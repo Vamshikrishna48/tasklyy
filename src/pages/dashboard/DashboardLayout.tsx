@@ -1,0 +1,24 @@
+import { Outlet } from "react-router-dom";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { DashboardSidebar } from "@/components/DashboardSidebar";
+
+const DashboardLayout = () => {
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <DashboardSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-14 flex items-center border-b bg-card/80 backdrop-blur-lg px-4 gap-3">
+            <SidebarTrigger />
+            <span className="font-display font-semibold text-foreground">Taskly Dashboard</span>
+          </header>
+          <main className="flex-1 overflow-auto">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+};
+
+export default DashboardLayout;
