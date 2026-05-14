@@ -79,7 +79,7 @@ const MyJobs = () => {
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
-        {(["all", "open", "in_progress", "submitted", "completed"] as const).map((f) => (
+        {(["all", "open", "payment_pending", "in_progress", "submitted", "completed"] as const).map((f) => (
           <Badge
             key={f}
             variant={filter === f ? "default" : "category"}

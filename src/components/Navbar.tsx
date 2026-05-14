@@ -69,16 +69,6 @@ const Navbar = () => {
               {profile && (
                 <div className="hidden lg:flex items-center gap-2 mr-2 px-2 border-r border-border min-w-0">
                   <span className="text-sm font-medium truncate max-w-[120px]">{profile.full_name}</span>
-                  {profile.is_verified && (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  )}
-                  {profile.verification_status === 'unverified' && (
-                    <Link to="/verify">
-                      <Button variant="outline" size="sm" className="text-xs h-7 px-2 ml-1 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100">
-                        Get Verified
-                      </Button>
-                    </Link>
-                  )}
                 </div>
               )}
               <Link to="/dashboard">

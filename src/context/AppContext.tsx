@@ -102,6 +102,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('Error fetching profile:', error);
       setProfile(null);
+    } else if (!data) {
+      // Safety net: Create profile if missing
+      console.log('Profile missing, creating default...');
+      const { data: user } = await supabase.auth.getUser();
+      if (user?.user) {
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: userId,
+            email: user.user.email || '',
+            full_name: user.user.user_metadata?.full_name || 'User',
+            role: 'worker',
+            wallet_balance: 0,
+            is_verified: false,
+            verification_status: 'unverified'
+          })
+          .select()
+          .single();
+        
+        if (!createError) setProfile(newProfile);
+      }
     } else {
       setProfile(data);
     }
@@ -110,11 +131,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // On mount: restore session and listen for auth changes
   useEffect(() => {
     // 1. Get existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       if (currentSession?.user) {
-        fetchProfile(currentSession.user.id);
+        await fetchProfile(currentSession.user.id);
       }
       setAuthLoading(false);
     });
@@ -124,6 +145,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       (_event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        
+        // CRITICAL: Clear all user-specific data when session changes
+        // This prevents data leakage when switching accounts
+        setMyPostedJobs([]);
+        setMyBids([]);
+        setPayments([]);
+        
         if (newSession?.user) {
           fetchProfile(newSession.user.id);
         } else {
@@ -145,8 +173,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [myPostedJobs, setMyPostedJobs] = useState<Job[]>(initialMyJobs);
   const [myBids, setMyBids] = useState<UserBid[]>(initialMyBids);
   const [payments, setPayments] = useState<Payment[]>(initialPayments);
-  // Demo mode: always treat current user as admin
-  const [isAdmin] = useState(true);
+  
+  // isAdmin derived from profile
+  const isAdmin = profile?.role === 'admin';
   const [platformBalance, setPlatformBalance] = useState(0);
 
   // On auth ready, fetch real jobs from Supabase and merge with mock
@@ -174,7 +203,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
             skills: rj.skills || [],
             instructions: rj.instructions || undefined,
           }));
-          setJobs(mapped);
+          setJobs((prev) => {
+            const existingIds = new Set(prev.map(j => j.id));
+            const newOnes = mapped.filter(j => !existingIds.has(j.id));
+            // Update existing ones if they changed
+            const updated = prev.map(p => {
+              const match = mapped.find(m => m.id === p.id);
+              return match ? { ...p, ...match } : p;
+            });
+            return [...newOnes, ...updated];
+          });
         }
       });
 
@@ -212,55 +250,50 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [authLoading, user?.id, profile?.full_name]);
 
   const addJob = useCallback(async (jobData: Omit<Job, "id" | "postedBy" | "bidsCount" | "status" | "createdAt">) => {
-    // Try real Supabase insert first if user is authenticated
-    if (user?.id) {
-      const supabaseJobData = {
-        title: jobData.title,
-        description: jobData.description,
-        budget: jobData.budget,
-        category: jobData.category,
-        deadline: jobData.deadline || null,
-        instructions: jobData.instructions || null,
-      };
-      const result = await supabasePostJob(supabaseJobData, user.id);
-      if (result) {
-        // Map to mock Job shape and add to local state
-        const newJob: Job = {
-          ...jobData,
-          id: result.id,
-          postedBy: {
-            name: profile?.full_name || currentUser.name,
-            avatar: (profile?.full_name || currentUser.name).substring(0, 2).toUpperCase(),
-            rating: currentUser.rating,
-            campus: currentUser.campus,
-          },
-          bidsCount: 0,
-          status: "open",
-          createdAt: new Date().toISOString().split("T")[0],
-        };
-        setMyPostedJobs((prev) => [newJob, ...prev]);
-        setJobs((prev) => [newJob, ...prev]);
-        return;
-      }
+    // Ensure user is authenticated
+    if (!user?.id) {
+      toast.error("You must be logged in to post a job.");
+      return;
     }
 
-    // Fallback: mock insert (for demo/non-authenticated)
-    const newJob: Job = {
-      ...jobData,
-      id: `job-${Date.now()}`,
-      postedBy: { 
-        name: currentUser.name, 
-        avatar: currentUser.avatar, 
-        rating: currentUser.rating,
-        campus: currentUser.campus
-      },
-      bidsCount: 0,
-      status: "open",
-      createdAt: new Date().toISOString().split("T")[0],
+    const supabaseJobData = {
+      title: jobData.title,
+      description: jobData.description,
+      budget: jobData.budget,
+      category: jobData.category,
+      deadline: jobData.deadline || null,
+      instructions: jobData.instructions || null,
+      skills: (jobData as any).skills || [],
+      is_quick_task: (jobData as any).isQuickTask || false,
+      campus_only: (jobData as any).campusOnly || false,
+      campus_name: (jobData as any).campusName || null,
+      is_urgent: (jobData as any).isUrgent || false,
+      urgent_time: (jobData as any).urgentTime || null,
+      is_team_task: (jobData as any).isTeamTask || false,
+      team_roles: (jobData as any).teamRoles || [],
+      is_mentoring: (jobData as any).isMentoring || false,
     };
-    setMyPostedJobs((prev) => [newJob, ...prev]);
-    setJobs((prev) => [newJob, ...prev]);
-    toast.success("Job posted successfully!");
+    const result = await supabasePostJob(supabaseJobData, user.id);
+    if (result) {
+      // Map to mock Job shape and add to local state
+      const newJob: Job = {
+        ...jobData,
+        id: result.id,
+        postedBy: {
+          name: profile?.full_name || currentUser.name,
+          avatar: (profile?.full_name || currentUser.name).substring(0, 2).toUpperCase(),
+          rating: currentUser.rating,
+          campus: currentUser.campus,
+        },
+        bidsCount: 0,
+        status: "open",
+        createdAt: new Date().toISOString().split("T")[0],
+      };
+      setMyPostedJobs((prev) => [newJob, ...prev]);
+      setJobs((prev) => [newJob, ...prev]);
+      return result;
+    }
+    return null;
   }, [user?.id, profile?.full_name, supabasePostJob]);
 
   const deleteJob = useCallback((id: string) => {
@@ -320,93 +353,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const acceptBid = useCallback(async (bidId: string) => {
     const bid = myBids.find((b) => b.id === bidId);
 
-    // Try real Supabase accept if authenticated
-    if (user?.id && bid?.jobId) {
-      const result = await supabaseAcceptJob(bid.jobId, user.id);
-      if (result) {
-        // Update local state to reflect acceptance
-        setMyBids((prev) => prev.map((b) => (b.id === bidId ? { ...b, status: "accepted" as const } : b)));
-        const updateStatus = (jobs: Job[]) => jobs.map((j) => j.id === bid.jobId ? { ...j, status: "in_progress" as const } : j);
-        setMyPostedJobs(updateStatus);
-        setJobs(updateStatus);
-        if (bid) sendJobAcceptedAlarm(bid.jobTitle, bid.amount);
-        return;
-      }
+    // Ensure user is authenticated
+    if (!user?.id || !bid?.jobId) {
+      toast.error("Authentication required to accept bids.");
+      return;
     }
 
-    // Fallback: mock accept
-    setMyBids((prev) => {
-      const foundBid = prev.find((b) => b.id === bidId);
-      if (foundBid) {
-        const platformFee = Math.round(foundBid.amount * 0.1);
-        const freelancerAmount = foundBid.amount - platformFee;
-        const posterPayment: Payment = {
-          id: `pay-${Date.now()}-poster`,
-          jobId: foundBid.jobId,
-          jobTitle: foundBid.jobTitle,
-          amount: foundBid.amount,
-          type: "spent",
-          date: new Date().toISOString().split("T")[0],
-          status: "completed",
-          recipient: "platform",
-        };
-        const freelancerPayment: Payment = {
-          id: `pay-${Date.now()}-freelancer`,
-          jobId: foundBid.jobId,
-          jobTitle: foundBid.jobTitle,
-          amount: freelancerAmount,
-          type: "earned",
-          date: new Date().toISOString().split("T")[0],
-          status: "escrow",
-          recipient: "freelancer",
-        };
-        setPayments((p) => [posterPayment, freelancerPayment, ...p]);
-        setPlatformBalance((b) => b + foundBid.amount);
-        const updateStatus = (jobs: Job[]) => jobs.map((j) => j.id === foundBid.jobId ? { ...j, status: "in_progress" as const } : j);
-        setMyPostedJobs(updateStatus);
-        setJobs(updateStatus);
-      }
-      return prev.map((b) => (b.id === bidId ? { ...b, status: "accepted" as const } : b));
-    });
-    toast.success("Bid accepted! Payment has been processed. 10% platform fee applied.");
-    const acceptedBid = myBids.find((b) => b.id === bidId);
-    if (acceptedBid) {
-      sendJobAcceptedAlarm(acceptedBid.jobTitle, acceptedBid.amount);
+    const result = await supabaseAcceptJob(bid.jobId, user.id);
+    if (result) {
+      // Update local state to reflect acceptance
+      setMyBids((prev) => prev.map((b) => (b.id === bidId ? { ...b, status: "accepted" as const } : b)));
+      const updateStatus = (jobs: Job[]) => jobs.map((j) => j.id === bid.jobId ? { ...j, status: "in_progress" as const } : j);
+      setMyPostedJobs(updateStatus);
+      setJobs(updateStatus);
+      if (bid) sendJobAcceptedAlarm(bid.jobTitle, bid.amount);
+      toast.success("Bid accepted! Payment has been processed via Supabase.");
     }
   }, [user?.id, myBids, supabaseAcceptJob]);
 
   const releaseEscrow = useCallback(async (paymentId: string) => {
-    // Try real Supabase release if authenticated
+    // Ensure user is authenticated
     const payment = payments.find((p) => p.id === paymentId && p.status === "escrow");
-    if (user?.id && payment?.jobId && payment.jobId !== 'posting-fee') {
-      const result = await supabaseReleaseEscrow(payment.jobId, user.id);
-      if (result) {
-        // Update local state
-        setPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, status: "completed" as const } : p));
-        setPlatformBalance((b) => b - payment.amount);
-        return;
-      }
+    if (!user?.id || !payment?.jobId || payment.jobId === 'posting-fee') {
+      toast.error("Cannot release escrow: Invalid payment or not authenticated.");
+      return;
     }
 
-    // Fallback: mock release
-    setPayments((prev) => {
-      const foundPayment = prev.find((p) => p.id === paymentId && p.status === "escrow");
-      if (!foundPayment) {
-        toast.error("Escrow payment not found or already released.");
-        return prev;
-      }
-
-      setPlatformBalance((b) => b - foundPayment.amount);
-      currentUser.balance += foundPayment.amount;
-
-      toast.success("Escrow released to freelancer (90% payout).");
-
-      return prev.map((p) =>
-        p.id === paymentId
-          ? { ...p, status: "completed" as const }
-          : p
-      );
-    });
+    const result = await supabaseReleaseEscrow(payment.jobId, user.id);
+    if (result) {
+      // Update local state
+      setPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, status: "completed" as const } : p));
+      setPlatformBalance((b) => b - payment.amount);
+      toast.success("Escrow released via Supabase.");
+    }
   }, [user?.id, payments, supabaseReleaseEscrow]);
 
   const recordPostingFee = useCallback((jobTitle: string, amount: number) => {

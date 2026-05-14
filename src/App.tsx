@@ -18,7 +18,6 @@ import Index from "./pages/Index.tsx";
 import BrowseJobs from "./pages/BrowseJobs.tsx";
 import JobDetail from "./pages/JobDetail.tsx";
 import PostJob from "./pages/PostJob.tsx";
-import VerificationPage from "./pages/VerificationPage.tsx";
 import OnTimeWorks from "./pages/OnTimeWorks.tsx";
 import Auth from "./pages/Auth.tsx";
 import DashboardLayout from "./pages/dashboard/DashboardLayout.tsx";
@@ -220,7 +219,6 @@ const App = () => {
                   <Route path="/jobs" element={<ProtectedRoute><BrowseJobs /></ProtectedRoute>} />
                   <Route path="/jobs/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
                   <Route path="/post-job" element={<ProtectedRoute><PostJob /></ProtectedRoute>} />
-                  <Route path="/verify" element={<ProtectedRoute><VerificationPage /></ProtectedRoute>} />
                   <Route path="/on-time-works" element={<ProtectedRoute><OnTimeWorks /></ProtectedRoute>} />
                   <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                     <Route index element={<DashboardOverview />} />

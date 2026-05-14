@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
+import { FileUp, X, Loader2 } from "lucide-react";
 
 const PostJob = () => {
   const navigate = useNavigate();
@@ -27,8 +29,6 @@ const PostJob = () => {
   const [skills, setSkills] = useState<string[]>([]);
   
   // New Feature States
-  const [paymentType, setPaymentType] = useState<"money" | "skill">("money");
-  const [skillExchangeDetails, setSkillExchangeDetails] = useState("");
   const [isQuickTask, setIsQuickTask] = useState(false);
   const [campusOnly, setCampusOnly] = useState(false);
   const [isUrgent, setIsUrgent] = useState(false);
@@ -37,6 +37,9 @@ const PostJob = () => {
   const [teamRoleInput, setTeamRoleInput] = useState("");
   const [teamRoles, setTeamRoles] = useState<string[]>([]);
   const [isMentoring, setIsMentoring] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const addSkill = () => {
     if (skillInput.trim() && !skills.includes(skillInput.trim())) {
@@ -68,46 +71,14 @@ const PostJob = () => {
     return d.toISOString().split("T")[0];
   };
 
-  const handleAIAssist = () => {
-    if (!title && !description) {
-      toast.error("Please enter a title or description first so AI can help!");
-      return;
-    }
-    toast.success("AI is analyzing your request...");
-    setTimeout(() => {
-      const lowerText = (title + " " + description).toLowerCase();
-      if (lowerText.includes("solve") || lowerText.includes("math")) {
-        setCategory("Assignment Help");
-        if(paymentType === "money") setBudget("50");
-        setIsQuickTask(true);
-      } else if (lowerText.includes("design") || lowerText.includes("poster")) {
-        setCategory("Poster Design");
-        if (!skills.includes("Figma")) setSkills([...skills, "Figma"]);
-      } else if (lowerText.includes("code") || lowerText.includes("python") || lowerText.includes("java")) {
-        setCategory("Coding Help");
-        const detectedSkill = lowerText.includes("python") ? "Python" : "Java";
-        if (!skills.includes(detectedSkill)) setSkills([...skills, detectedSkill]);
-      } else if (lowerText.includes("teach") || lowerText.includes("mentor")) {
-        setCategory("Tutoring");
-        setIsMentoring(true);
-      } else {
-        setCategory("Writing");
-      }
-      toast.success("AI has suggested a category, pricing/toggles, and tags based on your text!");
-    }, 1200);
-  };
 
   const handleSubmit = () => {
     if (!title.trim() || !description.trim() || !category || !deadline) {
       toast.error("Please fill in all required fields (Title, Description, Category, Deadline)");
       return;
     }
-    if (paymentType === "money" && !budget) {
-      toast.error("Please provide a money budget.");
-      return;
-    }
-    if (paymentType === "skill" && !skillExchangeDetails.trim()) {
-      toast.error("Please describe the skill you are willing to exchange.");
+    if (!budget) {
+      toast.error("Please provide a budget.");
       return;
     }
     const minDate = getMinDeadline();
@@ -116,8 +87,8 @@ const PostJob = () => {
       return;
     }
     
-    const numericBudget = paymentType === "money" ? Number(budget) : 0;
-    if (paymentType === "money" && (!numericBudget || numericBudget <= 0)) {
+    const numericBudget = Number(budget);
+    if (!numericBudget || numericBudget <= 0) {
       toast.error("Budget must be a positive number");
       return;
     }
@@ -129,8 +100,6 @@ const PostJob = () => {
       budget: numericBudget,
       deadline,
       skills,
-      paymentType,
-      skillExchangeDetails: paymentType === "skill" ? skillExchangeDetails.trim() : undefined,
       isQuickTask,
       campusOnly,
       campusName: campusOnly ? "Stanford University" : undefined, // Inherited from currentUser naturally, but kept here for mock
@@ -142,16 +111,50 @@ const PostJob = () => {
       rescueMode: false,
     };
 
-    if (paymentType === "money" && numericBudget > 0) {
-      // Post job directly without posting fee
-      addJob(jobPayload);
-      toast.success("Job posted successfully!");
-      navigate("/dashboard/jobs");
-    } else {
-      addJob(jobPayload);
-      toast.success("Skill Exchange Job posted successfully!");
-      navigate("/dashboard/jobs");
-    }
+    const runSubmission = async () => {
+      setIsSubmitting(true);
+      try {
+        const result = await addJob(jobPayload);
+        
+        if (result && selectedFile) {
+          setUploadingFile(true);
+          const fileExt = selectedFile.name.split('.').pop();
+          const fileName = `${Math.random()}.${fileExt}`;
+          const filePath = `${result.id}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('job-files')
+            .upload(filePath, selectedFile);
+
+          if (uploadError) {
+            toast.error("Job posted, but file upload failed: " + uploadError.message);
+          } else {
+            await supabase.from('job_files').insert({
+              job_id: result.id,
+              uploader_id: (await supabase.auth.getUser()).data.user?.id,
+              file_url: filePath,
+              file_name: selectedFile.name,
+              file_type: selectedFile.type,
+              is_submission: false,
+              is_watermarked: false
+            });
+            toast.success("File uploaded successfully!");
+          }
+        }
+        
+        if (result) {
+          toast.success("Job posted successfully!");
+          navigate("/dashboard/jobs");
+        }
+      } catch (err: any) {
+        toast.error("Error: " + err.message);
+      } finally {
+        setIsSubmitting(false);
+        setUploadingFile(false);
+      }
+    };
+
+    runSubmission();
   };
 
   return (
@@ -163,10 +166,6 @@ const PostJob = () => {
           <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" /> Back
           </Link>
-          <Button variant="outline" size="sm" className="gap-2 bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100" onClick={handleAIAssist}>
-            <Sparkles className="h-4 w-4" />
-            AI Task Assistant
-          </Button>
         </div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -277,56 +276,18 @@ const PostJob = () => {
 
               {/* Payment & Deadline */}
               <div className="pt-4 border-t space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-foreground">Payment Type *</label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        name="payment" 
-                        value="money" 
-                        checked={paymentType === "money"} 
-                        onChange={() => setPaymentType("money")} 
-                        className="accent-primary"
-                      />
-                      <span>Pay with Money (₹)</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        name="payment" 
-                        value="skill" 
-                        checked={paymentType === "skill"} 
-                        onChange={() => setPaymentType("skill")} 
-                        className="accent-primary"
-                      />
-                      <span>Skill Exchange</span>
-                    </label>
-                  </div>
-                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {paymentType === "money" ? (
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-foreground">Budget (₹) *</label>
-                      <Input
-                        type="number"
-                        placeholder={isQuickTask ? "10 - 100" : "25"}
-                        value={budget}
-                        onChange={(e) => setBudget(e.target.value)}
-                      />
-                    </div>
-                  ) : (
-                    <div className="md:col-span-2">
-                      <label className="mb-1.5 block text-sm font-medium text-foreground">What skill will you offer in exchange? *</label>
-                      <Input
-                        placeholder="e.g. I will teach you Python for 1 hour"
-                        value={skillExchangeDetails}
-                        onChange={(e) => setSkillExchangeDetails(e.target.value)}
-                      />
-                    </div>
-                  )}
-                  <div className={paymentType === "skill" ? "md:col-span-2" : ""}>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-foreground">Budget (₹) *</label>
+                    <Input
+                      type="number"
+                      placeholder={isQuickTask ? "10 - 100" : "25"}
+                      value={budget}
+                      onChange={(e) => setBudget(e.target.value)}
+                    />
+                  </div>
+                  <div>
                     <label className="mb-1.5 block text-sm font-medium text-foreground">Deadline *</label>
                     <Input
                       type="date"
@@ -371,9 +332,47 @@ const PostJob = () => {
                 )}
               </div>
 
-              <Button variant="hero" className="w-full gap-2 mt-4" size="lg" onClick={handleSubmit}>
-                <Send className="h-4 w-4" />
-                {paymentType === "money" ? "Post Job" : "Post Skill Exchange Job"}
+              {/* File Upload Section */}
+              <div className="pt-4 border-t">
+                <label className="mb-2 block text-sm font-medium text-foreground">Project Files / Brief</label>
+                <div className="flex flex-col gap-2">
+                  {!selectedFile ? (
+                    <div className="relative border-2 border-dashed border-muted rounded-xl p-8 transition-colors hover:border-primary/50 group">
+                      <input
+                        type="file"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                      />
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                          <FileUp className="h-5 w-5 text-primary" />
+                        </div>
+                        <p className="text-sm font-medium text-foreground">Click to upload or drag and drop</p>
+                        <p className="text-xs text-muted-foreground mt-1">PDF, Word, Images, or Zip (Max 10MB)</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-primary/20">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-8 w-8 rounded bg-primary/20 flex items-center justify-center text-primary">
+                          <FileUp className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{selectedFile.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setSelectedFile(null)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <Button variant="hero" className="w-full gap-2 mt-4" size="lg" onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {isSubmitting ? "Posting..." : "Post Job"}
               </Button>
             </CardContent>
           </Card>

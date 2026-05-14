@@ -16,6 +16,23 @@ export type Job = JobRow & {
 
 export const useJobs = () => {
   const [loading, setLoading] = useState(false);
+ 
+  const ensureProfile = async (userId: string) => {
+    const { data: existingProfile } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
+    if (!existingProfile) {
+      console.log(`Profile missing for ${userId}, creating...`);
+      const { data: authUser } = await supabase.auth.getUser();
+      await supabase.from('profiles').upsert({
+        id: userId,
+        email: authUser.user?.email || '',
+        full_name: authUser.user?.user_metadata?.full_name || 'User',
+        role: 'worker',
+        wallet_balance: 0,
+        is_verified: false,
+        verification_status: 'unverified'
+      });
+    }
+  };
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
@@ -29,7 +46,7 @@ export const useJobs = () => {
         toast.error(error.message);
         return [];
       }
-      return (data as any[]) as Job[];
+      return data as Job[];
     } finally {
       setLoading(false);
     }
@@ -48,11 +65,12 @@ export const useJobs = () => {
       }
 
       const jobs = data as JobRow[];
+      const filteredJobs = jobs;
 
       return {
-        posted: jobs.filter(j => j.poster_id === userId),
-        accepted: jobs.filter(j => j.worker_id === userId && j.status !== 'completed'),
-        completed: jobs.filter(j => j.status === 'completed' && (j.poster_id === userId || j.worker_id === userId))
+        posted: filteredJobs.filter(j => j.poster_id === userId),
+        accepted: filteredJobs.filter(j => j.worker_id === userId && j.status !== 'completed'),
+        completed: filteredJobs.filter(j => j.status === 'completed' && (j.poster_id === userId || j.worker_id === userId))
       };
     } catch (err) {
       return { posted: [], accepted: [], completed: [] };
@@ -71,7 +89,7 @@ export const useJobs = () => {
           escrow:escrow_transactions(*)
         `)
         .eq('id', jobId)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
         console.error("Fetch Job Error:", fetchError);
@@ -126,7 +144,9 @@ export const useJobs = () => {
 
   const postJob = async (jobData: any, userId: string) => {
     try {
-      // 1. Insert Job (No escrow yet, that happens after worker accepts and poster pays)
+      await ensureProfile(userId);
+
+      // 1. Insert Job
       const { data: job, error: jobError } = await supabase
         .from('jobs')
         .insert({
@@ -139,7 +159,7 @@ export const useJobs = () => {
           *,
           poster:profiles!jobs_poster_id_fkey(full_name, avatar_url)
         `)
-        .single();
+        .maybeSingle();
 
       if (jobError || !job) throw jobError || new Error("Failed to create job");
 
@@ -153,6 +173,7 @@ export const useJobs = () => {
 
   const acceptJob = async (jobId: string, userId: string) => {
     try {
+      await ensureProfile(userId);
       const paymentDueAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
       // 1. Update Job to payment_pending
@@ -165,7 +186,7 @@ export const useJobs = () => {
         })
         .eq('id', jobId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (jobError || !job) throw jobError || new Error("Job activation failed");
 
@@ -188,7 +209,7 @@ export const useJobs = () => {
 
   const payForJob = async (jobId: string, amount: number) => {
     try {
-      const { data: job } = await supabase.from('jobs').select('*').eq('id', jobId).single();
+      const { data: job } = await supabase.from('jobs').select('*').eq('id', jobId).maybeSingle();
       if (!job) throw new Error("Job not found");
 
       // 1. Create/Update Escrow
@@ -231,6 +252,7 @@ export const useJobs = () => {
 
   const submitWork = async (jobId: string, userId: string, files: File[]) => {
     try {
+      await ensureProfile(userId);
       for (const file of files) {
         const path = `submissions/${jobId}/${Date.now()}_${file.name}`;
         const { data, error: uploadError } = await supabase.storage
@@ -319,6 +341,55 @@ export const useJobs = () => {
     }
   };
 
+  const placeBid = async (bidData: any) => {
+    try {
+      console.log("Attempting to place bid:", bidData);
+      await ensureProfile(bidData.bidder_id);
+      
+      const { data, error } = await supabase
+        .from('bids')
+        .insert(bidData)
+        .select()
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Supabase Bid Error:", error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error("Bid was sent but verification failed. Please refresh the page and check if it appeared.");
+      }
+      
+      return data;
+    } catch (error: any) {
+      console.error("PlaceBid Exception:", error);
+      toast.error(`Bidding Error: ${error.message || "Unknown error"}`);
+      return null;
+    }
+  };
+ 
+  const cancelJobForNonPayment = async (jobId: string) => {
+    try {
+      const { error } = await (supabase
+        .from('jobs') as any)
+        .update({ 
+          status: 'rejected', 
+          worker_id: null, 
+          payment_due_at: null,
+          accepted_bid_id: null
+        })
+        .eq('id', jobId);
+      
+      if (error) throw error;
+      toast.error("Payment deadline missed. Project has been rejected.");
+      return true;
+    } catch (err: any) {
+      console.error("Cancel job error:", err);
+      return false;
+    }
+  };
+ 
   return { 
     loading, 
     fetchJobs, 
@@ -329,6 +400,8 @@ export const useJobs = () => {
     payForJob,
     submitWork, 
     declineWork,
-    releaseEscrow 
+    releaseEscrow,
+    placeBid,
+    cancelJobForNonPayment
   };
 };

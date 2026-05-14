@@ -5,12 +5,25 @@ import { motion } from "framer-motion";
 import { UserCircle, Mail, Phone, Star, Briefcase, Calendar, ShieldCheck } from "lucide-react";
 
 const Profile = () => {
-  const { profile } = useApp();
-  if (!profile) return (
-    <div className="p-6 text-center text-muted-foreground">
-      Please sign in to view your profile.
-    </div>
-  );
+  const { profile, authLoading } = useApp();
+
+  if (authLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="p-12 text-center">
+        <UserCircle className="mx-auto h-12 w-12 text-muted-foreground opacity-20 mb-4" />
+        <h3 className="text-lg font-semibold text-foreground">No Profile Found</h3>
+        <p className="text-muted-foreground">Please sign in to view your information.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -34,16 +47,10 @@ const Profile = () => {
                 <h2 className="font-display text-xl font-bold text-foreground">{profile.full_name}</h2>
                 <div className="flex items-center gap-2">
                   <p className="text-sm text-muted-foreground capitalize">{profile.role}</p>
-                  {profile.is_verified && (
-                    <Badge variant="default" className="bg-green-500 hover:bg-green-600 h-5 px-1.5 gap-1">
-                      <ShieldCheck className="h-3 w-3" />
-                      Verified
-                    </Badge>
-                  )}
                 </div>
               </div>
             </div>
-
+ 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
                 <Mail className="h-5 w-5 text-primary" />
@@ -52,12 +59,12 @@ const Profile = () => {
                   <p className="text-sm font-semibold text-foreground">{profile.email}</p>
                 </div>
               </div>
-
+ 
               <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
                 <Phone className="h-5 w-5 text-primary" />
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Contact</p>
-                  <p className="text-sm font-semibold text-foreground">Verified Student</p>
+                  <p className="text-sm font-semibold text-foreground">Registered Student</p>
                 </div>
               </div>
 

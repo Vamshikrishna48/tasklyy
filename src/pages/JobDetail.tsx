@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Star, Clock, ArrowLeft, CheckCircle, Info, Loader2, IndianRupee, MessageSquare, AlertTriangle, XCircle, Send } from "lucide-react";
+import { Star, Clock, ArrowLeft, CheckCircle, Info, Loader2, IndianRupee, MessageSquare, AlertTriangle, XCircle, Send, FileUp, Lock } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import Navbar from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,7 +17,7 @@ import { useJobs } from "@/hooks/useJobs";
 const JobDetail = () => {
   const { id } = useParams();
   const { user } = useApp();
-  const { fetchJobById, releaseEscrow, declineWork } = useJobs();
+  const { fetchJobById, releaseEscrow, declineWork, placeBid, acceptJob, cancelJobForNonPayment } = useJobs();
 
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -31,12 +31,14 @@ const JobDetail = () => {
   const [bidMessage, setBidMessage] = useState("");
   const [deliveryDays, setDeliveryDays] = useState("3");
   const [submittingBid, setSubmittingBid] = useState(false);
+  const [bidSubmitted, setBidSubmitted] = useState(false);
 
   const loadJob = useCallback(async () => {
     if (!id) return;
+    if (!id) return;
     const { data } = await supabase
       .from("jobs")
-      .select("*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url), worker:profiles!jobs_worker_id_fkey(full_name)")
+      .select("*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url), worker:profiles!jobs_worker_id_fkey(full_name), files:job_files(*)")
       .eq("id", id)
       .single();
     setJob(data);
@@ -55,36 +57,46 @@ const JobDetail = () => {
   }, [id]);
 
   useEffect(() => {
+    setLoading(true);
     loadJob();
     loadBids();
-  }, [loadJob, loadBids]);
+  }, [id, loadJob, loadBids]);
 
   // Realtime bid updates
   useEffect(() => {
     if (!id) return;
     const channel = supabase
-      .channel(`bids-${id}`)
+      .channel(`job-updates-${id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "jobs", filter: `id=eq.${id}` },
+        () => { loadJob(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "bids", filter: `job_id=eq.${id}` },
         () => { loadBids(); loadJob(); })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [id, loadBids, loadJob]);
 
-  // 10-minute payment countdown
+  // 5-minute payment countdown & Auto-rejection
   useEffect(() => {
-    if (!paymentDue) return;
-    const interval = setInterval(() => {
+    if (!paymentDue || job?.status !== 'payment_pending') return;
+    const interval = setInterval(async () => {
       const diff = new Date(paymentDue).getTime() - Date.now();
-      if (diff <= 0) { setTimeLeft("00:00"); clearInterval(interval); return; }
+      if (diff <= 0) { 
+        setTimeLeft("0:00"); 
+        clearInterval(interval);
+        // Auto-reject
+        await cancelJobForNonPayment(job.id);
+        loadJob();
+        return; 
+      }
       const mins = Math.floor(diff / 60000);
       const secs = Math.floor((diff % 60000) / 1000);
       setTimeLeft(`${mins}:${secs < 10 ? "0" : ""}${secs}`);
     }, 1000);
     return () => clearInterval(interval);
-  }, [paymentDue]);
+  }, [paymentDue, job?.status, job?.id, cancelJobForNonPayment, loadJob]);
 
   const isMyJob = job?.poster_id === user?.id;
-  const maxBidAmount = job?.budget ? job.budget + 100 : 9999;
+  const maxBidAmount = 100;
   const myBid = bids.find(b => b.bidder_id === user?.id);
   const acceptedBid = bids.find(b => b.status === "accepted");
 
@@ -96,46 +108,60 @@ const JobDetail = () => {
   const handlePlaceBid = async () => {
     const amount = Number(bidAmount);
     if (!amount || amount <= 0) { toast.error("Enter a valid bid amount"); return; }
-    if (amount > maxBidAmount) { toast.error(`Max bid is ₹${maxBidAmount} (budget + ₹100)`); return; }
+    if (amount > maxBidAmount) { toast.error(`Max bid is ₹${maxBidAmount}`); return; }
     if (!bidMessage.trim()) { toast.error("Add a message with your bid"); return; }
-    if (!user?.id) { toast.error("Please sign in to bid"); return; }
+    
+    const { profile } = useApp();
+    if (!profile?.id) { 
+      toast.error("Your profile is still syncing with the database. Please wait a moment or refresh."); 
+      return; 
+    }
 
     setSubmittingBid(true);
-    const { error } = await supabase.from("bids").insert({
-      job_id: id!,
-      bidder_id: user.id,
-      amount,
-      message: bidMessage.trim(),
-      delivery_days: Number(deliveryDays) || 3,
-      status: "pending",
-    });
+    try {
+      const result = await placeBid({
+        job_id: id!,
+        bidder_id: profile.id,
+        amount,
+        message: bidMessage.trim(),
+        delivery_days: Number(deliveryDays) || 3,
+        status: "pending",
+      });
 
-    if (error) { toast.error(error.message); setSubmittingBid(false); return; }
-
-    sendBidNotification(job?.title || "Job", amount, user?.email || "Worker");
-    setBidAmount(""); setBidMessage(""); setDeliveryDays("3");
-    setSubmittingBid(false);
-    toast.success("Bid placed! The poster has been notified.");
-    loadBids();
+      if (result) {
+        sendBidNotification(job?.title || "Job", amount, user?.email || "Worker");
+        setBidAmount(""); setBidMessage(""); setDeliveryDays("3");
+        setSubmittingBid(false);
+        setBidSubmitted(true);
+        toast.success("Bid placed! The poster has been notified.");
+        loadBids();
+        
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => setBidSubmitted(false), 5000);
+      } else {
+        setSubmittingBid(false);
+      }
+    } catch (err) {
+      console.error("handlePlaceBid Error:", err);
+      setSubmittingBid(false);
+    }
   };
 
   const handleAcceptBid = async (bid: any) => {
-    if (!user?.id) return;
-    const paymentDueAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-
+    const paymentDueAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     // Update bid status
     await supabase.from("bids").update({ status: "accepted" }).eq("id", bid.id);
     // Update job with worker and payment deadline
     await supabase.from("jobs").update({
       worker_id: bid.bidder_id,
-      status: "accepted",
+      status: "payment_pending", // Use payment_pending first
       payment_due_at: paymentDueAt,
       accepted_bid_id: bid.id,
     } as any).eq("id", id!);
 
     setPaymentDue(paymentDueAt);
     sendPaymentRequiredNotification(job?.title || "Job", bid.amount);
-    toast.success("Bid accepted! Pay within 10 minutes to confirm.");
+    toast.success("Bid accepted! Pay within 5 minutes to confirm.");
     loadJob(); loadBids();
   };
 
@@ -180,6 +206,18 @@ const JobDetail = () => {
     );
   };
 
+  const handleDirectAccept = async () => {
+    if (!user?.id) { toast.error("Please sign in to accept jobs"); return; }
+    
+    setSubmittingBid(true);
+    const result = await acceptJob(id!, user.id);
+    if (result) {
+      toast.success("Job accepted directly! Please pay within 5 minutes to confirm.");
+      loadJob();
+    }
+    setSubmittingBid(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -216,6 +254,7 @@ const JobDetail = () => {
           {/* ── Left ── */}
           <div className="lg:col-span-2 space-y-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+
               <div className="flex gap-2 mb-3 flex-wrap">
                 <Badge variant="category">{job.category}</Badge>
                 {job.status === "open" && <Badge variant="outline">Open for Bids</Badge>}
@@ -254,6 +293,72 @@ const JobDetail = () => {
                 </div>
               )}
 
+              {/* Poster Action Banner (Payment Pending) */}
+              {isMyJob && job.status === "payment_pending" && (
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mt-8 p-6 bg-primary/10 border-2 border-primary/30 rounded-3xl space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center text-white shrink-0">
+                      <IndianRupee className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-bold text-lg text-foreground">Worker Accepted! Secure the Funds</h3>
+                      <p className="text-sm text-muted-foreground">A worker has claimed this job. Please deposit the budget into escrow within {timeLeft || '5 minutes'} to start the project. Funds are only released when you approve the work.</p>
+                    </div>
+                  </div>
+                  <Button variant="hero" className="w-full h-12 text-lg shadow-lg shadow-primary/20" onClick={() => handlePayment({ amount: job.budget, bidder_id: job.worker_id })}>
+                    Pay ₹{job.budget} & Start Project
+                  </Button>
+                </motion.div>
+              )}
+
+              {/* Files & Brief Preview */}
+              <div className="mt-8">
+                <h2 className="mb-4 font-display text-lg font-bold flex items-center gap-2">
+                  <FileUp className="h-5 w-5 text-primary" /> Project Files & Brief
+                </h2>
+                {job.files && job.files.length > 0 ? (
+                  <div className="grid gap-3">
+                    {job.files.map((file: any) => (
+                      <div key={file.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border group">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                            <FileUp className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold truncate max-w-[200px] md:max-w-md">{file.file_name}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase">{file.file_type.split('/')[1] || 'file'}</p>
+                          </div>
+                        </div>
+                        {isMyJob || (myBid?.status === 'accepted' && job.status !== 'open') ? (
+                          <Button size="sm" variant="ghost" className="text-primary hover:bg-primary/10" asChild>
+                            <a href={`${supabase.storage.from('job-files').getPublicUrl(file.file_url).data.publicUrl}`} download={file.file_name}>
+                              Download
+                            </a>
+                          </Button>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] opacity-60">
+                            <Lock className="h-3 w-3 mr-1" /> Locked
+                          </Badge>
+                        )}
+                        {job.status === "payment_pending" && (
+                          <Badge variant="warning" className="animate-pulse bg-orange-500 hover:bg-orange-600">
+                            <Clock className="mr-1 h-3 w-3" /> 
+                            Action Required: Payment Pending {timeLeft ? `(${timeLeft})` : ''}
+                          </Badge>
+                        )}
+                        {job.status === "rejected" && (
+                          <Badge variant="destructive">
+                            <XCircle className="mr-1 h-3 w-3" /> Rejected (Payment Missed)
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">No files attached to this job.</p>
+                )}
+              </div>
+
               {/* Instructions (after accepting) */}
               {(hasAccepted || isMyJob || myBid) && job.instructions && (
                 <div className="mt-6 p-4 bg-muted/30 rounded-xl border">
@@ -262,9 +367,45 @@ const JobDetail = () => {
                 </div>
               )}
 
-              {/* Bid form */}
-              {!isMyJob && (hasAccepted || myBid === undefined) && job.status === "open" && !myBid && user?.id && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
+              {/* Bid Success Message */}
+              <AnimatePresence>
+                {bidSubmitted && (
+                  <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="mt-8">
+                    <Card className="border-green-300 bg-green-50 shadow-lg">
+                      <CardContent className="p-6 text-center space-y-3">
+                        <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                          <CheckCircle className="h-6 w-6 text-green-600" />
+                        </div>
+                        <h3 className="font-display font-bold text-green-800 text-lg">Bid Submitted Successfully!</h3>
+                        <p className="text-sm text-green-700">The project poster has been notified. You'll receive a notification if your bid is accepted.</p>
+                        <Button variant="outline" size="sm" onClick={() => setBidSubmitted(false)}>Dismiss</Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Actions: Direct Accept OR Bid */}
+              {!isMyJob && job.status === "open" && !myBid && !bidSubmitted && user?.id && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 space-y-6">
+                  {/* Direct Accept Option */}
+                  <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="text-center md:text-left">
+                      <h3 className="font-bold text-foreground">Skip Bidding?</h3>
+                      <p className="text-sm text-muted-foreground">Accept this job immediately for the full budget of ₹{job.budget}.</p>
+                    </div>
+                    <Button variant="hero" className="shrink-0" onClick={handleDirectAccept} disabled={submittingBid}>
+                      Accept Directly for ₹{job.budget}
+                    </Button>
+                  </div>
+
+                  <div className="relative py-4 flex items-center">
+                    <div className="flex-grow border-t border-muted"></div>
+                    <span className="flex-shrink mx-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Or Place a custom bid</span>
+                    <div className="flex-grow border-t border-muted"></div>
+                  </div>
+
+                  {/* Bid form */}
                   <Card className="border-primary/20 shadow-card">
                     <CardContent className="p-6 space-y-4">
                       <h2 className="font-display text-lg font-bold flex items-center gap-2">
@@ -411,7 +552,7 @@ const JobDetail = () => {
                 <div className="p-8 text-center text-white bg-gradient-to-br from-primary to-primary/80">
                   <p className="text-xs uppercase font-black tracking-widest opacity-60 mb-1">Project Budget</p>
                   <div className="font-display text-4xl font-black">₹{job.budget}</div>
-                  <p className="text-xs opacity-70 mt-1">Max bid: ₹{maxBidAmount}</p>
+                  <p className="text-xs opacity-70 mt-1">Max bid: ₹100</p>
                 </div>
                 <div className="p-6 space-y-4">
                   {isMyJob && paymentDue && acceptedBid && (
@@ -451,7 +592,7 @@ const JobDetail = () => {
                     <AlertTriangle className="h-4 w-4" /> Bidding Rules
                   </div>
                   <ul className="text-xs text-amber-700 space-y-1 list-disc list-inside">
-                    <li>Max bid: budget + ₹100 only</li>
+                    <li>Max bid: ₹100 only</li>
                     <li>One bid per job</li>
                     <li>Poster must pay within 10 mins of accepting</li>
                     <li>You'll be notified if bid is rejected</li>
