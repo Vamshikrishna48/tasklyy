@@ -1,10 +1,10 @@
-import { usePlatformNotifications } from "@/hooks/useNotificationPermission";
+import { mockNotifications } from "@/hooks/useAdmin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bell, Clock, User, DollarSign, Package, AlertTriangle, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const AdminNotifications = () => {
-  const { notifications } = usePlatformNotifications();
+  const notifications = mockNotifications;
 
   return (
     <div className="p-6 space-y-6">
@@ -41,7 +41,7 @@ const AdminNotifications = () => {
                   {n.type === 'timeout' && <AlertTriangle className="h-6 w-6" />}
                   {n.type === 'work_submitted' && <Package className="h-6 w-6" />}
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <Badge variant={
@@ -49,7 +49,7 @@ const AdminNotifications = () => {
                       n.type === 'acceptance' ? 'outline' :
                       n.type === 'payment' ? 'secondary' :
                       n.type === 'timeout' ? 'destructive' :
-                      'category'
+                      'secondary'
                     }>
                       {n.type.replace('_', ' ').toUpperCase()}
                     </Badge>
@@ -61,7 +61,7 @@ const AdminNotifications = () => {
                   <h4 className="font-semibold text-sm text-foreground truncate">{n.jobTitle}</h4>
                   <p className="text-xs text-muted-foreground">
                     {n.type === 'bid' && `${n.user} placed a bid of ₹${n.amount}`}
-                    {n.type === 'acceptance' && `Employer accepted a bid. 10min timer started.`}
+                    {n.type === 'acceptance' && `Employer accepted a bid. Payment in escrow.`}
                     {n.type === 'payment' && `Payment of ₹${n.amount} verified for escrow.`}
                     {n.type === 'timeout' && `Project deleted due to payment failure.`}
                     {n.type === 'work_submitted' && `${n.user} submitted work files.`}

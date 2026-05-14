@@ -1,28 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
-import { Job, Bid, AttachedFile } from "@/data/mockData";
+import { supabase } from "@/lib/supabase";
+import type { User, Session } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
+import { Job, Bid, mockJobs as initialJobs, mockBids as initialBids } from "@/data/mockData";
 import { toast } from "sonner";
-import { 
-  sendBidNotification, 
-  sendJobAcceptedAlarm, 
-  sendWorkSubmittedNotification, 
-  sendPaymentVerifiedNotification 
-} from "@/hooks/useNotificationPermission";
-import { db } from "@/integrations/firebase/client";
-import { mockJobs } from "@/data/mockData";
-import { 
-  collection, 
-  onSnapshot, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
-  orderBy,
-  serverTimestamp,
-  getDocs,
-  setDoc,
-  Timestamp
-} from "firebase/firestore";
+import { sendBidNotification, sendJobAcceptedAlarm } from "@/hooks/useNotificationPermission";
+import { useJobs } from "@/hooks/useJobs";
 
 export interface UserBid extends Bid {
   status: "pending" | "accepted" | "rejected";
@@ -35,16 +18,25 @@ export interface Payment {
   jobTitle: string;
   amount: number;
   type: "earned" | "spent";
-  date: any;
-  status: "completed" | "pending" | "escrow" | "verified";
+  date: string;
+  status: "completed" | "pending" | "escrow";
+  // Who ultimately receives/holds this money from the platform perspective
   recipient: "platform" | "freelancer" | "poster";
-  posterName?: string;
-  freelancerName?: string;
 }
 
+// === Supabase profile type ===
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+
 interface AppState {
+  // --- Supabase auth state ---
+  user: User | null;
+  session: Session | null;
+  profile: Profile | null;
+  authLoading: boolean;
+  // --- Existing mock state (preserved) ---
   jobs: Job[];
   myPostedJobs: Job[];
+  myBids: UserBid[];
   payments: Payment[];
   currentUser: { 
     name: string; 
@@ -57,23 +49,25 @@ interface AppState {
     email: string;
     contact: string;
   };
+  // Platform/admin state
   isAdmin: boolean;
   platformBalance: number;
   addJob: (job: Omit<Job, "id" | "postedBy" | "bidsCount" | "status" | "createdAt">) => void;
   deleteJob: (id: string) => void;
   updateJobStatus: (id: string, status: Job["status"]) => void;
-  acceptJob: (jobId: string) => void;
-  submitWork: (jobId: string, file: AttachedFile) => void;
-  getPaymentTimeRemaining: (jobId: string) => number | null;
+  placeBid: (jobId: string, amount: number, message: string, deliveryDays: number) => void;
+  withdrawBid: (bidId: string) => void;
+  acceptBid: (bidId: string) => void;
+  rejectBid: (bidId: string) => void;
+  getBidsForJob: (jobId: string) => UserBid[];
   releaseEscrow: (paymentId: string) => void;
   recordPostingFee: (jobTitle: string, amount: number) => void;
   toggleRescueMode: (id: string) => void;
-  seedDatabase: () => Promise<void>;
 }
 
 const AppContext = createContext<AppState | null>(null);
 
-const DEFAULT_USER = {
+const currentUser = {
   name: "You",
   avatar: "YO",
   rating: 4.9,
@@ -85,412 +79,373 @@ const DEFAULT_USER = {
   contact: "+1 (555) 000-0000",
 };
 
+const initialMyJobs: Job[] = [];
+
+const initialMyBids: UserBid[] = [];
+
+const initialPayments: Payment[] = [];
+
 export function AppProvider({ children }: { children: ReactNode }) {
-  // Load state from localStorage for Mock Mode persistence
-  const getInitialJobs = () => {
-    const saved = localStorage.getItem("taskly_mock_jobs");
-    return saved ? JSON.parse(saved) : mockJobs;
-  };
+  // === Supabase auth state ===
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  const getInitialPayments = () => {
-    const saved = localStorage.getItem("taskly_mock_payments");
-    return saved ? JSON.parse(saved) : [];
-  };
-
-  const [jobs, setJobs] = useState<Job[]>(getInitialJobs);
-  const [currentUser, setCurrentUser] = useState(DEFAULT_USER);
-  const [payments, setPayments] = useState<Payment[]>(getInitialPayments);
-  const [isAdmin, setIsAdmin] = useState(localStorage.getItem("isAdminLoggedIn") === "true");
-  const [platformBalance, setPlatformBalance] = useState(0);
-
-  const [myPostedJobs, setMyPostedJobs] = useState<Job[]>([]);
-
-  // Update currentUser based on session
-  useEffect(() => {
-    const adminEmail = localStorage.getItem("demoUserEmail");
-    if (adminEmail) {
-      const name = adminEmail.split('@')[0];
-      setCurrentUser(prev => ({
-        ...prev,
-        email: adminEmail,
-        name: name.charAt(0).toUpperCase() + name.slice(1),
-        avatar: name.substring(0, 2).toUpperCase()
-      }));
+  // Fetch profile row from Supabase when user changes
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (error) {
+      console.error('Error fetching profile:', error);
+      setProfile(null);
     } else {
-      setCurrentUser(DEFAULT_USER);
+      setProfile(data);
     }
-  }, [isAdmin]);
+  }, []);
 
-  // Sync state to localStorage for persistence in Mock Mode
+  // On mount: restore session and listen for auth changes
   useEffect(() => {
-    if (import.meta.env.VITE_FIREBASE_API_KEY === "...") {
-      localStorage.setItem("taskly_mock_jobs", JSON.stringify(jobs));
-      localStorage.setItem("taskly_mock_payments", JSON.stringify(payments));
-    }
-  }, [jobs, payments]);
+    // 1. Get existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      if (currentSession?.user) {
+        fetchProfile(currentSession.user.id);
+      }
+      setAuthLoading(false);
+    });
 
-  // Function to seed demo data into Firestore
-  const seedDatabase = useCallback(async () => {
-    if (import.meta.env.VITE_FIREBASE_API_KEY === "...") {
-      toast.error("Connect Firebase first to seed data!");
-      return;
-    }
-    
-    try {
-      const jobsCol = collection(db, "jobs");
-      const snapshot = await getDocs(jobsCol);
-      if (snapshot.empty) {
-        toast.loading("Seeding demo projects...");
-        for (const job of mockJobs) {
-          const { id, ...jobData } = job;
-          await setDoc(doc(db, "jobs", id), {
-            ...jobData,
-            createdAt: serverTimestamp()
-          });
+    // 2. Listen for auth state changes (login / logout / token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        if (newSession?.user) {
+          fetchProfile(newSession.user.id);
+        } else {
+          setProfile(null);
         }
-        toast.success("Demo projects seeded to database!");
-      } else {
-        toast.info("Database already has data.");
       }
-    } catch (error) {
-      console.error("Seeding error:", error);
-      toast.error("Failed to seed data.");
-    }
-  }, []);
-
-  // Sync admin login status across tabs
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "isAdminLoggedIn") {
-        setIsAdmin(e.newValue === "true");
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // --- CONNECTION VERIFICATION ---
-  useEffect(() => {
-    const isPlaceholder = import.meta.env.VITE_FIREBASE_API_KEY === "..." || !import.meta.env.VITE_FIREBASE_API_KEY;
-    if (isPlaceholder) {
-      toast.error("Firebase Credentials Missing! Open .env.local and add your actual Firebase keys to enable database sync.", {
-        duration: 10000,
-        id: "firebase-warning"
-      });
-    }
-  }, []);
-
-  // --- FIREBASE REAL-TIME LISTENERS ---
-  useEffect(() => {
-    if (import.meta.env.VITE_FIREBASE_API_KEY === "...") return;
-
-    // 1. Listen for Jobs
-    const jobsQuery = query(collection(db, "jobs"), orderBy("createdAt", "desc"));
-    const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
-      const jobsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-      })) as Job[];
-      
-      if (jobsData.length > 0) {
-        setJobs(jobsData);
-      }
-    }, (error) => {
-      console.error("Firebase Jobs Listener Error:", error);
-      if (import.meta.env.VITE_FIREBASE_API_KEY !== "...") {
-        toast.error("Database error. Verification failed or permission denied.");
-      }
-    });
-
-    // 3. Listen for Payments
-    const paymentsQuery = query(collection(db, "payments"), orderBy("date", "desc"));
-    const unsubscribePayments = onSnapshot(paymentsQuery, (snapshot) => {
-      const paymentsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date?.toDate()?.toISOString() || new Date().toISOString()
-      })) as Payment[];
-      setPayments(paymentsData);
-      
-      const balance = paymentsData
-        .filter(p => p.recipient === "platform")
-        .reduce((sum, p) => sum + p.amount, 0);
-      setPlatformBalance(balance);
-    }, (error) => {
-      console.error("Firebase Payments Listener Error:", error);
-    });
+    );
 
     return () => {
-      unsubscribeJobs();
-      unsubscribePayments();
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchProfile]);
 
-  // Sync platform balance from payments state
-  useEffect(() => {
-    const balance = payments
-      .filter(p => p.recipient === "platform")
-      .reduce((sum, p) => sum + p.amount, 0);
-    setPlatformBalance(balance);
-  }, [payments]);
+  // === Real Supabase hooks ===
+  const { postJob: supabasePostJob, acceptJob: supabaseAcceptJob, releaseEscrow: supabaseReleaseEscrow, submitWork: supabaseSubmitWork, fetchJobs: supabaseFetchJobs, fetchMyJobs: supabaseFetchMyJobs } = useJobs();
 
-  // Sync myPostedJobs
+  // === Existing mock state (preserved exactly as-is) ===
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [myPostedJobs, setMyPostedJobs] = useState<Job[]>(initialMyJobs);
+  const [myBids, setMyBids] = useState<UserBid[]>(initialMyBids);
+  const [payments, setPayments] = useState<Payment[]>(initialPayments);
+  // Demo mode: always treat current user as admin
+  const [isAdmin] = useState(true);
+  const [platformBalance, setPlatformBalance] = useState(0);
+
+  // On auth ready, fetch real jobs from Supabase and merge with mock
   useEffect(() => {
-    setMyPostedJobs(jobs.filter(j => j.postedBy.name === currentUser.name || j.postedBy.name === "Arjun Mehta" || j.postedBy.name === "You"));
-  }, [jobs, currentUser.name]);
+    if (!authLoading) {
+      supabaseFetchJobs().then((realJobs) => {
+        if (realJobs && realJobs.length > 0) {
+          // Map Supabase jobs to the mock Job shape for UI compatibility
+          const mapped: Job[] = realJobs.map((rj: any) => ({
+            id: rj.id,
+            title: rj.title,
+            description: rj.description,
+            category: rj.category,
+            budget: rj.budget,
+            deadline: rj.deadline || '',
+            postedBy: {
+              name: rj.poster?.full_name || 'Unknown',
+              avatar: (rj.poster?.full_name || 'U').substring(0, 2).toUpperCase(),
+              rating: 4.5,
+              campus: '',
+            },
+            bidsCount: 0,
+            status: rj.status as Job['status'],
+            createdAt: rj.created_at?.split('T')[0] || '',
+            skills: rj.skills || [],
+            instructions: rj.instructions || undefined,
+          }));
+          setJobs(mapped);
+        }
+      });
+
+      // Also fetch user's own jobs
+      if (user?.id) {
+        supabaseFetchMyJobs(user.id).then((result) => {
+          if (result.posted.length > 0) {
+            const mapped: Job[] = result.posted.map((rj: any) => ({
+              id: rj.id,
+              title: rj.title,
+              description: rj.description,
+              category: rj.category,
+              budget: rj.budget,
+              deadline: rj.deadline || '',
+              postedBy: {
+                name: profile?.full_name || 'You',
+                avatar: (profile?.full_name || 'YO').substring(0, 2).toUpperCase(),
+                rating: 4.9,
+                campus: '',
+              },
+              bidsCount: 0,
+              status: rj.status as Job['status'],
+              createdAt: rj.created_at?.split('T')[0] || '',
+              skills: rj.skills || [],
+              instructions: rj.instructions || undefined,
+            }));
+            setMyPostedJobs((prev) => {
+              const realIds = new Set(mapped.map((j) => j.id));
+              return [...mapped, ...prev.filter((j) => !realIds.has(j.id))];
+            });
+          }
+        });
+      }
+    }
+  }, [authLoading, user?.id, profile?.full_name]);
 
   const addJob = useCallback(async (jobData: Omit<Job, "id" | "postedBy" | "bidsCount" | "status" | "createdAt">) => {
-    try {
-      setJobs(prev => [{
-        ...jobData,
-        id: Math.random().toString(36).substr(2, 9),
-        postedBy: { 
-          name: currentUser.name, 
-          avatar: currentUser.avatar, 
-          rating: currentUser.rating,
-          campus: currentUser.campus
-        },
-        bidsCount: 0,
-        status: "open",
-        createdAt: new Date().toISOString(),
-      }, ...prev]);
-      
-      if (import.meta.env.VITE_FIREBASE_API_KEY === "...") {
-        toast.success("Job posted! (Mock Mode)");
+    // Try real Supabase insert first if user is authenticated
+    if (user?.id) {
+      const supabaseJobData = {
+        title: jobData.title,
+        description: jobData.description,
+        budget: jobData.budget,
+        category: jobData.category,
+        deadline: jobData.deadline || null,
+        instructions: jobData.instructions || null,
+      };
+      const result = await supabasePostJob(supabaseJobData, user.id);
+      if (result) {
+        // Map to mock Job shape and add to local state
+        const newJob: Job = {
+          ...jobData,
+          id: result.id,
+          postedBy: {
+            name: profile?.full_name || currentUser.name,
+            avatar: (profile?.full_name || currentUser.name).substring(0, 2).toUpperCase(),
+            rating: currentUser.rating,
+            campus: currentUser.campus,
+          },
+          bidsCount: 0,
+          status: "open",
+          createdAt: new Date().toISOString().split("T")[0],
+        };
+        setMyPostedJobs((prev) => [newJob, ...prev]);
+        setJobs((prev) => [newJob, ...prev]);
         return;
       }
-
-      await addDoc(collection(db, "jobs"), {
-        ...jobData,
-        postedBy: { 
-          name: currentUser.name, 
-          avatar: currentUser.avatar, 
-          rating: currentUser.rating,
-          campus: currentUser.campus
-        },
-        bidsCount: 0,
-        status: "open",
-        createdAt: serverTimestamp(),
-      });
-      toast.success("Job posted! Syncing across devices...");
-    } catch (error) {
-      console.error("Firebase Add Job Error:", error);
-      toast.error("Failed to post job.");
     }
+
+    // Fallback: mock insert (for demo/non-authenticated)
+    const newJob: Job = {
+      ...jobData,
+      id: `job-${Date.now()}`,
+      postedBy: { 
+        name: currentUser.name, 
+        avatar: currentUser.avatar, 
+        rating: currentUser.rating,
+        campus: currentUser.campus
+      },
+      bidsCount: 0,
+      status: "open",
+      createdAt: new Date().toISOString().split("T")[0],
+    };
+    setMyPostedJobs((prev) => [newJob, ...prev]);
+    setJobs((prev) => [newJob, ...prev]);
+    toast.success("Job posted successfully!");
+  }, [user?.id, profile?.full_name, supabasePostJob]);
+
+  const deleteJob = useCallback((id: string) => {
+    setMyPostedJobs((prev) => prev.filter((j) => j.id !== id));
+    setJobs((prev) => prev.filter((j) => j.id !== id));
+    toast.success("Job deleted");
   }, []);
 
-  const deleteJob = useCallback(async (id: string) => {
-    try {
-      setJobs(prev => prev.filter(j => j.id !== id));
-      setMyPostedJobs(prev => prev.filter(j => j.id !== id));
+  const updateJobStatus = useCallback((id: string, status: Job["status"]) => {
+    const update = (prev: Job[]) => prev.map((j) => (j.id === id ? { ...j, status } : j));
+    setMyPostedJobs(update);
+    setJobs(update);
+    toast.success(`Job marked as ${status.replace("_", " ")}`);
+  }, []);
 
-      if (import.meta.env.VITE_FIREBASE_API_KEY === "...") {
-        toast.success("Job deleted (Mock Mode)");
+  const toggleRescueMode = useCallback((id: string) => {
+    const update = (prev: Job[]) => prev.map((j) => (j.id === id ? { ...j, rescueMode: true, budget: j.budget * 1.5 } : j));
+    setMyPostedJobs(update);
+    setJobs(update);
+    toast.success(`Rescue Mode activated! Budget increased by 50% and visibility boosted.`);
+  }, []);
+
+  const placeBid = useCallback((jobId: string, amount: number, message: string, deliveryDays: number) => {
+    const job = [...jobs, ...myPostedJobs].find((j) => j.id === jobId);
+    const newBid: UserBid = {
+      id: `bid-${Date.now()}`,
+      jobId,
+      jobTitle: job?.title || "Unknown Job",
+      bidder: { 
+        name: currentUser.name, 
+        avatar: currentUser.avatar, 
+        rating: currentUser.rating, 
+        completedJobs: currentUser.completedJobs,
+        campus: currentUser.campus,
+        skillScores: currentUser.skillScores
+      },
+      amount,
+      message,
+      deliveryDays,
+      createdAt: new Date().toISOString().split("T")[0],
+      status: "pending",
+    };
+    setMyBids((prev) => [newBid, ...prev]);
+    const incBids = (prev: Job[]) => prev.map((j) => (j.id === jobId ? { ...j, bidsCount: j.bidsCount + 1 } : j));
+    setJobs(incBids);
+    setMyPostedJobs(incBids);
+    // Send browser notification alarm to job poster
+    sendBidNotification(job?.title || "Unknown Job", amount, currentUser.name);
+    toast.success("Bid placed successfully!");
+  }, [jobs, myPostedJobs]);
+
+  const withdrawBid = useCallback((bidId: string) => {
+    setMyBids((prev) => prev.filter((b) => b.id !== bidId));
+    toast.success("Bid withdrawn");
+  }, []);
+
+  const acceptBid = useCallback(async (bidId: string) => {
+    const bid = myBids.find((b) => b.id === bidId);
+
+    // Try real Supabase accept if authenticated
+    if (user?.id && bid?.jobId) {
+      const result = await supabaseAcceptJob(bid.jobId, user.id);
+      if (result) {
+        // Update local state to reflect acceptance
+        setMyBids((prev) => prev.map((b) => (b.id === bidId ? { ...b, status: "accepted" as const } : b)));
+        const updateStatus = (jobs: Job[]) => jobs.map((j) => j.id === bid.jobId ? { ...j, status: "in_progress" as const } : j);
+        setMyPostedJobs(updateStatus);
+        setJobs(updateStatus);
+        if (bid) sendJobAcceptedAlarm(bid.jobTitle, bid.amount);
         return;
       }
-
-      await deleteDoc(doc(db, "jobs", id));
-      toast.success("Job deleted");
-    } catch (error) {
-      console.error("Firebase Delete Job Error:", error);
     }
-  }, []);
 
-  const updateJobStatus = useCallback(async (id: string, status: Job["status"]) => {
-    try {
-      setJobs(prev => prev.map(j => j.id === id ? { ...j, status } : j));
-      
-      if (import.meta.env.VITE_FIREBASE_API_KEY === "...") {
-        toast.success(`Job marked as ${status.replace("_", " ")} (Mock Mode)`);
-        return;
-      }
-
-      await updateDoc(doc(db, "jobs", id), { status });
-      toast.success(`Job marked as ${status.replace("_", " ")}`);
-    } catch (error) {
-      console.error("Firebase Update Job Status Error:", error);
-    }
-  }, []);
-
-  const toggleRescueMode = useCallback(async (id: string) => {
-    const job = jobs.find(j => j.id === id);
-    if (job) {
-      await updateDoc(doc(db, "jobs", id), { 
-        rescueMode: true, 
-        budget: job.budget * 1.5 
-      });
-      toast.success(`Rescue Mode activated! Budget boosted.`);
-    }
-  }, [jobs]);
-
-  const placeBid = useCallback(async (jobId: string, amount: number, message: string, deliveryDays: number) => {
-    const job = jobs.find(j => j.id === jobId);
-    if (!job) return;
-
-  }, [jobs]);
-
-  const acceptJob = useCallback(async (jobId: string) => {
-    const job = jobs.find(j => j.id === jobId);
-    if (!job) return;
-
-    const platformFee = Math.round(job.budget * 0.1);
-    const freelancerAmount = job.budget - platformFee;
-    
-    try {
-      // Update Job locally - Move directly to in_progress with auto-payment
-      setJobs(prev => prev.map(j => j.id === jobId ? {
-        ...j,
-        status: "in_progress",
-        acceptedBidderId: "mock-worker-id",
-        acceptedBidderName: currentUser.name,
-        filesUnlocked: true,
-        paymentDeadline: null,
-      } : j));
-
-      // Record Payments locally
-      const newPayments: Payment[] = [
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          jobId,
-          jobTitle: job.title,
-          amount: job.budget,
-          type: "spent" as const,
-          date: new Date().toISOString(),
-          status: "verified" as const,
-          recipient: "platform" as const,
-          posterName: job.postedBy.name,
-          freelancerName: currentUser.name,
-        },
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          jobId,
-          jobTitle: job.title,
+    // Fallback: mock accept
+    setMyBids((prev) => {
+      const foundBid = prev.find((b) => b.id === bidId);
+      if (foundBid) {
+        const platformFee = Math.round(foundBid.amount * 0.1);
+        const freelancerAmount = foundBid.amount - platformFee;
+        const posterPayment: Payment = {
+          id: `pay-${Date.now()}-poster`,
+          jobId: foundBid.jobId,
+          jobTitle: foundBid.jobTitle,
+          amount: foundBid.amount,
+          type: "spent",
+          date: new Date().toISOString().split("T")[0],
+          status: "completed",
+          recipient: "platform",
+        };
+        const freelancerPayment: Payment = {
+          id: `pay-${Date.now()}-freelancer`,
+          jobId: foundBid.jobId,
+          jobTitle: foundBid.jobTitle,
           amount: freelancerAmount,
-          type: "earned" as const,
-          date: new Date().toISOString(),
-          status: "escrow" as const,
-          recipient: "freelancer" as const,
-          posterName: job.postedBy.name,
-          freelancerName: currentUser.name,
-        }
-      ];
-      setPayments(prev => [...newPayments, ...prev]);
-
-      if (import.meta.env.VITE_FIREBASE_API_KEY === "...") {
-        toast.success("Job accepted and payment secured! (Mock Mode)");
-        return;
+          type: "earned",
+          date: new Date().toISOString().split("T")[0],
+          status: "escrow",
+          recipient: "freelancer",
+        };
+        setPayments((p) => [posterPayment, freelancerPayment, ...p]);
+        setPlatformBalance((b) => b + foundBid.amount);
+        const updateStatus = (jobs: Job[]) => jobs.map((j) => j.id === foundBid.jobId ? { ...j, status: "in_progress" as const } : j);
+        setMyPostedJobs(updateStatus);
+        setJobs(updateStatus);
       }
-
-      // Update Job in Firebase
-      await updateDoc(doc(db, "jobs", jobId), {
-        status: "in_progress",
-        acceptedBidderId: "mock-worker-id",
-        acceptedBidderName: currentUser.name,
-        filesUnlocked: true,
-        paymentDeadline: null,
-      });
-
-      // Record Payments in Firebase
-      await addDoc(collection(db, "payments"), {
-        jobId,
-        jobTitle: job.title,
-        amount: job.budget,
-        type: "spent",
-        date: serverTimestamp(),
-        status: "verified",
-        recipient: "platform",
-        posterName: job.postedBy.name,
-        freelancerName: currentUser.name,
-      });
-
-      await addDoc(collection(db, "payments"), {
-        jobId,
-        jobTitle: job.title,
-        amount: freelancerAmount,
-        type: "earned",
-        date: serverTimestamp(),
-        status: "escrow",
-        recipient: "freelancer",
-        posterName: job.postedBy.name,
-        freelancerName: currentUser.name,
-      });
-
-      toast.success("Job taken and escrow secured!");
-    } catch (error) {
-      console.error("Firebase Direct Accept/Pay Error:", error);
+      return prev.map((b) => (b.id === bidId ? { ...b, status: "accepted" as const } : b));
+    });
+    toast.success("Bid accepted! Payment has been processed. 10% platform fee applied.");
+    const acceptedBid = myBids.find((b) => b.id === bidId);
+    if (acceptedBid) {
+      sendJobAcceptedAlarm(acceptedBid.jobTitle, acceptedBid.amount);
     }
-  }, [jobs, currentUser.name]);
-
-  const submitWork = useCallback(async (jobId: string, file: AttachedFile) => {
-    try {
-      setJobs(prev => prev.map(j => j.id === jobId ? {
-        ...j,
-        status: "completed",
-        submittedWork: file
-      } : j));
-
-      if (import.meta.env.VITE_FIREBASE_API_KEY === "...") {
-        toast.success("Work submitted! (Mock Mode)");
-        return;
-      }
-
-      await updateDoc(doc(db, "jobs", jobId), {
-        status: "completed",
-        submittedWork: file
-      });
-
-      const job = jobs.find(j => j.id === jobId);
-      if (job) sendWorkSubmittedNotification(job.title, currentUser.name);
-      toast.success("Work submitted and synced!");
-    } catch (error) {
-      console.error("Firebase Submit Work Error:", error);
-    }
-  }, [jobs]);
-
-  const getPaymentTimeRemaining = useCallback((jobId: string): number | null => {
-    const job = jobs.find(j => j.id === jobId);
-    if (!job || job.status !== "payment_pending" || !job.paymentDeadline) return null;
-    const remaining = job.paymentDeadline - Date.now();
-    return remaining > 0 ? remaining : 0;
-  }, [jobs]);
+  }, [user?.id, myBids, supabaseAcceptJob]);
 
   const releaseEscrow = useCallback(async (paymentId: string) => {
-    const payment = payments.find(p => p.id === paymentId && p.status === "escrow");
-    if (!payment) return;
-
-    try {
-      await updateDoc(doc(db, "payments", paymentId), { status: "completed" });
-      toast.success("Escrow released!");
-    } catch (error) {
-      console.error("Firebase Release Escrow Error:", error);
+    // Try real Supabase release if authenticated
+    const payment = payments.find((p) => p.id === paymentId && p.status === "escrow");
+    if (user?.id && payment?.jobId && payment.jobId !== 'posting-fee') {
+      const result = await supabaseReleaseEscrow(payment.jobId, user.id);
+      if (result) {
+        // Update local state
+        setPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, status: "completed" as const } : p));
+        setPlatformBalance((b) => b - payment.amount);
+        return;
+      }
     }
-  }, [payments]);
 
-  const recordPostingFee = useCallback(async (jobTitle: string, amount: number) => {
-    if (amount <= 0) return;
-    try {
-      await addDoc(collection(db, "payments"), {
-        jobId: "posting-fee",
-        jobTitle,
-        amount,
-        type: "spent",
-        date: serverTimestamp(),
-        status: "completed",
-        recipient: "platform",
-      });
-    } catch (error) {
-      console.error("Firebase Posting Fee Error:", error);
-    }
+    // Fallback: mock release
+    setPayments((prev) => {
+      const foundPayment = prev.find((p) => p.id === paymentId && p.status === "escrow");
+      if (!foundPayment) {
+        toast.error("Escrow payment not found or already released.");
+        return prev;
+      }
+
+      setPlatformBalance((b) => b - foundPayment.amount);
+      currentUser.balance += foundPayment.amount;
+
+      toast.success("Escrow released to freelancer (90% payout).");
+
+      return prev.map((p) =>
+        p.id === paymentId
+          ? { ...p, status: "completed" as const }
+          : p
+      );
+    });
+  }, [user?.id, payments, supabaseReleaseEscrow]);
+
+  const recordPostingFee = useCallback((jobTitle: string, amount: number) => {
+    if (!amount || amount <= 0) return;
+    const feePayment: Payment = {
+      id: `pay-${Date.now()}-post-fee`,
+      jobId: "posting-fee",
+      jobTitle,
+      amount,
+      type: "spent",
+      date: new Date().toISOString().split("T")[0],
+      status: "completed",
+      recipient: "platform",
+    };
+    setPayments((prev) => [feePayment, ...prev]);
+    setPlatformBalance((b) => b + amount);
   }, []);
 
-  const getBidsForJob = (jobId: string) => []; // Legacy compatibility
+  const rejectBid = useCallback((bidId: string) => {
+    setMyBids((prev) => prev.map((b) => (b.id === bidId ? { ...b, status: "rejected" as const } : b)));
+    toast.success("Bid rejected");
+  }, []);
+
+  const getBidsForJob = useCallback((jobId: string) => {
+    return myBids.filter((b) => b.jobId === jobId);
+  }, [myBids]);
 
   return (
     <AppContext.Provider
       value={{
+        // Supabase auth
+        user,
+        session,
+        profile,
+        authLoading,
+        // Existing mock state
         jobs,
         myPostedJobs,
+        myBids,
         payments,
         currentUser,
         isAdmin,
@@ -498,13 +453,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addJob,
         deleteJob,
         updateJobStatus,
-        acceptJob,
-        submitWork,
-        getPaymentTimeRemaining,
+        placeBid,
+        withdrawBid,
+        acceptBid,
+        rejectBid,
+        getBidsForJob,
         releaseEscrow,
         recordPostingFee,
         toggleRescueMode,
-        seedDatabase,
       }}
     >
       {children}

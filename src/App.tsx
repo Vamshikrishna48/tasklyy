@@ -4,16 +4,21 @@ import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-route
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AppProvider, useApp } from "@/context/AppContext";
+import { AppProvider } from "@/context/AppContext";
+import { useApp } from "@/context/AppContext";
 import AdminLayout from "./pages/admin/AdminLayout.tsx";
 import AdminOverview from "./pages/admin/AdminOverview.tsx";
 import AdminEscrow from "./pages/admin/AdminEscrow.tsx";
+import AdminLedger from "./pages/admin/AdminLedger.tsx";
+import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminNotifications from "./pages/admin/AdminNotifications.tsx";
 import AdminAuth from "./pages/admin/AdminAuth.tsx";
+import AdminGuard from "./components/AdminGuard.tsx";
 import Index from "./pages/Index.tsx";
 import BrowseJobs from "./pages/BrowseJobs.tsx";
 import JobDetail from "./pages/JobDetail.tsx";
 import PostJob from "./pages/PostJob.tsx";
+import VerificationPage from "./pages/VerificationPage.tsx";
 import OnTimeWorks from "./pages/OnTimeWorks.tsx";
 import Auth from "./pages/Auth.tsx";
 import DashboardLayout from "./pages/dashboard/DashboardLayout.tsx";
@@ -32,30 +37,171 @@ const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const SplashScreen = () => {
+  const [progress, setProgress] = useState(0);
+  const [currentText, setCurrentText] = useState(0);
+
+  const loadingTexts = [
+    "Finding assignments for you...",
+    "Connecting students & experts...",
+    "Loading your marketplace...",
+    "Almost ready...",
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setProgress((old) => {
+        if (old >= 100) { clearInterval(timer); return 100; }
+        return Math.min(old + Math.random() * 8 + 2, 100);
+      });
+    }, 120);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setCurrentText((old) => (old + 1) % loadingTexts.length);
+    }, 900);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 relative overflow-hidden">
+
+      {/* Animated gradient orbs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-500/20 blur-[120px] animate-pulse" style={{ animationDelay: "1s" }} />
+      <div className="absolute top-[40%] left-[50%] w-[300px] h-[300px] rounded-full bg-teal-400/10 blur-[100px]" />
+
+      {/* Grid overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+
+      {/* Center content */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative z-10 flex flex-col items-center gap-8"
+      >
+        {/* Logo + glow ring */}
+        <div className="relative flex items-center justify-center">
+          {/* Outer glow ring */}
+          <motion.div
+            animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.15, 0.4] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute w-36 h-36 rounded-full bg-gradient-to-br from-blue-500 to-emerald-400 blur-2xl"
+          />
+          {/* Logo container - no box */}
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
+            className="relative flex items-center justify-center"
+          >
+            <img
+              src="/taskly-logo.png"
+              alt="Taskly"
+              className="w-44 h-44 object-contain"
+            />
+          </motion.div>
+        </div>
+
+        {/* Brand */}
+        <div className="text-center">
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="text-5xl font-black tracking-tight text-white"
+          >
+            Taskly
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="mt-2 text-sm font-medium text-blue-300 tracking-widest uppercase"
+          >
+            India's Student Marketplace
+          </motion.p>
+        </div>
+
+        {/* Animated loading text */}
+        <motion.p
+          key={currentText}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-xs text-gray-400 tracking-wide"
+        >
+          {loadingTexts[currentText]}
+        </motion.p>
+
+        {/* Progress bar */}
+        <div className="w-64">
+          <div className="w-full h-[3px] bg-white/10 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-blue-500 via-teal-400 to-emerald-400"
+              animate={{ width: `${progress}%` }}
+              transition={{ ease: "easeOut", duration: 0.3 }}
+            />
+          </div>
+          <div className="flex justify-between mt-1.5">
+            <span className="text-[10px] text-gray-600">Loading</span>
+            <span className="text-[10px] text-gray-500">{Math.round(progress)}%</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Bottom tagline */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        className="absolute bottom-8 text-[11px] text-gray-600 tracking-widest uppercase"
+      >
+        Upload · Assign · Deliver
+      </motion.p>
+    </div>
+  );
+};
+
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = !!localStorage.getItem("demoUserEmail");
+  const { session, authLoading } = useApp();
   const location = useLocation();
 
-  if (!isAuthenticated) {
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
 };
 
-const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAdmin } = useApp();
-  const isAuthenticated = !!localStorage.getItem("demoUserEmail");
-
-  if (!isAuthenticated) return <Navigate to="/auth" replace />;
-  if (!isAdmin) return <Navigate to="/admin/auth" replace />;
-
-  return <>{children}</>;
-};
-
 const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -65,28 +211,35 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/admin/auth" element={<AdminAuth />} />
-                <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/jobs" element={<ProtectedRoute><BrowseJobs /></ProtectedRoute>} />
-                <Route path="/jobs/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
-                <Route path="/post-job" element={<ProtectedRoute><PostJob /></ProtectedRoute>} />
-                <Route path="/on-time-works" element={<ProtectedRoute><OnTimeWorks /></ProtectedRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                  <Route index element={<DashboardOverview />} />
-                  <Route path="jobs" element={<MyJobs />} />
-                  <Route path="earnings" element={<Earnings />} />
-                  <Route path="portfolio" element={<Portfolio />} />
-                  <Route path="profile" element={<Profile />} />
-                </Route>
-                <Route path="/admin" element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
-                  <Route index element={<AdminOverview />} />
-                  <Route path="escrow" element={<AdminEscrow />} />
-                  <Route path="notifications" element={<AdminNotifications />} />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              {showSplash ? (
+                <SplashScreen />
+              ) : (
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                  <Route path="/jobs" element={<ProtectedRoute><BrowseJobs /></ProtectedRoute>} />
+                  <Route path="/jobs/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
+                  <Route path="/post-job" element={<ProtectedRoute><PostJob /></ProtectedRoute>} />
+                  <Route path="/verify" element={<ProtectedRoute><VerificationPage /></ProtectedRoute>} />
+                  <Route path="/on-time-works" element={<ProtectedRoute><OnTimeWorks /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                    <Route index element={<DashboardOverview />} />
+                    <Route path="jobs" element={<MyJobs />} />
+                    <Route path="earnings" element={<Earnings />} />
+                    <Route path="portfolio" element={<Portfolio />} />
+                    <Route path="profile" element={<Profile />} />
+                  </Route>
+                  <Route path="/admin/auth" element={<AdminAuth />} />
+                  <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
+                    <Route index element={<AdminOverview />} />
+                    <Route path="escrow" element={<AdminEscrow />} />
+                    <Route path="ledger" element={<AdminLedger />} />
+                    <Route path="users" element={<AdminUsers />} />
+                    <Route path="notifications" element={<AdminNotifications />} />
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              )}
             </BrowserRouter>
           </NotificationGate>
         </AppProvider>

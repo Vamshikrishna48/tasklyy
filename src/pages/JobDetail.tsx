@@ -3,131 +3,202 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Star, Clock, Users, ArrowLeft, Send, CheckCircle, XCircle, Info, Zap, AlertTriangle, BookOpen, FileText, Download, Lock, Timer, Upload } from "lucide-react";
-import { mockBids, AttachedFile } from "@/data/mockData";
+import { Star, Clock, ArrowLeft, CheckCircle, Info, Loader2, IndianRupee, MessageSquare, AlertTriangle, XCircle, Send } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import Navbar from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-
-const PaymentTimer = ({ deadline }: { deadline: number }) => {
-  const [remaining, setRemaining] = useState(deadline - Date.now());
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const r = deadline - Date.now();
-      setRemaining(r > 0 ? r : 0);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [deadline]);
-
-  const minutes = Math.floor(remaining / 60000);
-  const seconds = Math.floor((remaining % 60000) / 1000);
-  const isUrgent = remaining < 30000;
-
-  return (
-    <div className={`flex items-center gap-2 p-3 rounded-lg border-2 ${isUrgent ? 'border-red-500 bg-red-50 animate-pulse' : 'border-amber-400 bg-amber-50'}`}>
-      <Timer className={`h-5 w-5 ${isUrgent ? 'text-red-600' : 'text-amber-600'}`} />
-      <div>
-        <p className={`text-sm font-bold ${isUrgent ? 'text-red-700' : 'text-amber-700'}`}>
-          Payment Required: {minutes}:{seconds.toString().padStart(2, '0')}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {isUrgent ? 'Hurry! Project will be auto-deleted!' : 'Complete payment to Admin before timeout'}
-        </p>
-      </div>
-    </div>
-  );
-};
-
-const WatermarkedImage = ({ src, alt }: { src: string; alt: string }) => {
-  return (
-    <div className="relative group overflow-hidden rounded-lg border bg-muted">
-      <img src={src} alt={alt} className="w-full h-auto max-h-[400px] object-contain" />
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 select-none overflow-hidden">
-        <div className="grid grid-cols-3 grid-rows-3 gap-8 rotate-[-30deg]">
-          {[...Array(9)].map((_, i) => (
-            <div key={i} className="text-4xl font-display font-black whitespace-nowrap text-foreground opacity-50 uppercase tracking-tighter">
-              TASKLY PROTECT
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1 backdrop-blur-sm">
-        <Lock className="h-3 w-3" /> Protected Preview
-      </div>
-    </div>
-  );
-};
+import { supabase } from "@/lib/supabase";
+import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
+import { sendBidNotification, sendBidRejectedNotification, sendPaymentRequiredNotification } from "@/hooks/useNotificationPermission";
+import { useJobs } from "@/hooks/useJobs";
 
 const JobDetail = () => {
   const { id } = useParams();
-  const { jobs, myPostedJobs, currentUser, deleteJob, acceptJob, completePayment, submitWork, getPaymentTimeRemaining } = useApp();
-  const allJobs = [...myPostedJobs, ...jobs];
-  const job = allJobs.find((j) => j.id === id);
-  const isMyJob = myPostedJobs.some((j) => j.id === id);
-  
-  // File submission
-  const submitFileRef = useRef<HTMLInputElement>(null);
-  const [submittingWork, setSubmittingWork] = useState(false);
+  const { user } = useApp();
+  const { fetchJobById, releaseEscrow, declineWork } = useJobs();
 
-  const handlePlaceBid = () => {
-    // This function is not used in the provided snippet, but keeping it for context
-    // if (!bidAmount || !bidMessage.trim()) {
-    //   toast.error("Please enter an amount and message");
-    //   return;
-    // }
-    // if (!id) return;
-    // placeBid(id, Number(bidAmount), bidMessage.trim(), Number(bidDays) || 3);
-    // setBidAmount("");
-    // setBidMessage("");
-    // setBidDays("");
+  const [job, setJob] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [bids, setBids] = useState<any[]>([]);
+  const [hasAccepted, setHasAccepted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<string>("");
+  const [paymentDue, setPaymentDue] = useState<string | null>(null);
+
+  // Bid form
+  const [bidAmount, setBidAmount] = useState("");
+  const [bidMessage, setBidMessage] = useState("");
+  const [deliveryDays, setDeliveryDays] = useState("3");
+  const [submittingBid, setSubmittingBid] = useState(false);
+
+  const loadJob = useCallback(async () => {
+    if (!id) return;
+    const { data } = await supabase
+      .from("jobs")
+      .select("*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url), worker:profiles!jobs_worker_id_fkey(full_name)")
+      .eq("id", id)
+      .single();
+    setJob(data);
+    if (data?.payment_due_at) setPaymentDue(data.payment_due_at);
+    setLoading(false);
+  }, [id]);
+
+  const loadBids = useCallback(async () => {
+    if (!id) return;
+    const { data } = await supabase
+      .from("bids")
+      .select("*, bidder:profiles!bids_bidder_id_fkey(full_name, avatar_url)")
+      .eq("job_id", id)
+      .order("created_at", { ascending: false });
+    setBids(data || []);
+  }, [id]);
+
+  useEffect(() => {
+    loadJob();
+    loadBids();
+  }, [loadJob, loadBids]);
+
+  // Realtime bid updates
+  useEffect(() => {
+    if (!id) return;
+    const channel = supabase
+      .channel(`bids-${id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bids", filter: `job_id=eq.${id}` },
+        () => { loadBids(); loadJob(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [id, loadBids, loadJob]);
+
+  // 10-minute payment countdown
+  useEffect(() => {
+    if (!paymentDue) return;
+    const interval = setInterval(() => {
+      const diff = new Date(paymentDue).getTime() - Date.now();
+      if (diff <= 0) { setTimeLeft("00:00"); clearInterval(interval); return; }
+      const mins = Math.floor(diff / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${mins}:${secs < 10 ? "0" : ""}${secs}`);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [paymentDue]);
+
+  const isMyJob = job?.poster_id === user?.id;
+  const maxBidAmount = job?.budget ? job.budget + 100 : 9999;
+  const myBid = bids.find(b => b.bidder_id === user?.id);
+  const acceptedBid = bids.find(b => b.status === "accepted");
+
+  const handleAcceptToView = () => {
+    setHasAccepted(true);
+    toast.success("You can now view full details and place a bid.");
   };
 
-  const handleSubmitWork = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0 || !id) return;
-    setSubmittingWork(true);
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      const attachedFile: AttachedFile = {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        dataUrl: reader.result as string,
-      };
-      submitWork(id, attachedFile);
-      setSubmittingWork(false);
-    };
-    reader.readAsDataURL(file);
+  const handlePlaceBid = async () => {
+    const amount = Number(bidAmount);
+    if (!amount || amount <= 0) { toast.error("Enter a valid bid amount"); return; }
+    if (amount > maxBidAmount) { toast.error(`Max bid is ₹${maxBidAmount} (budget + ₹100)`); return; }
+    if (!bidMessage.trim()) { toast.error("Add a message with your bid"); return; }
+    if (!user?.id) { toast.error("Please sign in to bid"); return; }
+
+    setSubmittingBid(true);
+    const { error } = await supabase.from("bids").insert({
+      job_id: id!,
+      bidder_id: user.id,
+      amount,
+      message: bidMessage.trim(),
+      delivery_days: Number(deliveryDays) || 3,
+      status: "pending",
+    });
+
+    if (error) { toast.error(error.message); setSubmittingBid(false); return; }
+
+    sendBidNotification(job?.title || "Job", amount, user?.email || "Worker");
+    setBidAmount(""); setBidMessage(""); setDeliveryDays("3");
+    setSubmittingBid(false);
+    toast.success("Bid placed! The poster has been notified.");
+    loadBids();
   };
 
-  const isAcceptedWorker = job?.acceptedBidderName === currentUser.name;
-  const canAccessInstructions = isAcceptedWorker && job?.filesUnlocked;
+  const handleAcceptBid = async (bid: any) => {
+    if (!user?.id) return;
+    const paymentDueAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+    // Update bid status
+    await supabase.from("bids").update({ status: "accepted" }).eq("id", bid.id);
+    // Update job with worker and payment deadline
+    await supabase.from("jobs").update({
+      worker_id: bid.bidder_id,
+      status: "accepted",
+      payment_due_at: paymentDueAt,
+      accepted_bid_id: bid.id,
+    } as any).eq("id", id!);
+
+    setPaymentDue(paymentDueAt);
+    sendPaymentRequiredNotification(job?.title || "Job", bid.amount);
+    toast.success("Bid accepted! Pay within 10 minutes to confirm.");
+    loadJob(); loadBids();
+  };
+
+  const handleRejectBid = async (bid: any) => {
+    await supabase.from("bids").update({ status: "rejected" }).eq("id", bid.id);
+    sendBidRejectedNotification(job?.title || "Job", bid.amount);
+    toast.success("Bid rejected. Worker has been notified.");
+    loadBids();
+  };
+
+  const handlePayment = async (bid: any) => {
+    openRazorpayCheckout(
+      bid.amount,
+      job?.title || "Job",
+      null,
+      async () => {
+        // Create escrow
+        const platformFee = Math.round(bid.amount * 0.30);
+        const workerAmount = bid.amount - platformFee;
+        await supabase.from("escrow_transactions").insert({
+          job_id: id!,
+          poster_id: user!.id,
+          worker_id: bid.bidder_id,
+          total_amount: bid.amount,
+          platform_fee: platformFee,
+          worker_amount: workerAmount,
+          status: "held",
+        });
+        await supabase.from("jobs").update({ status: "accepted", instructions_locked: false } as any).eq("id", id!);
+        await supabase.from("admin_ledger").insert({
+          job_id: id!,
+          type: "fee_collected",
+          amount: platformFee,
+          from_user_id: user!.id,
+          note: `30% platform fee for: ${job?.title}`,
+        } as any);
+        toast.success(`Payment confirmed! Job is now in progress.`);
+        setPaymentDue(null);
+        loadJob();
+      },
+      () => toast.error("Payment failed or cancelled.")
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-20 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="mt-4 text-muted-foreground">Loading job details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!job) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container mx-auto px-4 py-20 text-center">
-          <h1 className="font-display text-2xl font-bold text-foreground">Job not found</h1>
-          <Link to="/jobs">
-            <Button variant="hero" className="mt-4">Browse Jobs</Button>
-          </Link>
+          <h1 className="font-display text-2xl font-bold">Job not found</h1>
+          <Link to="/jobs"><Button variant="hero" className="mt-4">Browse Jobs</Button></Link>
         </div>
       </div>
     );
@@ -136,304 +207,258 @@ const JobDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
       <div className="container mx-auto px-4 py-8">
-        <Link to="/jobs" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link to="/jobs" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to jobs
         </Link>
 
         <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+          {/* ── Left ── */}
+          <div className="lg:col-span-2 space-y-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="flex gap-2 mb-3 items-center flex-wrap">
+              <div className="flex gap-2 mb-3 flex-wrap">
                 <Badge variant="category">{job.category}</Badge>
-                {job.status === "payment_pending" && (
-                  <Badge className="bg-amber-500 hover:bg-amber-600 animate-pulse">⏳ Escrow Pending</Badge>
-                )}
-                {job.status === "in_progress" && (
-                  <Badge className="bg-blue-500 hover:bg-blue-600">🔨 In Progress</Badge>
-                )}
-                {job.status === "completed" && (
-                  <Badge className="bg-green-500 hover:bg-green-600">✅ Completed</Badge>
-                )}
+                {job.status === "open" && <Badge variant="outline">Open for Bids</Badge>}
+                {job.status === "accepted" && <Badge className="bg-amber-500">Awaiting Payment {timeLeft && `(${timeLeft})`}</Badge>}
+                {job.status === "in_progress" && <Badge className="bg-green-500">In Progress</Badge>}
+                {job.status === "submitted" && <Badge className="bg-blue-500">Work Submitted</Badge>}
+                {job.status === "completed" && <Badge className="bg-primary">Completed</Badge>}
               </div>
-              
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">{job.title}</h1>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  Due {new Date(job.deadline).toLocaleDateString()}
-                </div>
+
+              <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">{job.title}</h1>
+              <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1"><Clock className="h-4 w-4" />
+                  Due {job.deadline ? new Date(job.deadline).toLocaleDateString("en-IN", { month: "long", day: "numeric", year: "numeric" }) : "—"}
+                </span>
+                <span className="flex items-center gap-1"><IndianRupee className="h-4 w-4" />Budget: ₹{job.budget}</span>
               </div>
 
               <div className="mt-6">
-                <h2 className="mb-2 font-display text-lg font-semibold text-foreground">Description</h2>
-                <p className="leading-relaxed text-muted-foreground">{job.description}</p>
+                <h2 className="mb-2 font-display text-lg font-semibold">Description</h2>
+                <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{job.description}</p>
               </div>
 
-              <div className="mt-6">
-                <h2 className="mb-2 font-display text-lg font-semibold text-foreground">Skills Required</h2>
-                <div className="flex flex-wrap gap-2">
-                  {job.skills.map((skill) => (
-                    <Badge key={skill} variant="secondary">{skill}</Badge>
-                  ))}
+              {job.skills?.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {job.skills.map((s: string) => <Badge key={s} variant="secondary">{s}</Badge>)}
                 </div>
-              </div>
+              )}
 
-              {/* Task Instructions Section */}
-              <div className="mt-8 border-t pt-8">
-                <h2 className="mb-4 font-display text-lg font-semibold text-foreground flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-primary" /> Task Instructions & Files
-                </h2>
-                
-                {canAccessInstructions ? (
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-lg border bg-primary/5 text-sm leading-relaxed mb-4">
-                      {job.instructions || "No specific text instructions provided. Please use the files below."}
-                    </div>
-                    {job.attachedFiles && job.attachedFiles.length > 0 && (
-                      <div className="space-y-2">
-                        {job.attachedFiles.map((file, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3 rounded-lg border bg-green-50 border-green-200">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <FileText className="h-4 w-4 text-green-600 shrink-0" />
-                              <span className="truncate text-sm font-medium">{file.name}</span>
-                              <span className="text-xs text-muted-foreground shrink-0">({(file.size / 1024).toFixed(1)} KB)</span>
-                            </div>
-                            <a href={file.dataUrl} download={file.name}>
-                              <Button size="sm" variant="outline" className="gap-1 text-green-600 border-green-300 hover:bg-green-100">
-                                <Download className="h-3 w-3" /> Download
-                              </Button>
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed bg-muted/50 text-center">
-                    <div className="mb-4 h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                      <Lock className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <h3 className="font-display font-semibold text-foreground mb-1">Instructions Locked</h3>
-                    <p className="text-sm text-muted-foreground max-w-sm mb-4">
-                      {isAcceptedWorker 
-                        ? "Waiting for the client to complete payment to Admin to unlock instructions and files."
-                        : "Accept this job and wait for client payment to unlock specific task instructions and files."}
-                    </p>
-                    {!isAcceptedWorker && !isMyJob && job.status === "open" && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="hero" className="gap-2">
-                            <Zap className="h-4 w-4" /> Accept Job to Unlock
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you ready to take this task?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              By accepting, you commit to completing this task by the deadline. 
-                              The instructions will unlock as soon as you accept, and the escrow payment will be secured.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => acceptJob(job.id)}>
-                              Accept & Start Now
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </div>
-                )}
-              </div>
+              {/* Accept to view (worker) */}
+              {!isMyJob && !hasAccepted && job.status === "open" && !myBid && (
+                <div className="mt-8 p-6 border-2 border-dashed border-primary/30 rounded-2xl text-center space-y-3 bg-primary/5">
+                  <Info className="h-8 w-8 text-primary mx-auto" />
+                  <h3 className="font-bold text-foreground">Accept to View Full Details & Bid</h3>
+                  <p className="text-sm text-muted-foreground">Click below to unlock the full job instructions and place your bid.</p>
+                  <Button variant="hero" onClick={handleAcceptToView}>Accept & View Job</Button>
+                </div>
+              )}
 
-              {/* Submitted Work with Watermark for Poster */}
-              {job.submittedWork && (
-                <div className="mt-8 border-t pt-8">
-                  <h2 className="mb-4 font-display text-lg font-semibold text-foreground flex items-center gap-2">
-                    📦 Submitted Work
-                  </h2>
-                  
-                  {isMyJob ? (
-                    <div className="space-y-4">
-                      {job.submittedWork.type.startsWith("image/") ? (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-amber-600 flex items-center gap-2">
-                            <Info className="h-4 w-4" /> Protected Preview (Watermarked)
-                          </p>
-                          <WatermarkedImage 
-                            src={job.submittedWork.dataUrl} 
-                            alt="Submitted Work Preview" 
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            High-quality, clean version will be sent to your email after you **Release Funds** to the worker.
-                          </p>
+              {/* Instructions (after accepting) */}
+              {(hasAccepted || isMyJob || myBid) && job.instructions && (
+                <div className="mt-6 p-4 bg-muted/30 rounded-xl border">
+                  <h2 className="mb-2 font-display text-base font-semibold">Instructions</h2>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{job.instructions}</p>
+                </div>
+              )}
+
+              {/* Bid form */}
+              {!isMyJob && (hasAccepted || myBid === undefined) && job.status === "open" && !myBid && user?.id && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
+                  <Card className="border-primary/20 shadow-card">
+                    <CardContent className="p-6 space-y-4">
+                      <h2 className="font-display text-lg font-bold flex items-center gap-2">
+                        <Send className="h-5 w-5 text-primary" /> Place Your Bid
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Budget: <span className="font-bold text-foreground">₹{job.budget}</span> · Max bid: <span className="font-bold text-foreground">₹{maxBidAmount}</span>
+                      </p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Your Bid (₹) *</label>
+                          <Input type="number" placeholder={`Up to ₹${maxBidAmount}`} value={bidAmount} min={1} max={maxBidAmount}
+                            onChange={(e) => {
+                              const v = Number(e.target.value);
+                              if (v > maxBidAmount) { toast.error(`Max bid is ₹${maxBidAmount}`); setBidAmount(String(maxBidAmount)); }
+                              else setBidAmount(e.target.value);
+                            }} />
                         </div>
-                      ) : (
-                        <div className="p-4 rounded-lg border bg-muted text-center italic text-muted-foreground flex flex-col items-center gap-2">
-                          <Lock className="h-6 w-6" />
-                          <p>Original file locked until escrow release.</p>
-                          <p className="text-xs not-italic">Release funds in the Admin Panel to receive the final file.</p>
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Delivery Days *</label>
+                          <Input type="number" placeholder="e.g. 3" value={deliveryDays} min={1} onChange={(e) => setDeliveryDays(e.target.value)} />
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-50 border-blue-200">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <CheckCircle className="h-4 w-4 text-blue-600 shrink-0" />
-                        <span className="truncate text-sm font-medium">{job.submittedWork.name}</span>
-                        <span className="text-xs text-muted-foreground shrink-0">({(job.submittedWork.size / 1024).toFixed(1)} KB)</span>
                       </div>
-                      <div className="text-xs font-semibold text-blue-700 bg-blue-100/50 px-2 py-1 rounded">
-                        Submitted ✅
+                      <div>
+                        <label className="text-xs font-medium mb-1 block">Message to Poster *</label>
+                        <textarea className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          placeholder="Describe your approach and experience..." value={bidMessage} onChange={(e) => setBidMessage(e.target.value)} />
                       </div>
+                      <Button variant="hero" className="w-full gap-2" onClick={handlePlaceBid} disabled={submittingBid}>
+                        {submittingBid ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        Submit Bid
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* My bid status */}
+              {!isMyJob && myBid && (
+                <div className={`mt-6 p-4 rounded-xl border ${myBid.status === "accepted" ? "bg-green-50 border-green-200" : myBid.status === "rejected" ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"}`}>
+                  <div className="flex items-center gap-2">
+                    {myBid.status === "accepted" && <CheckCircle className="h-5 w-5 text-green-600" />}
+                    {myBid.status === "rejected" && <XCircle className="h-5 w-5 text-red-600" />}
+                    {myBid.status === "pending" && <Clock className="h-5 w-5 text-amber-600" />}
+                    <div>
+                      <p className="font-bold text-sm">
+                        {myBid.status === "accepted" && "Your bid was accepted! Waiting for payment."}
+                        {myBid.status === "rejected" && "Your bid was rejected."}
+                        {myBid.status === "pending" && "Bid submitted — waiting for poster response"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Bid: ₹{myBid.amount} · {myBid.delivery_days} days</p>
                     </div>
+                  </div>
+                  {myBid.status === "rejected" && (
+                    <p className="text-xs text-red-600 mt-2">The poster rejected your bid. Browse other jobs.</p>
                   )}
                 </div>
               )}
 
-              {/* Submit Work Section - for accepted worker */}
-              {isAcceptedWorker && job.status === "in_progress" && canAccessInstructions && !job.submittedWork && (
-                <div className="mt-8 p-6 rounded-xl border-2 border-primary/30 bg-primary/5">
-                  <h3 className="font-display font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <Upload className="h-4 w-4" /> Submit Your Work
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Upload your completed file. For images, a large watermark will be added automatically to protect your work until payment release.
-                  </p>
-                  <Button 
-                    variant="hero" 
-                    className="w-full gap-2 py-6 text-lg" 
-                    onClick={() => submitFileRef.current?.click()}
-                    disabled={submittingWork}
-                  >
-                    <Upload className="h-5 w-5" />
-                    {submittingWork ? "Uploading..." : "Click to Upload & Submit"}
-                  </Button>
-                  <input
-                    ref={submitFileRef}
-                    type="file"
-                    className="hidden"
-                    onChange={handleSubmitWork}
-                    accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.zip,.rar,.psd,.ai,.fig"
-                  />
+              {/* Bids list (poster) */}
+              {isMyJob && (
+                <div className="mt-8 space-y-4">
+                  <h2 className="font-display text-lg font-bold flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-primary" /> Bids Received ({bids.length})
+                  </h2>
+                  {bids.length === 0 ? (
+                    <div className="p-6 border border-dashed rounded-xl text-center text-muted-foreground">
+                      <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No bids yet.</p>
+                    </div>
+                  ) : (
+                    <AnimatePresence>
+                      {bids.map((bid, i) => (
+                        <motion.div key={bid.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                          <Card className={`border ${bid.status === "accepted" ? "border-green-300 bg-green-50" : bid.status === "rejected" ? "border-red-200 bg-red-50/30 opacity-60" : "border-primary/20"}`}>
+                            <CardContent className="p-4 space-y-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-sm">
+                                    {bid.bidder?.full_name?.charAt(0)?.toUpperCase() || "W"}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-sm">{bid.bidder?.full_name || "Worker"}</p>
+                                    <p className="text-[10px] text-muted-foreground">Delivery: {bid.delivery_days} days</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-black text-lg">₹{bid.amount}</p>
+                                  <Badge variant="outline" className={`text-[9px] ${bid.status === "accepted" ? "bg-green-100 text-green-700 border-green-300" : bid.status === "rejected" ? "bg-red-100 text-red-700 border-red-300" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                                    {bid.status.toUpperCase()}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <p className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">{bid.message}</p>
+
+                              {bid.status === "pending" && !acceptedBid && (
+                                <div className="flex gap-2 pt-1">
+                                  <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-1" onClick={() => handleAcceptBid(bid)}>
+                                    <CheckCircle className="h-3.5 w-3.5" /> Accept Bid
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="flex-1 text-destructive border-destructive/30 gap-1" onClick={() => handleRejectBid(bid)}>
+                                    <XCircle className="h-3.5 w-3.5" /> Reject
+                                  </Button>
+                                </div>
+                              )}
+
+                              {bid.status === "accepted" && paymentDue && (
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <span className="text-xs font-bold text-amber-700">Pay within:</span>
+                                    <span className="text-lg font-black text-amber-800">{timeLeft}</span>
+                                  </div>
+                                  <Button variant="hero" className="w-full gap-2 bg-amber-600 hover:bg-amber-700" onClick={() => handlePayment(bid)}>
+                                    <IndianRupee className="h-4 w-4" /> Pay ₹{bid.amount} Now
+                                  </Button>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  )}
                 </div>
               )}
 
-              {job.isTeamTask && job.teamRoles && job.teamRoles.length > 0 && (
-                <div className="mt-6">
-                  <h2 className="mb-2 font-display text-lg font-semibold text-foreground">Team Roles Needed</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {job.teamRoles.map((role) => (
-                      <Badge key={role} variant="outline" className="border-purple-200 text-purple-700 bg-purple-50">
-                        <Users className="w-3 h-3 mr-1" /> {role}
-                      </Badge>
-                    ))}
+              {/* Approve/Decline work */}
+              {isMyJob && job.status === "submitted" && (
+                <div className="mt-8 p-6 bg-primary/5 border border-primary/20 rounded-2xl space-y-4">
+                  <h3 className="font-display font-bold text-lg">Review Work Submission</h3>
+                  <div className="flex gap-3">
+                    <Button variant="hero" onClick={() => releaseEscrow(job.id, user?.id || "")}>Approve & Release Payment</Button>
+                    <Button variant="outline" className="text-destructive" onClick={() => declineWork(job.id, "Work did not meet requirements")}>Decline Work</Button>
                   </div>
                 </div>
               )}
-
             </motion.div>
           </div>
 
+          {/* ── Right Sidebar ── */}
           <div className="space-y-6">
-            <Card className="shadow-card overflow-hidden">
+            <Card className="shadow-card overflow-hidden border-primary/10">
               <CardContent className="p-0">
-                <div className="p-6 text-center text-white bg-primary">
-                  <div className="font-display text-3xl font-bold">₹{job.budget}</div>
-                  <p className="text-sm opacity-90">Budget</p>
+                <div className="p-8 text-center text-white bg-gradient-to-br from-primary to-primary/80">
+                  <p className="text-xs uppercase font-black tracking-widest opacity-60 mb-1">Project Budget</p>
+                  <div className="font-display text-4xl font-black">₹{job.budget}</div>
+                  <p className="text-xs opacity-70 mt-1">Max bid: ₹{maxBidAmount}</p>
                 </div>
-
-                <div className="p-6">
-                  <div className="mb-6 flex flex-col gap-2">
-                    {job.isUrgent && (
-                      <div className="flex items-center gap-2 text-rose-600 bg-rose-50 p-2 rounded text-sm font-medium">
-                        <AlertTriangle className="w-4 h-4" /> Urgent Task
-                      </div>
-                    )}
-                    {job.isQuickTask && (
-                      <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-2 rounded text-sm font-medium">
-                        <Zap className="w-4 h-4" /> 10 Minute Quick Task
-                      </div>
-                    )}
-                    {job.isMentoring && (
-                      <div className="flex items-center gap-2 text-blue-600 bg-blue-50 p-2 rounded text-sm font-medium">
-                        <BookOpen className="w-4 h-4" /> Mentoring Session
-                      </div>
-                    )}
-                    {job.campusOnly && (
-                      <div className="flex items-center gap-2 text-green-600 bg-green-50 p-2 rounded text-sm font-medium">
-                        🎓 Campus Exclusive ({job.campusName})
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-6 pt-0">
-                  <div className="mb-4 flex items-center gap-3 rounded-lg border p-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-display text-sm font-bold text-primary">
-                      {job.postedBy.avatar}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-foreground">{job.postedBy.name}</div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Star className="h-3 w-3 fill-accent text-accent" />
-                        {job.postedBy.rating} rating
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Payment Timer */}
-                  {job.status === "payment_pending" && job.paymentDeadline && (
-                    <div className="mb-4">
-                      <PaymentTimer deadline={job.paymentDeadline} />
+                <div className="p-6 space-y-4">
+                  {isMyJob && paymentDue && acceptedBid && (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                      <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Pay Within</p>
+                      <p className="text-3xl font-display font-black text-amber-800">{timeLeft}</p>
                     </div>
                   )}
-
-                  {/* Platform fee notice */}
-                  <div className="mb-4 rounded-lg border border-accent/30 bg-accent/5 p-3">
-                    <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                      <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold text-foreground">Platform Fee:</span> Only <span className="font-bold text-primary">90%</span> of the bid amount will be received by the freelancer. 10% goes to the platform as service fee.
-                      </p>
+                  <div className="border-t pt-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-bold text-primary text-sm shrink-0">
+                        {(job.poster?.full_name || "U").substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Posted By</p>
+                        <p className="font-bold text-sm">{job.poster?.full_name || "Anonymous"}</p>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <Star className="h-2.5 w-2.5 fill-accent text-accent" /> 4.5 rating
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Info badges/notices for accepted worker */}
-                  {isAcceptedWorker && job.status === "in_progress" && (
-                    <div className="rounded-lg bg-green-50 border-green-200 p-3">
-                      <p className="text-sm font-bold text-green-700">💰 Payment Secured!</p>
-                      <p className="text-xs text-green-600 mt-1">Submit your work using the form on the left.</p>
-                    </div>
-                  )}
-
-                  {/* Job poster controls */}
                   {isMyJob && (
-                    <div className="space-y-4 mt-4">
-                      {job.status === "open" && (
-                        <div className="rounded-lg bg-muted p-3 text-center text-sm text-muted-foreground">
-                          This is your job. Once a worker accepts it, the escrow payment will be secured automatically.
-                        </div>
-                      )}
-                      {job.status === "in_progress" && (
-                        <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-center">
-                          <p className="text-sm font-medium text-blue-700">🔨 In Progress</p>
-                          <p className="text-xs text-blue-600 mt-1">Escrow funds (₹{job.budget}) are currently being held by Taskly Protect.</p>
-                        </div>
-                      )}
-                      {job.status === "completed" && (
-                        <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-center">
-                          <p className="text-sm font-medium text-green-700">✅ Project Completed!</p>
-                        </div>
-                      )}
+                    <div className="flex items-center justify-between text-sm border-t pt-3">
+                      <span className="text-muted-foreground">Total Bids</span>
+                      <span className="font-bold">{bids.length}</span>
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
+
+            {!isMyJob && (
+              <Card className="border-amber-200 bg-amber-50">
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-700 font-bold text-sm">
+                    <AlertTriangle className="h-4 w-4" /> Bidding Rules
+                  </div>
+                  <ul className="text-xs text-amber-700 space-y-1 list-disc list-inside">
+                    <li>Max bid: budget + ₹100 only</li>
+                    <li>One bid per job</li>
+                    <li>Poster must pay within 10 mins of accepting</li>
+                    <li>You'll be notified if bid is rejected</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

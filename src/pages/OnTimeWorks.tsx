@@ -13,15 +13,15 @@ const OnTimeWorks = () => {
   // Advanced Filters moved here
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
-  const { jobs, currentUser } = useApp();
+  const { jobs, profile } = useApp();
 
   // ONLY include jobs that have one of the special toggles
   const specialJobs = jobs.filter(job => 
-    job.isUrgent || 
-    job.isQuickTask || 
-    job.campusOnly || 
-    job.isMentoring || 
-    job.isTeamTask
+    job.is_urgent || 
+    job.is_quick_task || 
+    job.campus_only || 
+    job.is_mentoring || 
+    job.is_team_task
   );
 
   const filteredJobs = specialJobs.filter((job) => {
@@ -30,11 +30,11 @@ const OnTimeWorks = () => {
       job.title.toLowerCase().includes(search.toLowerCase()) ||
       job.description.toLowerCase().includes(search.toLowerCase());
       
-    const matchesUrgent = activeFilter !== "urgent" || job.isUrgent;
-    const matchesQuick = activeFilter !== "quick" || job.isQuickTask;
-    const matchesCampus = activeFilter !== "campus" || (job.campusOnly && job.campusName === currentUser.campus);
-    const matchesMentoring = activeFilter !== "mentoring" || job.isMentoring;
-    const matchesTeam = activeFilter !== "team" || job.isTeamTask;
+    const matchesUrgent = activeFilter !== "urgent" || job.is_urgent;
+    const matchesQuick = activeFilter !== "quick" || job.is_quick_task;
+    const matchesCampus = activeFilter !== "campus" || job.campus_only;
+    const matchesMentoring = activeFilter !== "mentoring" || job.is_mentoring;
+    const matchesTeam = activeFilter !== "team" || job.is_team_task;
 
     return matchesSearch && matchesUrgent && matchesQuick && matchesCampus && matchesMentoring && matchesTeam;
   });
@@ -85,7 +85,7 @@ const OnTimeWorks = () => {
             className="cursor-pointer"
             onClick={() => setActiveFilter(activeFilter === "campus" ? null : "campus")}
           >
-            🎓 Campus Only ({currentUser.campus})
+            🎓 Campus Only (Taskly University)
           </Badge>
           <Badge
             variant={activeFilter === "team" ? "default" : "outline"}

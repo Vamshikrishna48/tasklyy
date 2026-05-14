@@ -1,5 +1,5 @@
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   Briefcase,
@@ -23,8 +23,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
+import { supabase } from "@/lib/supabase";
 
 const menuItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
@@ -39,7 +39,7 @@ export function DashboardSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { currentUser } = useApp();
+  const { profile } = useApp();
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -80,9 +80,8 @@ export function DashboardSidebar() {
           variant="ghost" 
           size="sm" 
           className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-          onClick={() => {
-            localStorage.removeItem("demoUserEmail");
-            localStorage.removeItem("isAdminLoggedIn");
+          onClick={async () => {
+            await supabase.auth.signOut();
             window.location.href = "/auth";
           }}
         >

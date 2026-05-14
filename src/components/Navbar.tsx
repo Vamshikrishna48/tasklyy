@@ -1,38 +1,37 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Clock } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Clock, CheckCircle } from "lucide-react";
+import { useApp } from "@/context/AppContext";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const email = localStorage.getItem("demoUserEmail");
-    setUser(email ? { email } : null);
-  }, []);
+  const { session, profile } = useApp();
+  const isAuthenticated = !!session;
 
   const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem("demoUserEmail");
-    localStorage.removeItem("isAdminLoggedIn");
-    toast.success("Signed out (demo mode)");
-    navigate("/");
+    localStorage.removeItem("demoAdminAuth");
+    toast.success("Signed out");
+    navigate("/auth");
   };
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-lg">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-0">
+      <div className="container mx-auto flex h-24 items-center justify-between px-4">
+        <Link to="/" className="flex items-center">
           <img
             src="/taskly-logo.png"
             alt="Taskly logo"
-            className="h-10 w-auto object-contain"
+            style={{ width: "96px", height: "96px" }}
+            className="object-contain"
           />
-          <span className="font-display text-xl font-bold text-foreground">
+          <span className="font-display font-bold text-foreground" style={{ fontSize: "28px", lineHeight: 1, marginLeft: "-12px" }}>
             Taskly
           </span>
         </Link>
@@ -64,8 +63,24 @@ const Navbar = () => {
               <PlusCircle className="h-5 w-5" />
             </Button>
           </Link>
-          {user ? (
+          
+          {isAuthenticated ? (
             <>
+              {profile && (
+                <div className="hidden lg:flex items-center gap-2 mr-2 px-2 border-r border-border min-w-0">
+                  <span className="text-sm font-medium truncate max-w-[120px]">{profile.full_name}</span>
+                  {profile.is_verified && (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  )}
+                  {profile.verification_status === 'unverified' && (
+                    <Link to="/verify">
+                      <Button variant="outline" size="sm" className="text-xs h-7 px-2 ml-1 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100">
+                        Get Verified
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
               <Link to="/dashboard">
                 <Button variant="hero" size="sm" className="gap-2">
                   <LayoutDashboard className="h-4 w-4" />

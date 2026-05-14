@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Shield, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import ColorBends from "@/components/ColorBends";
+import { supabase } from "@/lib/supabase";
 
 const AdminAuth = () => {
   const [email, setEmail] = useState("");
@@ -17,16 +18,11 @@ const AdminAuth = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Hardcoded Admin Credentials (Demo Mode)
-  const ADMIN_CREDENTIALS = [
-    { email: "admin@taskly.com", password: "TasklyAdmin123!" },
-    { email: "karsh@taskly.com", password: "TasklyAdmin789!" }
-  ];
-
   useEffect(() => {
-    const isAdmin = localStorage.getItem("isAdminLoggedIn") === "true";
-    if (isAdmin) {
+    // Check demo admin auth first (no network call)
+    if (localStorage.getItem("demoAdminAuth") === "true") {
       navigate("/admin");
+      return;
     }
   }, [navigate]);
 
@@ -35,23 +31,52 @@ const AdminAuth = () => {
     setLoading(true);
     setError("");
 
-    // Simulate network delay
-    setTimeout(() => {
-      const authorized = ADMIN_CREDENTIALS.find(
-        (acc) => acc.email === email && acc.password === password
-      );
+    // Demo admin credentials bypass — no network call needed
+    const DEMO_ADMIN_EMAIL = "admin@taskly.com";
+    const DEMO_ADMIN_PASSWORD = "admin123";
 
-      if (authorized) {
-        localStorage.setItem("isAdminLoggedIn", "true");
-        localStorage.setItem("demoUserEmail", email); // Also log in as user
+    if (email === DEMO_ADMIN_EMAIL && password === DEMO_ADMIN_PASSWORD) {
+      localStorage.setItem("demoAdminAuth", "true");
+      toast.success("Welcome, Administrator.");
+      setLoading(false);
+      navigate("/admin");
+      return;
+    }
+
+    // Non-demo: try Supabase
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        if (profile?.role !== 'admin') {
+          await supabase.auth.signOut();
+          setError("Access Denied. You do not have administrative privileges.");
+          toast.error("Access Denied.");
+          setLoading(false);
+          return;
+        }
+
         toast.success("Welcome, Administrator.");
-        window.location.href = "/admin"; // Force reload to sync AppContext
-      } else {
-        setError("Invalid Admin Credentials. Access Denied.");
-        toast.error("Access Denied.");
-        setLoading(false);
+        localStorage.setItem("demoAdminAuth", "true");
+        navigate("/admin");
       }
-    }, 1200);
+    } catch (err: any) {
+      setError("Invalid credentials. Use the demo credentials below.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -156,6 +181,13 @@ const AdminAuth = () => {
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-50">
                 Security clearance level tracking active
               </p>
+              <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/10 text-left">
+                <p className="text-[11px] text-muted-foreground font-mono">
+                  <span className="text-primary font-bold">Demo credentials:</span><br />
+                  Email: admin@taskly.com<br />
+                  Password: admin123
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

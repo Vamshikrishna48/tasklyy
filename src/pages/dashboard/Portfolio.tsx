@@ -6,14 +6,17 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 const Portfolio = () => {
-  const { jobs, currentUser } = useApp();
+  const { jobs, profile } = useApp();
+
+  if (!profile) return null;
 
   // Find jobs this user has completed as a freelancer
   const myCompletedGigs = jobs.filter(
-    j => j.acceptedBidderName === currentUser.name && j.status === "completed"
+    j => j.worker_id === profile.id && j.status === "completed"
   );
 
-  const myCompletedPostings = jobs.filter(j => j.postedBy.name === "You" && j.status === "completed");
+  // Find jobs this user posted that are completed
+  const myCompletedPostings = jobs.filter(j => j.poster_id === profile.id && j.status === "completed");
 
   const allPortfolioItems = [...myCompletedGigs, ...myCompletedPostings];
 

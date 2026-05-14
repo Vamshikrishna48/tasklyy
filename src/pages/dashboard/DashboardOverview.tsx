@@ -8,14 +8,13 @@ import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 const DashboardOverview = () => {
-  const { myPostedJobs, payments, currentUser } = useApp();
+  const { myPostedJobs, payments, profile } = useApp();
 
   const totalEarned = payments.filter((p) => p.type === "earned" && p.status === "completed").reduce((s, p) => s + p.amount, 0);
   const totalSpent = payments.filter((p) => p.type === "spent" && p.status === "completed").reduce((s, p) => s + p.amount, 0);
   const inEscrow = payments.filter((p) => p.status === "escrow").reduce((s, p) => s + p.amount, 0);
   const openJobs = myPostedJobs.filter((j) => j.status === "open").length;
 
-  // Chart data - derived from actual payments
   const chartData = payments.length > 0
     ? Object.values(
         payments.reduce((acc, p) => {
@@ -29,7 +28,7 @@ const DashboardOverview = () => {
     : [];
 
   const stats = [
-    { label: "My Balance", value: `₹${currentUser.balance}`, icon: DollarSign, color: "text-primary" },
+    { label: "My Balance", value: `₹${profile?.wallet_balance ?? 0}`, icon: DollarSign, color: "text-primary" },
     { label: "Live Jobs", value: openJobs, icon: Briefcase, color: "text-accent" },
     { label: "Held in Escrow", value: `₹${inEscrow}`, icon: ShieldCheck, color: "text-primary" },
     { label: "Total Earned", value: `₹${totalEarned}`, icon: TrendingUp, color: "text-primary" },
@@ -38,11 +37,10 @@ const DashboardOverview = () => {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Welcome back! 👋</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">Welcome back, {profile?.full_name?.split(' ')[0] || 'User'}! 👋</h1>
         <p className="text-muted-foreground">Here's what's happening with your gigs.</p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
           <motion.div
@@ -65,7 +63,6 @@ const DashboardOverview = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Earnings Chart */}
         <Card className="shadow-card">
           <CardContent className="p-5">
             <h2 className="font-display text-lg font-semibold text-foreground mb-4">Earnings Overview</h2>
@@ -88,7 +85,6 @@ const DashboardOverview = () => {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
         <Card className="shadow-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
@@ -116,7 +112,6 @@ const DashboardOverview = () => {
         </Card>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Link to="/post-job">
           <Button variant="hero" className="w-full gap-2">

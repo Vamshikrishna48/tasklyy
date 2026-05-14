@@ -2,11 +2,10 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Clock, Users, Zap, AlertTriangle, BookOpen } from "lucide-react";
-import { Job } from "@/data/mockData";
 import { motion } from "framer-motion";
 
 interface JobCardProps {
-  job: Job;
+  job: any;
   index?: number;
 }
 
@@ -31,13 +30,8 @@ const JobCard = ({ job, index = 0 }: JobCardProps) => {
               </div>
               <div className="text-right">
                 <span className="font-display text-lg font-bold text-primary block">
-                  {job.paymentType === "skill" ? "Skill Swap" : `₹${job.budget}`}
+                  ₹{job.budget}
                 </span>
-                {job.paymentType === "skill" && (
-                  <span className="text-xs text-muted-foreground block max-w-[120px] truncate" title={job.skillExchangeDetails}>
-                    Offers: {job.skillExchangeDetails}
-                  </span>
-                )}
               </div>
             </div>
 
@@ -50,32 +44,32 @@ const JobCard = ({ job, index = 0 }: JobCardProps) => {
             </p>
 
             <div className="mb-3 flex flex-wrap gap-1.5">
-              {job.isUrgent && (
+              {job.is_urgent && (
                 <Badge variant="outline" className="text-xs border-rose-500 text-rose-600 bg-rose-50 gap-1 pb-0.5">
-                  <AlertTriangle className="w-3 h-3" /> Urgent {job.urgentTime && `(${job.urgentTime})`}
+                  <AlertTriangle className="w-3 h-3" /> Urgent
                 </Badge>
               )}
-              {job.isQuickTask && (
+              {job.is_quick_task && (
                 <Badge variant="outline" className="text-xs border-amber-500 text-amber-600 bg-amber-50 gap-1 pb-0.5">
                   <Zap className="w-3 h-3" /> 10 Min Task
                 </Badge>
               )}
-              {job.isMentoring && (
+              {job.is_mentoring && (
                 <Badge variant="outline" className="text-xs border-blue-500 text-blue-600 bg-blue-50 gap-1 pb-0.5">
                   <BookOpen className="w-3 h-3" /> Mentoring
                 </Badge>
               )}
-              {job.campusOnly && (
+              {job.campus_only && (
                 <Badge variant="outline" className="text-xs border-green-500 text-green-600 bg-green-50 gap-1 pb-0.5">
                   🎓 Campus Only
                 </Badge>
               )}
-              {job.isTeamTask && (
+              {job.is_team_task && (
                 <Badge variant="outline" className="text-xs border-purple-500 text-purple-600 bg-purple-50 gap-1 pb-0.5">
-                  <Users className="w-3 h-3" /> Team ({job.teamRoles?.length})
+                  <Users className="w-3 h-3" /> Team
                 </Badge>
               )}
-              {job.skills.slice(0, 3).map((skill) => (
+              {job.skills?.slice(0, 3).map((skill: string) => (
                 <Badge key={skill} variant="secondary" className="text-xs">
                   {skill}
                 </Badge>
@@ -84,14 +78,14 @@ const JobCard = ({ job, index = 0 }: JobCardProps) => {
 
             <div className="flex items-center justify-between border-t pt-3">
               <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                  {job.postedBy.avatar}
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary truncate p-1">
+                  {job.poster?.avatar_url?.[0] || job.poster?.full_name?.[0] || 'T'}
                 </div>
                 <div className="text-xs">
-                  <span className="font-medium text-foreground">{job.postedBy.name}</span>
+                  <span className="font-medium text-foreground">{job.poster?.full_name || 'User'}</span>
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Star className="h-3 w-3 fill-accent text-accent" />
-                    {job.postedBy.rating}
+                    5.0
                   </div>
                 </div>
               </div>

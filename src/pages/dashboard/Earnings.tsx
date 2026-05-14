@@ -6,15 +6,16 @@ import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 const Earnings = () => {
-  const { payments, currentUser } = useApp();
+  const { payments, profile } = useApp();
 
   const totalEarned = payments.filter((p) => p.type === "earned" && p.status === "completed").reduce((s, p) => s + p.amount, 0);
   const totalSpent = payments.filter((p) => p.type === "spent" && p.status === "completed").reduce((s, p) => s + p.amount, 0);
   const inEscrow = payments.filter((p) => p.status === "escrow").reduce((s, p) => s + p.amount, 0);
-  const netEarnings = totalEarned - totalSpent;
+  
+  const balance = profile?.wallet_balance ?? 0;
 
   const pieData = [
-    { name: "Available", value: currentUser.balance, color: "hsl(160 84% 39%)" },
+    { name: "Available", value: balance, color: "hsl(160 84% 39%)" },
     { name: "In Escrow", value: inEscrow, color: "hsl(45 93% 47%)" },
   ];
 
@@ -31,7 +32,7 @@ const Earnings = () => {
     : [];
 
   const stats = [
-    { label: "Available Balance", value: `₹${currentUser.balance}`, icon: DollarSign, color: "text-primary", desc: "Ready to withdraw" },
+    { label: "Available Balance", value: `₹${balance}`, icon: DollarSign, color: "text-primary", desc: "Ready to withdraw" },
     { label: "Total Earned", value: `₹${totalEarned}`, icon: TrendingUp, color: "text-primary", desc: "All time" },
     { label: "Total Spent", value: `₹${totalSpent}`, icon: ArrowUpRight, color: "text-accent", desc: "On posted jobs" },
     { label: "In Escrow", value: `₹${inEscrow}`, icon: Lock, color: "text-muted-foreground", desc: "Pending completion" },

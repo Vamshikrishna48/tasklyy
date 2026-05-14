@@ -1,10 +1,16 @@
 import { useApp } from "@/context/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { UserCircle, Mail, Phone, Star, Briefcase, Calendar } from "lucide-react";
+import { UserCircle, Mail, Phone, Star, Briefcase, Calendar, ShieldCheck } from "lucide-react";
 
 const Profile = () => {
-  const { currentUser } = useApp();
+  const { profile } = useApp();
+  if (!profile) return (
+    <div className="p-6 text-center text-muted-foreground">
+      Please sign in to view your profile.
+    </div>
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -22,11 +28,19 @@ const Profile = () => {
           <CardContent className="p-6">
             <div className="flex items-center gap-4 mb-8">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
-                {currentUser.avatar}
+                {profile.avatar_url ? <img src={profile.avatar_url} className="h-full w-full rounded-full object-cover" /> : profile.full_name?.substring(0, 2).toUpperCase()}
               </div>
               <div>
-                <h2 className="font-display text-xl font-bold text-foreground">{currentUser.name}</h2>
-                <p className="text-sm text-muted-foreground">Student Member</p>
+                <h2 className="font-display text-xl font-bold text-foreground">{profile.full_name}</h2>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground capitalize">{profile.role}</p>
+                  {profile.is_verified && (
+                    <Badge variant="default" className="bg-green-500 hover:bg-green-600 h-5 px-1.5 gap-1">
+                      <ShieldCheck className="h-3 w-3" />
+                      Verified
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -35,7 +49,7 @@ const Profile = () => {
                 <Mail className="h-5 w-5 text-primary" />
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Email</p>
-                  <p className="text-sm font-semibold text-foreground">{currentUser.email}</p>
+                  <p className="text-sm font-semibold text-foreground">{profile.email}</p>
                 </div>
               </div>
 
@@ -43,7 +57,7 @@ const Profile = () => {
                 <Phone className="h-5 w-5 text-primary" />
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Contact</p>
-                  <p className="text-sm font-semibold text-foreground">{currentUser.contact || "Not provided"}</p>
+                  <p className="text-sm font-semibold text-foreground">Verified Student</p>
                 </div>
               </div>
 
@@ -51,15 +65,15 @@ const Profile = () => {
                 <Star className="h-5 w-5 text-yellow-500" />
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Rating</p>
-                  <p className="text-sm font-semibold text-foreground">⭐ {currentUser.rating} / 5.0</p>
+                  <p className="text-sm font-semibold text-foreground">⭐ 5.0 / 5.0</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
                 <Briefcase className="h-5 w-5 text-primary" />
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium">Completed Jobs</p>
-                  <p className="text-sm font-semibold text-foreground">{currentUser.completedJobs} jobs</p>
+                  <p className="text-xs text-muted-foreground font-medium">Account ID</p>
+                  <p className="text-sm font-semibold text-foreground text-[10px]">{profile.id}</p>
                 </div>
               </div>
 
@@ -67,7 +81,7 @@ const Profile = () => {
                 <UserCircle className="h-5 w-5 text-primary" />
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">University</p>
-                  <p className="text-sm font-semibold text-foreground">{currentUser.campus || "Not specified"}</p>
+                  <p className="text-sm font-semibold text-foreground">Taskly University</p>
                 </div>
               </div>
 

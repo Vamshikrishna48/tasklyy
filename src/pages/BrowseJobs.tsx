@@ -15,7 +15,7 @@ const BrowseJobs = () => {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(categoryParam);
 
-  const { jobs, currentUser } = useApp();
+  const { jobs, profile } = useApp();
 
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
