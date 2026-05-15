@@ -19,11 +19,18 @@ const AdminAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check demo admin auth first (no network call)
-    if (localStorage.getItem("demoAdminAuth") === "true") {
-      navigate("/admin");
-      return;
-    }
+    // Check if already logged in as admin via Supabase session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data: profile } = await (supabase as any)
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+      if (profile?.role === "admin") navigate("/admin");
+    };
+    checkSession();
   }, [navigate]);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -31,37 +38,20 @@ const AdminAuth = () => {
     setLoading(true);
     setError("");
 
-    // Demo admin credentials bypass — no network call needed
-    const DEMO_ADMIN_EMAIL = "admin@taskly.com";
-    const DEMO_ADMIN_PASSWORD = "admin123";
-
-    if (email === DEMO_ADMIN_EMAIL && password === DEMO_ADMIN_PASSWORD) {
-      localStorage.setItem("demoAdminAuth", "true");
-      toast.success("Welcome, Administrator.");
-      setLoading(false);
-      navigate("/admin");
-      return;
-    }
-
-    // Non-demo: try Supabase
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) throw authError;
 
       if (data.user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
+        const { data: profile, error: profileError } = await (supabase as any)
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
           .single();
 
         if (profileError) throw profileError;
 
-        if (!profile || (profile as any).role !== 'admin') {
+        if (!profile || profile.role !== "admin") {
           await supabase.auth.signOut();
           setError("Access Denied. You do not have administrative privileges.");
           toast.error("Access Denied.");
@@ -70,18 +60,16 @@ const AdminAuth = () => {
         }
 
         toast.success("Welcome, Administrator.");
-        localStorage.setItem("demoAdminAuth", "true");
         navigate("/admin");
       }
     } catch (err: any) {
-      setError("Invalid credentials. Use the demo credentials below.");
+      setError(err.message || "Invalid credentials.");
       setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center relative overflow-hidden px-4">
-      {/* Dark Subtle Background */}
       <div className="absolute inset-0 z-0 opacity-40">
         <ColorBends
           colors={["#4f46e5", "#7c3aed", "#b91c1c"]}
@@ -112,7 +100,7 @@ const AdminAuth = () => {
           <CardContent className="p-8">
             <form onSubmit={handleAdminLogin} className="space-y-5">
               {error && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold"
@@ -129,7 +117,7 @@ const AdminAuth = () => {
                   <Input
                     id="admin-email"
                     type="email"
-                    placeholder="name@taskly.com"
+                    placeholder="admin@taskly.com"
                     className="pl-10 h-11 bg-background/50 border-primary/10 focus:border-primary/40"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -181,21 +169,14 @@ const AdminAuth = () => {
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-50">
                 Security clearance level tracking active
               </p>
-              <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/10 text-left">
-                <p className="text-[11px] text-muted-foreground font-mono">
-                  <span className="text-primary font-bold">Demo credentials:</span><br />
-                  Email: admin@taskly.com<br />
-                  Password: admin123
-                </p>
-              </div>
             </div>
           </CardContent>
         </Card>
 
         <div className="mt-8 text-center">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className="text-muted-foreground hover:text-foreground"
             onClick={() => navigate("/")}
           >

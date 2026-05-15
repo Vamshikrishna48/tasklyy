@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   FolderOutput,
   UserCircle,
+  Upload,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,11 +30,13 @@ import { supabase } from "@/lib/supabase";
 const menuItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Jobs", url: "/dashboard/jobs", icon: Briefcase },
+  { title: "Submitted Work", url: "/dashboard/submitted", icon: Upload },
   { title: "Portfolio", url: "/dashboard/portfolio", icon: FolderOutput },
   { title: "Earnings", url: "/dashboard/earnings", icon: DollarSign },
   { title: "Your Information", url: "/dashboard/profile", icon: UserCircle },
   { title: "Admin Panel", url: "/admin", icon: Settings },
 ];
+
 
 export function DashboardSidebar() {
   const { state } = useSidebar();

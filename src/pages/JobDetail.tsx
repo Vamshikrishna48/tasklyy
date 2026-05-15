@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Star, Clock, ArrowLeft, CheckCircle, Info, Loader2, IndianRupee, MessageSquare, AlertTriangle, XCircle, Send, FileUp, Lock } from "lucide-react";
+import { Star, Clock, ArrowLeft, CheckCircle, Info, Loader2, IndianRupee, MessageSquare, AlertTriangle, XCircle, Send, FileUp, Lock, Download } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import Navbar from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +13,8 @@ import { supabase } from "@/lib/supabase";
 import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
 import { sendBidNotification, sendBidRejectedNotification, sendPaymentRequiredNotification } from "@/hooks/useNotificationPermission";
 import { useJobs } from "@/hooks/useJobs";
+import { useJobFiles } from "@/hooks/useJobFiles";
+import { NoScreenshotWrapper } from "@/components/NoScreenshotWrapper";
 
 const JobDetail = () => {
   const { id } = useParams();
@@ -97,9 +99,18 @@ const JobDetail = () => {
   }, [paymentDue, job?.status, job?.id, cancelJobForNonPayment, loadJob]);
 
   const isMyJob = job?.poster_id === user?.id;
+  const isMyWorkerJob = job?.worker_id === user?.id;
+  const isAuthorized = isMyJob || isMyWorkerJob;
   const maxBidAmount = 100;
   const myBid = bids.find(b => b.bidder_id === user?.id);
   const acceptedBid = bids.find(b => b.status === "accepted");
+
+  // Secure file hook — signed URLs, only for authorized participants
+  const { files: secureFiles, loading: filesLoading, refresh: refreshFiles } = useJobFiles(
+    job?.id ?? "",
+    isAuthorized,
+    job?.status
+  );
 
   const handleAcceptToView = () => {
     setHasAccepted(true);
@@ -313,52 +324,59 @@ const JobDetail = () => {
               )}
 
               {/* Files & Brief Preview */}
-              <div className="mt-8">
-                <h2 className="mb-4 font-display text-lg font-bold flex items-center gap-2">
-                  <FileUp className="h-5 w-5 text-primary" /> Project Files & Brief
-                </h2>
-                {job.files && job.files.length > 0 ? (
-                  <div className="grid gap-3">
-                    {job.files.map((file: any) => (
-                      <div key={file.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border group">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-                            <FileUp className="h-5 w-5" />
+              <NoScreenshotWrapper>
+                <div className="mt-8">
+                  <h2 className="mb-4 font-display text-lg font-bold flex items-center gap-2">
+                    <FileUp className="h-5 w-5 text-primary" /> Project Files & Brief
+                  </h2>
+                  {!isAuthorized ? (
+                    <div className="p-4 border border-dashed rounded-xl text-center text-muted-foreground text-sm">
+                      <Lock className="h-5 w-5 mx-auto mb-2 opacity-30" />
+                      Accept or bid on this job to view the attached files.
+                    </div>
+                  ) : filesLoading ? (
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm py-4">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading files...
+                    </div>
+                  ) : secureFiles.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">No files attached to this job.</p>
+                  ) : (
+                    <div className="grid gap-3">
+                      {secureFiles.map((file) => (
+                        <div key={file.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border group">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                              <FileUp className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold truncate max-w-[200px] md:max-w-md">{file.file_name}</p>
+                              <p className="text-[10px] text-muted-foreground uppercase">
+                                {file.is_submission ? "Submission" : "Brief File"} · {file.file_type?.split('/')[1] || 'file'}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-bold truncate max-w-[200px] md:max-w-md">{file.file_name}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase">{file.file_type.split('/')[1] || 'file'}</p>
-                          </div>
-                        </div>
-                        {isMyJob || (myBid?.status === 'accepted' && job.status !== 'open') ? (
-                          <Button size="sm" variant="ghost" className="text-primary hover:bg-primary/10" asChild>
-                            <a href={`${(supabase.storage.from('job-files') as any).getPublicUrl(file.file_url).data.publicUrl}`} download={file.file_name}>
-                              Download
+                          {/* Download only if signed URL exists (completed jobs for submission files) */}
+                          {file.downloadUrl ? (
+                            <a href={file.downloadUrl} download={file.file_name}>
+                              <Button size="sm" variant="ghost" className="text-primary hover:bg-primary/10 gap-1">
+                                <Download className="h-3.5 w-3.5" /> Download
+                              </Button>
                             </a>
-                          </Button>
-                        ) : (
-                          <Badge variant="outline" className="text-[10px] opacity-60">
-                            <Lock className="h-3 w-3 mr-1" /> Locked
-                          </Badge>
-                        )}
-                        {job.status === "payment_pending" && (
-                          <Badge variant="outline" className="animate-pulse bg-orange-500 hover:bg-orange-600 text-white border-none">
-                            <Clock className="mr-1 h-3 w-3" /> 
-                            Action Required: Payment Pending {timeLeft ? `(${timeLeft})` : ''}
-                          </Badge>
-                        )}
-                        {job.status === "rejected" && (
-                          <Badge variant="destructive">
-                            <XCircle className="mr-1 h-3 w-3" /> Rejected (Payment Missed)
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">No files attached to this job.</p>
-                )}
-              </div>
+                          ) : file.is_submission ? (
+                            <Badge variant="outline" className="text-[10px] opacity-60">
+                              <Lock className="h-3 w-3 mr-1" /> Locked until accepted
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] text-green-600 border-green-200">
+                              Brief File
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </NoScreenshotWrapper>
 
               {/* Instructions (after accepting) */}
               {(hasAccepted || isMyJob || myBid) && job.instructions && (
@@ -533,14 +551,16 @@ const JobDetail = () => {
                 </div>
               )}
 
-              {/* Approve/Decline work */}
+              {/* Approve/Decline work — direct to SubmittedWork page */}
               {isMyJob && job.status === "submitted" && (
                 <div className="mt-8 p-6 bg-primary/5 border border-primary/20 rounded-2xl space-y-4">
-                  <h3 className="font-display font-bold text-lg">Review Work Submission</h3>
-                  <div className="flex gap-3">
-                    <Button variant="hero" onClick={() => releaseEscrow(job.id, user?.id || "")}>Approve & Release Payment</Button>
-                    <Button variant="outline" className="text-destructive" onClick={() => declineWork(job.id, "Work did not meet requirements")}>Decline Work</Button>
-                  </div>
+                  <h3 className="font-display font-bold text-lg">Work Has Been Submitted!</h3>
+                  <p className="text-sm text-muted-foreground">Review the submitted files and accept or reject the work from the dashboard.</p>
+                  <Link to="/dashboard/submitted">
+                    <Button variant="hero" className="gap-2">
+                      <CheckCircle className="h-4 w-4" /> Review Submitted Work
+                    </Button>
+                  </Link>
                 </div>
               )}
             </motion.div>
