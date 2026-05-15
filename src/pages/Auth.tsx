@@ -52,23 +52,7 @@ const Auth = () => {
         });
         if (error) throw error;
 
-        // Create profile row
-        if (data.user) {
-          const { error: profileError } = await (supabase as any).from("profiles").upsert({
-            id: data.user.id,
-            email,
-            full_name: displayName.trim(),
-            role: "worker" as const,
-            wallet_balance: 0,
-            is_verified: false,
-            verification_status: "unverified" as const,
-          });
-
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-            throw new Error(`Failed to create user profile: ${profileError.message}`);
-          }
-        }
+        // Profile row is automatically created by the Supabase database trigger (handle_new_user)
 
         setShowWelcome(true);
         setTimeout(() => {
