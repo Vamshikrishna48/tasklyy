@@ -42,6 +42,19 @@ export interface Job {
   submittedWork?: AttachedFile;
   // Specific task instructions (locked until payment)
   instructions?: string;
+  
+  // Database compatibility fields
+  poster_id?: string;
+  worker_id?: string;
+  payment_due_at?: string;
+  accepted_bid_id?: string;
+  
+  // Snake case equivalents for legacy/realtime compatibility
+  is_urgent?: boolean;
+  is_quick_task?: boolean;
+  campus_only?: boolean;
+  is_mentoring?: boolean;
+  is_team_task?: boolean;
 }
 
 export interface AttachedFile {

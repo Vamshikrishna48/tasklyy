@@ -25,7 +25,7 @@ import UnreadBadge from "@/components/UnreadBadge";
 const statusConfig = {
   open: { label: "Open", variant: "default" as const, icon: Clock },
   payment_pending: { label: "Escrow Pending", variant: "warning" as const, icon: Clock },
-  in_progress: { label: "In Progress", icon: Loader2 },
+  in_progress: { label: "In Progress", variant: "hero" as const, icon: Loader2 },
   completed: { label: "Completed", variant: "outline" as const, icon: CheckCircle },
   submitted: { label: "Submitted", variant: "secondary" as const, icon: Clock },
 };

@@ -19,7 +19,7 @@ export const useVerification = () => {
   const [loading, setLoading] = useState(false);
 
   const fetchMyVerificationStatus = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('verification_status, is_verified, full_name, avatar_url')
       .eq('id', userId)
@@ -61,8 +61,8 @@ export const useVerification = () => {
       if (selfieUpload.error) throw selfieUpload.error;
 
       // 2. Insert Request Record
-      const { error: insertError } = await (supabase
-        .from('verification_requests' as any)
+      const { error: insertError } = await (supabase as any)
+        .from('verification_requests')
         .insert({
           user_id: userId,
           id_type: formData.idType,
@@ -71,15 +71,15 @@ export const useVerification = () => {
           back_image_url: backPath,
           selfie_url: selfiePath,
           status: 'pending'
-        }) as any);
+        });
 
       if (insertError) throw insertError;
 
       // 3. Update Profile Status
-      const { error: profileError } = await (supabase
-        .from('profiles' as any)
-        .update({ verification_status: 'pending' } as any)
-        .eq('id', userId) as any);
+      const { error: profileError } = await (supabase as any)
+        .from('profiles')
+        .update({ verification_status: 'pending' })
+        .eq('id', userId);
 
       if (profileError) throw profileError;
 

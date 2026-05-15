@@ -17,7 +17,7 @@ export const useChat = () => {
   const [loading, setLoading] = useState(false);
 
   const fetchMessages = async (jobId: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('messages')
       .select(`
         *,
@@ -45,14 +45,14 @@ export const useChat = () => {
   const sendMessage = async (jobId: string, senderId: string, content: string) => {
     if (!content.trim()) return;
 
-    const { error } = await (supabase
-      .from('messages' as any)
+    const { error } = await (supabase as any)
+      .from('messages')
       .insert({
         job_id: jobId,
         sender_id: senderId,
         content: content.trim(),
         is_read: false
-      }) as any);
+      });
 
     if (error) {
       console.error("Error sending message:", error);
@@ -64,12 +64,12 @@ export const useChat = () => {
   };
 
   const markAsRead = async (jobId: string, currentUserId: string) => {
-    const { error } = await (supabase
-      .from('messages' as any)
-      .update({ is_read: true } as any)
+    const { error } = await (supabase as any)
+      .from('messages')
+      .update({ is_read: true })
       .eq('job_id', jobId)
       .neq('sender_id', currentUserId)
-      .eq('is_read', false) as any);
+      .eq('is_read', false);
 
     if (error) {
       console.error("Error marking messages as read:", error);
@@ -89,13 +89,13 @@ export const useChat = () => {
         },
         async (payload) => {
           // Fetch sender profile for the new message
-          const { data, error } = await supabase
+          const { data, error } = await (supabase as any)
             .from('profiles')
             .select('full_name, avatar_url')
             .eq('id', payload.new.sender_id)
             .limit(1);
             
-          const profileData = data?.[0];
+          const profileData = data?.[0] as any;
           const enrichedMessage = {
             ...payload.new,
             full_name: profileData?.full_name || 'User',
@@ -117,17 +117,17 @@ export const useChat = () => {
     // AND belong to jobs where user is poster or worker.
     
     // First get jobs user is part of
-    const { data: myJobs, error: jobError } = await supabase
+    const { data: myJobs, error: jobError } = await (supabase as any)
       .from('jobs')
       .select('id')
       .or(`poster_id.eq.${userId},worker_id.eq.${userId}`);
       
     if (jobError || !myJobs) return 0;
     
-    const jobIds = myJobs.map(j => j.id);
+    const jobIds = myJobs.map((j: any) => j.id);
     if (jobIds.length === 0) return 0;
 
-    const { count, error } = await supabase
+    const { count, error } = await (supabase as any)
       .from('messages')
       .select('*', { count: 'exact', head: true })
       .in('job_id', jobIds)

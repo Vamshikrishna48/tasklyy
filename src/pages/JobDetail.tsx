@@ -17,7 +17,7 @@ import { useJobs } from "@/hooks/useJobs";
 const JobDetail = () => {
   const { id } = useParams();
   const { user } = useApp();
-  const { fetchJobById, releaseEscrow, declineWork, placeBid, acceptJob, cancelJobForNonPayment } = useJobs();
+  const { releaseEscrow, declineWork, placeBid, acceptJob, cancelJobForNonPayment } = useJobs();
 
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -35,20 +35,21 @@ const JobDetail = () => {
 
   const loadJob = useCallback(async () => {
     if (!id) return;
-    if (!id) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("jobs")
       .select("*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url), worker:profiles!jobs_worker_id_fkey(full_name), files:job_files(*)")
       .eq("id", id)
       .single();
-    setJob(data);
-    if (data?.payment_due_at) setPaymentDue(data.payment_due_at);
+    if (data) {
+      setJob(data);
+      if (data.payment_due_at) setPaymentDue(data.payment_due_at);
+    }
     setLoading(false);
   }, [id]);
 
   const loadBids = useCallback(async () => {
     if (!id) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("bids")
       .select("*, bidder:profiles!bids_bidder_id_fkey(full_name, avatar_url)")
       .eq("job_id", id)
@@ -111,9 +112,8 @@ const JobDetail = () => {
     if (amount > maxBidAmount) { toast.error(`Max bid is ₹${maxBidAmount}`); return; }
     if (!bidMessage.trim()) { toast.error("Add a message with your bid"); return; }
     
-    const { profile } = useApp();
-    if (!profile?.id) { 
-      toast.error("Your profile is still syncing with the database. Please wait a moment or refresh."); 
+    if (!user?.id) { 
+      toast.error("Please sign in to place a bid."); 
       return; 
     }
 
@@ -121,7 +121,7 @@ const JobDetail = () => {
     try {
       const result = await placeBid({
         job_id: id!,
-        bidder_id: profile.id,
+        bidder_id: user.id,
         amount,
         message: bidMessage.trim(),
         delivery_days: Number(deliveryDays) || 3,
@@ -150,14 +150,14 @@ const JobDetail = () => {
   const handleAcceptBid = async (bid: any) => {
     const paymentDueAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     // Update bid status
-    await supabase.from("bids").update({ status: "accepted" }).eq("id", bid.id);
+    await (supabase as any).from("bids").update({ status: "accepted" }).eq("id", bid.id);
     // Update job with worker and payment deadline
-    await supabase.from("jobs").update({
+    await (supabase as any).from("jobs").update({
       worker_id: bid.bidder_id,
-      status: "payment_pending", // Use payment_pending first
+      status: "payment_pending" as any, // Use payment_pending first
       payment_due_at: paymentDueAt,
       accepted_bid_id: bid.id,
-    } as any).eq("id", id!);
+    }).eq("id", id!);
 
     setPaymentDue(paymentDueAt);
     sendPaymentRequiredNotification(job?.title || "Job", bid.amount);
@@ -166,7 +166,7 @@ const JobDetail = () => {
   };
 
   const handleRejectBid = async (bid: any) => {
-    await supabase.from("bids").update({ status: "rejected" }).eq("id", bid.id);
+    await (supabase as any).from("bids").update({ status: "rejected" }).eq("id", bid.id);
     sendBidRejectedNotification(job?.title || "Job", bid.amount);
     toast.success("Bid rejected. Worker has been notified.");
     loadBids();
@@ -181,7 +181,7 @@ const JobDetail = () => {
         // Create escrow
         const platformFee = Math.round(bid.amount * 0.30);
         const workerAmount = bid.amount - platformFee;
-        await supabase.from("escrow_transactions").insert({
+        await (supabase as any).from("escrow_transactions").insert({
           job_id: id!,
           poster_id: user!.id,
           worker_id: bid.bidder_id,
@@ -190,14 +190,14 @@ const JobDetail = () => {
           worker_amount: workerAmount,
           status: "held",
         });
-        await supabase.from("jobs").update({ status: "accepted", instructions_locked: false } as any).eq("id", id!);
-        await supabase.from("admin_ledger").insert({
+        await (supabase as any).from("jobs").update({ status: "accepted", instructions_locked: false } as any).eq("id", id!);
+        await (supabase as any).from("admin_ledger").insert({
           job_id: id!,
           type: "fee_collected",
           amount: platformFee,
           from_user_id: user!.id,
           note: `30% platform fee for: ${job?.title}`,
-        } as any);
+        });
         toast.success(`Payment confirmed! Job is now in progress.`);
         setPaymentDue(null);
         loadJob();
@@ -258,7 +258,8 @@ const JobDetail = () => {
               <div className="flex gap-2 mb-3 flex-wrap">
                 <Badge variant="category">{job.category}</Badge>
                 {job.status === "open" && <Badge variant="outline">Open for Bids</Badge>}
-                {job.status === "accepted" && <Badge className="bg-amber-500">Awaiting Payment {timeLeft && `(${timeLeft})`}</Badge>}
+                {job.status === "payment_pending" && <Badge className="bg-amber-500">Awaiting Payment {timeLeft && `(${timeLeft})`}</Badge>}
+                {job.status === "accepted" && <Badge className="bg-green-500">In Progress</Badge>}
                 {job.status === "in_progress" && <Badge className="bg-green-500">In Progress</Badge>}
                 {job.status === "submitted" && <Badge className="bg-blue-500">Work Submitted</Badge>}
                 {job.status === "completed" && <Badge className="bg-primary">Completed</Badge>}
@@ -331,7 +332,7 @@ const JobDetail = () => {
                         </div>
                         {isMyJob || (myBid?.status === 'accepted' && job.status !== 'open') ? (
                           <Button size="sm" variant="ghost" className="text-primary hover:bg-primary/10" asChild>
-                            <a href={`${supabase.storage.from('job-files').getPublicUrl(file.file_url).data.publicUrl}`} download={file.file_name}>
+                            <a href={`${(supabase.storage.from('job-files') as any).getPublicUrl(file.file_url).data.publicUrl}`} download={file.file_name}>
                               Download
                             </a>
                           </Button>
@@ -341,7 +342,7 @@ const JobDetail = () => {
                           </Badge>
                         )}
                         {job.status === "payment_pending" && (
-                          <Badge variant="warning" className="animate-pulse bg-orange-500 hover:bg-orange-600">
+                          <Badge variant="outline" className="animate-pulse bg-orange-500 hover:bg-orange-600 text-white border-none">
                             <Clock className="mr-1 h-3 w-3" /> 
                             Action Required: Payment Pending {timeLeft ? `(${timeLeft})` : ''}
                           </Badge>

@@ -61,7 +61,7 @@ const AdminAuth = () => {
 
         if (profileError) throw profileError;
 
-        if (profile?.role !== 'admin') {
+        if (!profile || (profile as any).role !== 'admin') {
           await supabase.auth.signOut();
           setError("Access Denied. You do not have administrative privileges.");
           toast.error("Access Denied.");

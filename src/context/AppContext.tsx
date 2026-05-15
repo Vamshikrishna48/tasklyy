@@ -49,10 +49,10 @@ interface AppState {
     email: string;
     contact: string;
   };
-  // Platform/admin state
   isAdmin: boolean;
   platformBalance: number;
-  addJob: (job: Omit<Job, "id" | "postedBy" | "bidsCount" | "status" | "createdAt">) => void;
+  refreshProfile: () => Promise<void>;
+  addJob: (job: Omit<Job, "id" | "postedBy" | "bidsCount" | "status" | "createdAt">) => Promise<any>;
   deleteJob: (id: string) => void;
   updateJobStatus: (id: string, status: Job["status"]) => void;
   placeBid: (jobId: string, amount: number, message: string, deliveryDays: number) => void;
@@ -94,8 +94,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Fetch profile row from Supabase when user changes
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
+    const { data, error } = await (supabase
+      .from('profiles') as any)
       .select('*')
       .eq('id', userId)
       .single();
@@ -107,21 +107,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.log('Profile missing, creating default...');
       const { data: user } = await supabase.auth.getUser();
       if (user?.user) {
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
+        const { data: newProfile, error: createError } = await (supabase
+          .from('profiles') as any)
           .upsert({
             id: userId,
             email: user.user.email || '',
             full_name: user.user.user_metadata?.full_name || 'User',
-            role: 'worker',
+            role: 'worker' as const,
             wallet_balance: 0,
             is_verified: false,
-            verification_status: 'unverified'
+            verification_status: 'unverified' as const
           })
           .select()
           .single();
         
-        if (!createError) setProfile(newProfile);
+        if (!createError) setProfile(newProfile as Profile);
       }
     } else {
       setProfile(data);
@@ -202,6 +202,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
             createdAt: rj.created_at?.split('T')[0] || '',
             skills: rj.skills || [],
             instructions: rj.instructions || undefined,
+            poster_id: rj.poster_id,
+            worker_id: rj.worker_id,
+            payment_due_at: rj.payment_due_at,
+            accepted_bid_id: rj.accepted_bid_id,
+            isUrgent: rj.is_urgent,
+            isQuickTask: rj.is_quick_task,
+            campusOnly: rj.campus_only,
+            isMentoring: rj.is_mentoring,
+            isTeamTask: rj.is_team_task,
+            is_urgent: rj.is_urgent,
+            is_quick_task: rj.is_quick_task,
+            campus_only: rj.campus_only,
+            is_mentoring: rj.is_mentoring,
+            is_team_task: rj.is_team_task,
           }));
           setJobs((prev) => {
             const existingIds = new Set(prev.map(j => j.id));
@@ -238,6 +252,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
               createdAt: rj.created_at?.split('T')[0] || '',
               skills: rj.skills || [],
               instructions: rj.instructions || undefined,
+              poster_id: rj.poster_id,
+              worker_id: rj.worker_id,
+              payment_due_at: rj.payment_due_at,
+              accepted_bid_id: rj.accepted_bid_id,
+              isUrgent: rj.is_urgent,
+              isQuickTask: rj.is_quick_task,
+              campusOnly: rj.campus_only,
+              isMentoring: rj.is_mentoring,
+              isTeamTask: rj.is_team_task,
+              is_urgent: rj.is_urgent,
+              is_quick_task: rj.is_quick_task,
+              campus_only: rj.campus_only,
+              is_mentoring: rj.is_mentoring,
+              is_team_task: rj.is_team_task,
             }));
             setMyPostedJobs((prev) => {
               const realIds = new Set(mapped.map((j) => j.id));
@@ -288,6 +316,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         bidsCount: 0,
         status: "open",
         createdAt: new Date().toISOString().split("T")[0],
+        poster_id: user.id,
+        ...((jobData as any).isUrgent ? { isUrgent: true, is_urgent: true } : {}),
+        ...((jobData as any).isQuickTask ? { isQuickTask: true, is_quick_task: true } : {}),
+        ...((jobData as any).campusOnly ? { campusOnly: true, campus_only: true } : {}),
+        ...((jobData as any).isMentoring ? { isMentoring: true, is_mentoring: true } : {}),
+        ...((jobData as any).isTeamTask ? { isTeamTask: true, is_team_task: true } : {}),
       };
       setMyPostedJobs((prev) => [newJob, ...prev]);
       setJobs((prev) => [newJob, ...prev]);
@@ -429,6 +463,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         currentUser,
         isAdmin,
         platformBalance,
+        refreshProfile: async () => {
+          if (user?.id) await fetchProfile(user.id);
+        },
         addJob,
         deleteJob,
         updateJobStatus,

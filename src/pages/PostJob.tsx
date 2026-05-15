@@ -129,7 +129,7 @@ const PostJob = () => {
           if (uploadError) {
             toast.error("Job posted, but file upload failed: " + uploadError.message);
           } else {
-            await supabase.from('job_files').insert({
+            await (supabase as any).from('job_files').insert({
               job_id: result.id,
               uploader_id: (await supabase.auth.getUser()).data.user?.id,
               file_url: filePath,

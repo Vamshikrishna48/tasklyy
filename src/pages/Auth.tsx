@@ -54,14 +54,14 @@ const Auth = () => {
 
         // Create profile row
         if (data.user) {
-          const { error: profileError } = await supabase.from("profiles").upsert({
+          const { error: profileError } = await (supabase as any).from("profiles").upsert({
             id: data.user.id,
             email,
             full_name: displayName.trim(),
-            role: "worker",
+            role: "worker" as const,
             wallet_balance: 0,
             is_verified: false,
-            verification_status: "unverified",
+            verification_status: "unverified" as const,
           });
 
           if (profileError) {

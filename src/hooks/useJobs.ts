@@ -1,28 +1,16 @@
-import { useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Database } from "@/lib/database.types";
-
-type Tables = Database['public']['Tables'];
-type JobRow = Tables['jobs']['Row'];
-type ProfileRow = Tables['profiles']['Row'];
-
-export type Job = JobRow & {
-  poster?: {
-    full_name: string | null;
-    avatar_url: string | null;
-  }
-};
+import { useState, useCallback } from "react";
 
 export const useJobs = () => {
   const [loading, setLoading] = useState(false);
  
   const ensureProfile = async (userId: string) => {
-    const { data: existingProfile } = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
+    const { data: existingProfile } = await (supabase as any).from('profiles').select('id').eq('id', userId).maybeSingle();
     if (!existingProfile) {
       console.log(`Profile missing for ${userId}, creating...`);
       const { data: authUser } = await supabase.auth.getUser();
-      await supabase.from('profiles').upsert({
+      await (supabase as any).from('profiles').upsert({
         id: userId,
         email: authUser.user?.email || '',
         full_name: authUser.user?.user_metadata?.full_name || 'User',
@@ -34,140 +22,71 @@ export const useJobs = () => {
     }
   };
 
-  const fetchJobs = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('*,poster:profiles!jobs_poster_id_fkey(full_name,avatar_url)')
-        .eq('status', 'open');
+  const fetchJobs = async () => {
+    const { data, error } = await (supabase as any)
+      .from('jobs')
+      .select('*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url)')
+      .order('created_at', { ascending: false });
 
-      if (error) {
-        toast.error(error.message);
-        return [];
-      }
-      return data as Job[];
-    } finally {
-      setLoading(false);
+    if (error) {
+      console.error("Error fetching jobs:", error);
+      return [];
     }
-  }, []);
+    return data || [];
+  };
 
-  const fetchMyJobs = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('*,poster:profiles!jobs_poster_id_fkey(full_name,avatar_url)')
-        .or(`poster_id.eq.${userId},worker_id.eq.${userId}`);
+  const fetchJobById = async (id: string) => {
+    const { data, error } = await (supabase as any)
+      .from('jobs')
+      .select('*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url)')
+      .eq('id', id)
+      .single();
 
-      if (error) {
-        toast.error(error.message);
-        return { posted: [], accepted: [], completed: [] };
-      }
-
-      const jobs = data as JobRow[];
-      const filteredJobs = jobs;
-
-      return {
-        posted: filteredJobs.filter(j => j.poster_id === userId),
-        accepted: filteredJobs.filter(j => j.worker_id === userId && j.status !== 'completed'),
-        completed: filteredJobs.filter(j => j.status === 'completed' && (j.poster_id === userId || j.worker_id === userId))
-      };
-    } catch (err) {
-      return { posted: [], accepted: [], completed: [] };
-    }
-  }, []);
-
-  const fetchJobById = useCallback(async (jobId: string, currentUserId?: string) => {
-    try {
-      const { data: jobData, error: fetchError } = await supabase
-        .from('jobs')
-        .select(`
-          *,
-          poster:profiles!poster_id(full_name, avatar_url),
-          worker:profiles!worker_id(full_name, avatar_url),
-          files:job_files(*),
-          escrow:escrow_transactions(*)
-        `)
-        .eq('id', jobId)
-        .maybeSingle();
-
-      if (fetchError) {
-        console.error("Fetch Job Error:", fetchError);
-        if (fetchError.code === '42703') {
-           toast.error("Database schema mismatch. Please run the migration 003_job_flow_updates.sql in Supabase SQL Editor.");
-        } else {
-           toast.error(`Error fetching job: ${fetchError.message}`);
-        }
-        return null;
-      }
-
-      if (!jobData) return null;
-
-      const job = jobData as any;
-
-      // 1. Check for Payment Expiration (5 min timer)
-      if (job.status === 'payment_pending' && job.payment_due_at) {
-        const now = new Date();
-        const due = new Date(job.payment_due_at);
-        
-        if (now > due) {
-          // Notify worker before deletion
-          if (job.worker_id) {
-            await (supabase.from('messages') as any).insert({
-              job_id: jobId,
-              sender_id: job.poster_id, // System message essentially
-              content: `⚠️ Payment Timeout: The poster failed to pay within 5 minutes. This job has been cancelled and removed.`
-            });
-          }
-          
-          // Delete Job (cascade will handle files/messages if set, but we usually want to hide it first or delete)
-          await (supabase.from('jobs') as any).delete().eq('id', jobId);
-          toast.error("Job expired due to non-payment.");
-          return null;
-        }
-      }
-
-      // 2. Logic for unlocking instructions/files
-      // Workers only see instructions IF payment is secured (escrow held)
-      const escrowStatus = job.escrow?.[0]?.status;
-      if (currentUserId === job.worker_id) {
-        job.instructions_locked = escrowStatus !== 'held';
-      } else if (currentUserId === job.poster_id) {
-        job.instructions_locked = false;
-      }
-
-      return job;
-    } catch (err) {
+    if (error) {
+      console.error("Error fetching job:", error);
       return null;
     }
-  }, []);
+    return data;
+  };
+
+  const fetchMyJobs = async (userId: string) => {
+    const { data: posted, error: postedError } = await (supabase as any)
+      .from('jobs')
+      .select('*')
+      .eq('poster_id', userId);
+
+    const { data: working, error: workingError } = await (supabase as any)
+      .from('jobs')
+      .select('*')
+      .eq('worker_id', userId);
+
+    return {
+      posted: posted || [],
+      working: working || []
+    };
+  };
 
   const postJob = async (jobData: any, userId: string) => {
+    setLoading(true);
     try {
       await ensureProfile(userId);
-
-      // 1. Insert Job
-      const { data: job, error: jobError } = await supabase
+      const { data, error } = await (supabase as any)
         .from('jobs')
         .insert({
           ...jobData,
           poster_id: userId,
-          status: 'open',
-          instructions_locked: true,
+          status: 'open'
         })
-        .select(`
-          *,
-          poster:profiles!jobs_poster_id_fkey(full_name, avatar_url)
-        `)
-        .maybeSingle();
+        .select()
+        .single();
 
-      if (jobError || !job) throw jobError || new Error("Failed to create job");
-
-      toast.success("Job posted successfully!");
-      return job;
+      if (error) throw error;
+      return data;
     } catch (error: any) {
       toast.error(error.message);
       return null;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -175,74 +94,29 @@ export const useJobs = () => {
     try {
       await ensureProfile(userId);
       const paymentDueAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
-      // 1. Update Job to payment_pending
-      const { data: job, error: jobError } = await (supabase
-        .from('jobs') as any)
+      const { error } = await (supabase as any)
+        .from('jobs')
         .update({
           worker_id: userId,
-          status: 'payment_pending' as any,
+          status: 'payment_pending',
           payment_due_at: paymentDueAt
         })
-        .eq('id', jobId)
-        .select()
-        .maybeSingle();
-
-      if (jobError || !job) throw jobError || new Error("Job activation failed");
-
-      // 2. Notification Message
-      await (supabase
-        .from('messages') as any)
-        .insert({
-          job_id: jobId,
-          sender_id: userId,
-          content: "I've accepted the job! Please complete the payment within 5 minutes to unlock the files and start the timer."
-        });
-
-      toast.success("Job accepted! Waiting for poster payment (5m remaining).");
-      return job;
-    } catch (error: any) {
-      toast.error(error.message);
-      return null;
-    }
-  };
-
-  const payForJob = async (jobId: string, amount: number) => {
-    try {
-      const { data: job } = await supabase.from('jobs').select('*').eq('id', jobId).maybeSingle();
-      if (!job) throw new Error("Job not found");
-
-      // 1. Create/Update Escrow
-      const { error: escrowError } = await (supabase
-        .from('escrow_transactions') as any)
-        .upsert({
-          job_id: jobId,
-          poster_id: (job as any).poster_id,
-          worker_id: (job as any).worker_id,
-          total_amount: amount,
-          platform_fee: amount * 0.10,
-          worker_amount: amount * 0.90,
-          status: 'held'
-        });
-
-      if (escrowError) throw escrowError;
-
-      // 2. Update Job Status to accepted
-      await (supabase
-        .from('jobs') as any)
-        .update({ status: 'accepted', instructions_locked: false })
         .eq('id', jobId);
 
-      // 3. Admin Ledger
-      await (supabase.from('admin_ledger') as any).insert({
-        job_id: jobId,
-        type: 'escrow_held',
-        amount: amount,
-        from_user_id: (job as any).poster_id,
-        note: `Escrow secured for job: ${(job as any).title}`
-      });
+      if (error) throw error;
+      
+      // Auto-rejection logic if payment not made
+      setTimeout(async () => {
+        const { data: job } = await (supabase as any).from('jobs').select('status, payment_due_at').eq('id', jobId).single();
+        const now = new Date().toISOString();
+        const due = job?.payment_due_at;
+        if (job?.status === 'payment_pending' && due && now > due) {
+          await (supabase as any).from('jobs').delete().eq('id', jobId);
+          toast.error("Job expired due to non-payment.");
+          return null;
+        }
+      }, 5 * 60 * 1000 + 5000);
 
-      toast.success("Payment successful! Job is live.");
       return true;
     } catch (error: any) {
       toast.error(error.message);
@@ -250,42 +124,63 @@ export const useJobs = () => {
     }
   };
 
-  const submitWork = async (jobId: string, userId: string, files: File[]) => {
+  const payForJob = async (jobId: string, amount: number) => {
     try {
-      await ensureProfile(userId);
-      for (const file of files) {
-        const path = `submissions/${jobId}/${Date.now()}_${file.name}`;
-        const { data, error: uploadError } = await supabase.storage
-          .from('submissions')
-          .upload(path, file);
+      const { data: job } = await (supabase as any).from('jobs').select('*').eq('id', jobId).maybeSingle();
+      if (!job) throw new Error("Job not found");
 
-        if (uploadError || !data) throw uploadError || new Error("Upload failed");
+      const platformFee = Math.round(amount * 0.30);
+      const workerAmount = amount - platformFee;
 
-        await (supabase
-          .from('job_files') as any)
-          .insert({
-            job_id: jobId,
-            uploader_id: userId,
-            file_url: data.path,
-            file_name: file.name,
-            file_type: file.type,
-            is_submission: true,
-            is_watermarked: true
-          });
-      }
+      await (supabase as any).from('escrow_transactions').upsert({
+        job_id: jobId,
+        poster_id: job.poster_id,
+        worker_id: job.worker_id,
+        total_amount: amount,
+        platform_fee: platformFee,
+        worker_amount: workerAmount,
+        status: 'held'
+      }, { onConflict: 'job_id' });
 
-      await (supabase
-        .from('jobs') as any)
-        .update({ status: 'submitted' })
-        .eq('id', jobId);
+      await (supabase as any).from('jobs').update({ status: 'accepted', instructions_locked: false }).eq('id', jobId);
 
-      await (supabase.from('messages') as any).insert({
+      await (supabase as any).from('admin_ledger').insert({
+        job_id: jobId,
+        type: 'escrow_held',
+        amount: amount,
+        from_user_id: job.poster_id,
+        note: `Payment for job: ${job.title}`
+      });
+
+      toast.success("Payment successful! Job is now in progress.");
+      return true;
+    } catch (error: any) {
+      toast.error(error.message);
+      return false;
+    }
+  };
+
+  const submitWork = async (jobId: string, userId: string, fileUrl: string, fileName: string, fileType: string) => {
+    try {
+      await (supabase as any).from('job_files').insert({
+        job_id: jobId,
+        uploader_id: userId,
+        file_url: fileUrl,
+        file_name: fileName,
+        file_type: fileType,
+        is_submission: true,
+        is_watermarked: true
+      });
+
+      await (supabase as any).from('jobs').update({ status: 'submitted' }).eq('id', jobId);
+
+      await (supabase as any).from('messages').insert({
         job_id: jobId,
         sender_id: userId,
         content: "Work submitted! Review it now (Download locked until approval)."
       });
 
-      toast.success("Work submitted!");
+      toast.success("Work submitted successfully!");
       return true;
     } catch (error: any) {
       toast.error(error.message);
@@ -295,43 +190,42 @@ export const useJobs = () => {
 
   const declineWork = async (jobId: string, reason: string) => {
     try {
-      await (supabase.from('jobs') as any).update({ status: 'disputed' as any }).eq('id', jobId);
-      await (supabase.from('messages') as any).insert({
+      await (supabase as any).from('jobs').update({ status: 'disputed' }).eq('id', jobId);
+      const user = (await supabase.auth.getUser()).data.user;
+      await (supabase as any).from('messages').insert({
         job_id: jobId,
-        sender_id: (await supabase.auth.getUser()).data.user?.id,
+        sender_id: user?.id || '',
         content: `❌ Work declined. Reason: ${reason}. Refund will be processed in 4 working days.`
       });
-      toast.info("Work declined. Refund process initiated.");
+
+      toast.error("Work declined and dispute opened.");
       return true;
     } catch (error: any) {
-      toast.error("Failed to decline work");
+      toast.error(error.message);
       return false;
     }
   };
 
   const releaseEscrow = async (jobId: string, userId: string) => {
     try {
-      const { data: jobData } = await (supabase.from('jobs') as any).select('*').eq('id', jobId).single();
-      const job = jobData as any;
-      if (!job || job.poster_id !== userId) throw new Error("Unauthorized");
+      const { data: jobData } = await (supabase as any).from('jobs').select('*').eq('id', jobId).single();
+      if (!jobData || jobData.poster_id !== userId) throw new Error("Unauthorized");
 
-      await (supabase.from('jobs') as any).update({ status: 'completed' }).eq('id', jobId);
-      await (supabase.from('escrow_transactions') as any).update({ 
+      await (supabase as any).from('jobs').update({ status: 'completed' }).eq('id', jobId);
+      await (supabase as any).from('escrow_transactions').update({ 
         status: 'released', 
         released_at: new Date().toISOString() 
       }).eq('job_id', jobId);
       
-      // Unlock files for download
-      await (supabase.from('job_files') as any).update({ is_watermarked: false }).eq('job_id', jobId);
+      await (supabase as any).from('job_files').update({ is_watermarked: false }).eq('job_id', jobId);
 
-      const { data: escrowData } = await (supabase.from('escrow_transactions') as any).select('*').eq('job_id', jobId).single();
-      const escrow = escrowData as any;
-      if (!escrow) throw new Error("Escrow record missing");
+      const { data: escrowData } = await (supabase as any).from('escrow_transactions').select('*').eq('job_id', jobId).single();
+      if (!escrowData) throw new Error("Escrow record missing");
       
-      const { data: worker } = await (supabase.from('profiles') as any).select('wallet_balance').eq('id', job.worker_id).single();
-      await (supabase.from('profiles') as any).update({ 
-        wallet_balance: (worker?.wallet_balance || 0) + escrow.worker_amount 
-      }).eq('id', job.worker_id);
+      const { data: worker } = await (supabase as any).from('profiles').select('wallet_balance').eq('id', jobData.worker_id).single();
+      await (supabase as any).from('profiles').update({ 
+        wallet_balance: ((worker as any)?.wallet_balance || 0) + escrowData.worker_amount 
+      }).eq('id', jobData.worker_id);
 
       toast.success("Work approved and funds released!");
       return true;
@@ -343,38 +237,22 @@ export const useJobs = () => {
 
   const placeBid = async (bidData: any) => {
     try {
-      console.log("Attempting to place bid:", bidData);
       await ensureProfile(bidData.bidder_id);
-      
-      const { data, error } = await supabase
-        .from('bids')
-        .insert(bidData)
-        .select()
-        .maybeSingle();
-      
-      if (error) {
-        console.error("Supabase Bid Error:", error);
-        throw error;
-      }
-      
-      if (!data) {
-        throw new Error("Bid was sent but verification failed. Please refresh the page and check if it appeared.");
-      }
-      
+      const { data, error } = await (supabase as any).from('bids').insert(bidData).select().single();
+      if (error) throw error;
       return data;
     } catch (error: any) {
-      console.error("PlaceBid Exception:", error);
-      toast.error(`Bidding Error: ${error.message || "Unknown error"}`);
+      toast.error(`Bidding Error: ${error.message}`);
       return null;
     }
   };
  
   const cancelJobForNonPayment = async (jobId: string) => {
     try {
-      const { error } = await (supabase
-        .from('jobs') as any)
+      const { error } = await (supabase as any)
+        .from('jobs')
         .update({ 
-          status: 'rejected', 
+          status: 'disputed',
           worker_id: null, 
           payment_due_at: null,
           accepted_bid_id: null
@@ -385,20 +263,20 @@ export const useJobs = () => {
       toast.error("Payment deadline missed. Project has been rejected.");
       return true;
     } catch (err: any) {
-      console.error("Cancel job error:", err);
+      toast.error(err.message);
       return false;
     }
   };
- 
-  return { 
-    loading, 
-    fetchJobs, 
-    fetchMyJobs, 
-    fetchJobById, 
-    postJob, 
-    acceptJob, 
+
+  return {
+    loading,
+    fetchJobs,
+    fetchJobById,
+    fetchMyJobs,
+    postJob,
+    acceptJob,
     payForJob,
-    submitWork, 
+    submitWork,
     declineWork,
     releaseEscrow,
     placeBid,

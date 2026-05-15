@@ -293,6 +293,50 @@ export interface Database {
           created_at?: string
         }
       }
+      verification_requests: {
+        Row: {
+          id: string
+          user_id: string
+          id_type: 'student_id' | 'aadhaar' | 'pan'
+          id_number: string
+          front_image_url: string
+          back_image_url: string | null
+          selfie_url: string
+          status: 'pending' | 'verified' | 'rejected'
+          admin_note: string | null
+          reviewed_by: string | null
+          reviewed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          id_type: 'student_id' | 'aadhaar' | 'pan'
+          id_number: string
+          front_image_url: string
+          back_image_url?: string | null
+          selfie_url: string
+          status?: 'pending' | 'verified' | 'rejected'
+          admin_note?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          id_type?: 'student_id' | 'aadhaar' | 'pan'
+          id_number?: string
+          front_image_url?: string
+          back_image_url?: string | null
+          selfie_url?: string
+          status?: 'pending' | 'verified' | 'rejected'
+          admin_note?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

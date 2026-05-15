@@ -8,7 +8,7 @@ interface AuthGuardProps {
 }
 
 const AuthGuard = ({ children }: AuthGuardProps) => {
-  const { profile, loading, sessionUser, refreshProfile } = useApp();
+  const { profile, authLoading: loading, user: sessionUser, refreshProfile } = useApp();
   const location = useLocation();
 
   if (loading) {
