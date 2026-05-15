@@ -106,16 +106,9 @@ export const useJobs = () => {
       if (error) throw error;
       
       // Auto-rejection logic if payment not made
-      setTimeout(async () => {
-        const { data: job } = await (supabase as any).from('jobs').select('status, payment_due_at').eq('id', jobId).single();
-        const now = new Date().toISOString();
-        const due = job?.payment_due_at;
-        if (job?.status === 'payment_pending' && due && now > due) {
-          await (supabase as any).from('jobs').delete().eq('id', jobId);
-          toast.error("Job expired due to non-payment.");
-          return null;
-        }
-      }, 5 * 60 * 1000 + 5000);
+      // This should ideally be handled by a cron job or background worker, not a client-side setTimeout
+      // which can cause unexpected deletions if the client's clock is off or the component unmounts.
+
 
       return true;
     } catch (error: any) {
