@@ -170,6 +170,11 @@ const SubmittedWork = () => {
     }
     setActionLoading(true);
     try {
+      const budget = rejectDialogJob.budget;
+      const posterRefund = Math.floor(budget * 0.70);
+      const workerComp = Math.floor(budget * 0.25);
+      const platformFee = budget - posterRefund - workerComp;
+
       // Update escrow to refunded
       await (supabase as any)
         .from("escrow_transactions")
@@ -183,14 +188,45 @@ const SubmittedWork = () => {
         .update({ status: "rejected", rejection_reason: rejectReason.trim() })
         .eq("id", rejectDialogJob.id);
 
-      // Log to admin ledger
+      // Refund Poster (70%)
+      await (supabase as any).rpc("increment_wallet", {
+        user_id: rejectDialogJob.poster_id,
+        amount: posterRefund,
+      }).catch(() => console.warn("increment_wallet RPC not found"));
+
+      // Compensate Worker (25%)
+      await (supabase as any).rpc("increment_wallet", {
+        user_id: rejectDialogJob.worker_id,
+        amount: workerComp,
+      }).catch(() => console.warn("increment_wallet RPC not found"));
+
+      // Log Poster Refund to admin ledger
       await (supabase as any).from("admin_ledger").insert({
         job_id: rejectDialogJob.id,
         type: "refund",
-        amount: rejectDialogJob.budget,
-        from_user_id: rejectDialogJob.worker_id,
+        amount: posterRefund,
+        from_user_id: rejectDialogJob.poster_id,
         to_user_id: rejectDialogJob.poster_id,
-        note: `Work rejected: ${rejectReason.trim()}`,
+        note: `70% Refund for rejected work: ${rejectReason.trim()}`,
+      });
+
+      // Log Worker Compensation to admin ledger
+      await (supabase as any).from("admin_ledger").insert({
+        job_id: rejectDialogJob.id,
+        type: "escrow_released",
+        amount: workerComp,
+        from_user_id: rejectDialogJob.poster_id,
+        to_user_id: rejectDialogJob.worker_id,
+        note: `25% Compensation for rejected work.`,
+      });
+
+      // Log Platform Fee to admin ledger
+      await (supabase as any).from("admin_ledger").insert({
+        job_id: rejectDialogJob.id,
+        type: "fee_collected",
+        amount: platformFee,
+        from_user_id: rejectDialogJob.poster_id,
+        note: `5% Platform fee on rejected work.`,
       });
 
       toast.success("Work rejected. Escrow marked for refund.");

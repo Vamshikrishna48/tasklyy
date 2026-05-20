@@ -18,6 +18,8 @@ const BrowseJobs = () => {
   const { jobs, profile } = useApp();
 
   const filteredJobs = jobs.filter((job) => {
+    if (job.status !== "open") return false;
+    
     const matchesSearch =
       !search ||
       job.title.toLowerCase().includes(search.toLowerCase()) ||

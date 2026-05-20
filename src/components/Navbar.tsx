@@ -49,12 +49,6 @@ const Navbar = () => {
               Post a Job
             </Button>
           </Link>
-          <Link to="/on-time-works">
-            <Button variant={isActive("/on-time-works") ? "secondary" : "ghost"} size="sm" className="gap-2">
-              <Clock className="h-4 w-4" />
-              On Time Works
-            </Button>
-          </Link>
         </div>
 
         <div className="flex items-center gap-2">

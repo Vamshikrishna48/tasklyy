@@ -41,7 +41,8 @@ const JobDetail = () => {
       .from("jobs")
       .select("*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url), worker:profiles!jobs_worker_id_fkey(full_name), files:job_files(*)")
       .eq("id", id)
-      .single();
+      .limit(1)
+      .maybeSingle();
     if (data) {
       setJob(data);
       if (data.payment_due_at) setPaymentDue(data.payment_due_at);
@@ -223,7 +224,7 @@ const JobDetail = () => {
     setSubmittingBid(true);
     const result = await acceptJob(id!, user.id);
     if (result) {
-      toast.success("Job accepted directly! Please pay within 5 minutes to confirm.");
+      toast.success("Job accepted directly! The poster has been notified to deposit the funds within 5 minutes.");
       loadJob();
     }
     setSubmittingBid(false);
@@ -329,12 +330,7 @@ const JobDetail = () => {
                   <h2 className="mb-4 font-display text-lg font-bold flex items-center gap-2">
                     <FileUp className="h-5 w-5 text-primary" /> Project Files & Brief
                   </h2>
-                  {!isAuthorized ? (
-                    <div className="p-4 border border-dashed rounded-xl text-center text-muted-foreground text-sm">
-                      <Lock className="h-5 w-5 mx-auto mb-2 opacity-30" />
-                      Accept or bid on this job to view the attached files.
-                    </div>
-                  ) : filesLoading ? (
+                  {filesLoading ? (
                     <div className="flex items-center gap-2 text-muted-foreground text-sm py-4">
                       <Loader2 className="h-4 w-4 animate-spin" /> Loading files...
                     </div>
@@ -378,8 +374,8 @@ const JobDetail = () => {
                 </div>
               </NoScreenshotWrapper>
 
-              {/* Instructions (after accepting) */}
-              {(hasAccepted || isMyJob || myBid) && job.instructions && (
+              {/* Instructions (after payment) */}
+              {(isMyJob || (isMyWorkerJob && ["accepted", "in_progress", "submitted", "completed"].includes(job.status))) && job.instructions && (
                 <div className="mt-6 p-4 bg-muted/30 rounded-xl border">
                   <h2 className="mb-2 font-display text-base font-semibold">Instructions</h2>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">{job.instructions}</p>

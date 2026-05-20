@@ -11,12 +11,13 @@ import ColorBends from "@/components/ColorBends";
 import { supabase } from "@/lib/supabase";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
 
@@ -29,7 +30,10 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent double submission
+    
     setLoading(true);
+    setError("");
 
     try {
       if (isLogin) {
@@ -52,18 +56,40 @@ const Auth = () => {
         });
         if (error) throw error;
 
-        // Profile row is automatically created by the Supabase database trigger (handle_new_user)
+        // If email confirmation is off, we get a session immediately.
+        // Let's create the profile manually from the frontend so we don't rely on database triggers.
+        if (data.user) {
+          const { error: profileError } = await (supabase as any).from("profiles").insert({
+            id: data.user.id,
+            email: email,
+            full_name: displayName.trim(),
+            role: "worker",
+            is_verified: false,
+            verification_status: "unverified",
+            wallet_balance: 0
+          });
+          // Ignore unique constraint errors if the row already exists
+          if (profileError && profileError.code !== '23505') {
+            console.error("Profile creation error:", profileError);
+          }
+        }
 
+        if (data.session) {
+          // Explicitly sign out because we want them to sign in manually
+          await supabase.auth.signOut();
+        }
         setShowWelcome(true);
         setTimeout(() => {
           setShowWelcome(false);
-          toast.success("Account created! Welcome to Taskly.");
-          navigate("/dashboard");
+          toast.success("Account created successfully! Please sign in.");
+          setIsLogin(true);
+          setLoading(false);
         }, 900);
       }
-    } catch (error: any) {
-      console.error("Auth Error:", error);
-      toast.error(error.message || "Authentication failed");
+    } catch (err: any) {
+      console.error("Auth Error:", err);
+      setError(err.message || "Authentication failed. Please check your credentials.");
+      toast.error(err.message || "Authentication failed");
       setLoading(false);
     }
   };
@@ -109,13 +135,22 @@ const Auth = () => {
                 className={`relative z-10 flex-1 py-2 text-sm font-semibold transition-colors ${isLogin ? "text-primary-foreground" : "text-muted-foreground"}`}>
                 Sign In
               </button>
-              <button type="button" onClick={() => setIsLogin(false)}
+              <button type="button" onClick={() => { setIsLogin(false); setError(""); }}
                 className={`relative z-10 flex-1 py-2 text-sm font-semibold transition-colors ${!isLogin ? "text-primary-foreground" : "text-muted-foreground"}`}>
                 Sign Up
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium"
+                >
+                  <span className="flex-1">{error}</span>
+                </motion.div>
+              )}
               <AnimatePresence mode="wait">
                 {!isLogin && (
                   <motion.div key="name" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}

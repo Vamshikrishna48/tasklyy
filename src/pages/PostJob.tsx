@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { FileUp, X, Loader2 } from "lucide-react";
@@ -33,6 +34,7 @@ const PostJob = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const addSkill = () => {
     if (skillInput.trim() && !skills.includes(skillInput.trim())) {
@@ -81,6 +83,11 @@ const PostJob = () => {
     
     if (!selectedFile) {
       toast.error("You must upload a project file or brief to post this job.");
+      return;
+    }
+
+    if (!agreedToTerms) {
+      toast.error("You must agree to the refund policy terms to post a job.");
       return;
     }
     
@@ -234,7 +241,7 @@ const PostJob = () => {
                       onChange={(e) => setDeadline(e.target.value)}
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
-                      ⚠️ Minimum deadline is 2 days.
+                      ⚠️ Please select the deadline 2 days before submission.
                     </p>
                   </div>
                 </div>
@@ -303,6 +310,29 @@ const PostJob = () => {
                       </Button>
                     </div>
                   )}
+                </div>
+              </div>
+              
+              {/* Terms Checkbox */}
+              <div className="pt-4 border-t">
+                <div className="flex items-start space-x-3 bg-muted/30 p-4 rounded-lg border border-primary/10">
+                  <Checkbox 
+                    id="terms" 
+                    checked={agreedToTerms} 
+                    onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)} 
+                    className="mt-1"
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="terms"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      I agree to the Refund Policy
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      By posting this job, I agree that if I reject the submitted work, I will receive a 70% refund, 25% will compensate the worker for their time, and 5% is charged as a platform fee.
+                    </p>
+                  </div>
                 </div>
               </div>
               
