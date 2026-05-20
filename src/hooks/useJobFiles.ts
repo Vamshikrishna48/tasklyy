@@ -26,7 +26,7 @@ export const useJobFiles = (jobId: string, isAuthorized: boolean, jobStatus?: st
   const [loading, setLoading] = useState(true);
 
   const fetchFiles = useCallback(async () => {
-    if (!jobId || !isAuthorized) {
+    if (!jobId) {
       setFiles([]);
       setLoading(false);
       return;
@@ -48,6 +48,19 @@ export const useJobFiles = (jobId: string, isAuthorized: boolean, jobStatus?: st
           if (f.is_submission && jobStatus !== "completed") {
             return { ...f, downloadUrl: undefined };
           }
+          
+          if (!f.is_submission) {
+            // For brief files, try to get a signed URL, fallback to public URL
+            try {
+              const downloadUrl = await getSignedUrl("job-files", f.file_url);
+              return { ...f, downloadUrl };
+            } catch {
+              const { data: publicData } = supabase.storage.from("job-files").getPublicUrl(f.file_url);
+              return { ...f, downloadUrl: publicData.publicUrl };
+            }
+          }
+
+          // For submission files that are completed
           try {
             const downloadUrl = await getSignedUrl("job-files", f.file_url);
             return { ...f, downloadUrl };
@@ -64,7 +77,7 @@ export const useJobFiles = (jobId: string, isAuthorized: boolean, jobStatus?: st
     } finally {
       setLoading(false);
     }
-  }, [jobId, isAuthorized, jobStatus]);
+  }, [jobId, jobStatus]);
 
   useEffect(() => {
     fetchFiles();

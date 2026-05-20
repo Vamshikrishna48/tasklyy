@@ -115,9 +115,9 @@ const Auth = () => {
         {/* Logo */}
         <motion.div className="w-full flex flex-col items-center justify-center text-center mb-8"
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <motion.div className="flex flex-row items-center justify-center mb-4" whileHover={{ scale: 1.05 }}>
-            <img src="/taskly-logo.png" alt="Taskly logo" className="h-28 w-28 object-contain shrink-0" />
-            <span className="font-display text-4xl font-bold text-foreground leading-none min-w-max" style={{ marginLeft: "-10px" }}>Taskly</span>
+          <motion.div className="flex flex-col items-center justify-center mb-4 gap-2" whileHover={{ scale: 1.05 }}>
+            <img src="/taskly-logo.png" alt="Taskly logo" className="h-24 w-24 object-contain shrink-0" />
+            <span className="font-display text-3xl font-bold text-foreground leading-none">Taskly</span>
           </motion.div>
           <p className="text-muted-foreground">
             {isLogin ? "Welcome back to the student marketplace" : "Join the student freelance community"}
@@ -154,7 +154,7 @@ const Auth = () => {
               <AnimatePresence mode="wait">
                 {!isLogin && (
                   <motion.div key="name" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }}>
+                    exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
                     <Label htmlFor="name" className="text-foreground">Display Name</Label>
                     <div className="relative mt-1">
                       <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
