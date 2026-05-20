@@ -29,14 +29,7 @@ const PostJob = () => {
   const [skills, setSkills] = useState<string[]>([]);
   
   // New Feature States
-  const [isQuickTask, setIsQuickTask] = useState(false);
-  const [campusOnly, setCampusOnly] = useState(false);
-  const [isUrgent, setIsUrgent] = useState(false);
-  const [urgentTime, setUrgentTime] = useState("");
-  const [isTeamTask, setIsTeamTask] = useState(false);
-  const [teamRoleInput, setTeamRoleInput] = useState("");
-  const [teamRoles, setTeamRoles] = useState<string[]>([]);
-  const [isMentoring, setIsMentoring] = useState(false);
+  const [isOnTimeWork, setIsOnTimeWork] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -65,8 +58,7 @@ const PostJob = () => {
 
   const getMinDeadline = () => {
     const d = new Date();
-    // If urgent, deadline can be today. Otherwise 2 days.
-    if (isUrgent || isQuickTask) return d.toISOString().split("T")[0];
+    // Regular work needs 2 days.
     d.setDate(d.getDate() + 2);
     return d.toISOString().split("T")[0];
   };
@@ -82,14 +74,19 @@ const PostJob = () => {
       return;
     }
     const minDate = getMinDeadline();
-    if (deadline < minDate && !isUrgent && !isQuickTask) {
-      toast.error("Deadline must be at least 2 days from today, unless marked Urgent/Quick Task");
+    if (deadline < minDate) {
+      toast.error(`Deadline must be at least 2 days from today.`);
+      return;
+    }
+    
+    if (!selectedFile) {
+      toast.error("You must upload a project file or brief to post this job.");
       return;
     }
     
     const numericBudget = Number(budget);
-    if (!numericBudget || numericBudget <= 0) {
-      toast.error("Budget must be a positive number");
+    if (!numericBudget || numericBudget < 500) {
+      toast.error("Minimum budget must be ₹500");
       return;
     }
 
@@ -100,14 +97,14 @@ const PostJob = () => {
       budget: numericBudget,
       deadline,
       skills,
-      isQuickTask,
-      campusOnly,
-      campusName: campusOnly ? "Stanford University" : undefined, // Inherited from currentUser naturally, but kept here for mock
-      isUrgent,
-      urgentTime: isUrgent ? urgentTime.trim() : undefined,
-      isTeamTask,
-      teamRoles: isTeamTask ? teamRoles : undefined,
-      isMentoring,
+      isQuickTask: false,
+      campusOnly: false,
+      campusName: undefined,
+      isUrgent: false,
+      urgentTime: undefined,
+      isTeamTask: false,
+      teamRoles: undefined,
+      isMentoring: false,
       rescueMode: false,
     };
 
@@ -213,66 +210,7 @@ const PostJob = () => {
                 </div>
               </div>
 
-              {/* Advanced Toggles */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                <div className="flex items-center space-x-2">
-                  <Switch id="quick-task" checked={isQuickTask} onCheckedChange={setIsQuickTask} />
-                  <Label htmlFor="quick-task">10 Minute Quick Task</Label>
-                </div>
-                <div className="flex flex-col gap-2 justify-center">
-                  <div className="flex items-center space-x-2">
-                    <Switch id="urgent" checked={isUrgent} onCheckedChange={setIsUrgent} />
-                    <Label htmlFor="urgent" className="flex items-center gap-1 text-rose-600">
-                      <AlertTriangle className="w-3 h-3" /> Emergency Help (Urgent)
-                    </Label>
-                  </div>
-                  {isUrgent && (
-                    <Input
-                      placeholder="Required time (e.g. 2 hours)"
-                      value={urgentTime}
-                      onChange={(e) => setUrgentTime(e.target.value)}
-                      className="h-8 text-sm"
-                    />
-                  )}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch id="campus" checked={campusOnly} onCheckedChange={setCampusOnly} />
-                  <Label htmlFor="campus">Campus Only</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch id="mentor" checked={isMentoring} onCheckedChange={setIsMentoring} />
-                  <Label htmlFor="mentor">Mentoring / Learning Mode</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch id="team" checked={isTeamTask} onCheckedChange={setIsTeamTask} />
-                  <Label htmlFor="team">Team Task</Label>
-                </div>
-              </div>
-
-              {/* Dynamic Sections Based on Toggles */}
-              {isTeamTask && (
-                <div className="p-4 bg-muted/50 rounded-lg space-y-3">
-                  <label className="block text-sm font-medium text-foreground">Required Team Roles</label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="e.g. Frontend Developer"
-                      value={teamRoleInput}
-                      onChange={(e) => setTeamRoleInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTeamRole())}
-                    />
-                    <Button variant="outline" onClick={addTeamRole}>Add Role</Button>
-                  </div>
-                  {teamRoles.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {teamRoles.map((role) => (
-                        <Badge key={role} variant="secondary" className="cursor-pointer" onClick={() => removeTeamRole(role)}>
-                          {role} ×
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Advanced Toggles Removed */}
 
               {/* Payment & Deadline */}
               <div className="pt-4 border-t space-y-4">
@@ -282,7 +220,7 @@ const PostJob = () => {
                     <label className="mb-1.5 block text-sm font-medium text-foreground">Budget (₹) *</label>
                     <Input
                       type="number"
-                      placeholder={isQuickTask ? "10 - 100" : "25"}
+                      placeholder="Min ₹500"
                       value={budget}
                       onChange={(e) => setBudget(e.target.value)}
                     />
@@ -295,11 +233,9 @@ const PostJob = () => {
                       min={getMinDeadline()}
                       onChange={(e) => setDeadline(e.target.value)}
                     />
-                    {(!isUrgent && !isQuickTask) && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        ⚠️ Regular tasks require a 2-day minimum deadline.
-                      </p>
-                    )}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      ⚠️ Minimum deadline is 2 days.
+                    </p>
                   </div>
                 </div>
               </div>

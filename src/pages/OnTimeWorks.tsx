@@ -66,41 +66,7 @@ const OnTimeWorks = () => {
         </div>
 
         <div className="mb-8 flex flex-wrap gap-2">
-          <Badge
-            variant={activeFilter === "urgent" ? "default" : "outline"}
-            className={`cursor-pointer ${activeFilter === "urgent" ? "bg-rose-500 hover:bg-rose-600" : ""}`}
-            onClick={() => setActiveFilter(activeFilter === "urgent" ? null : "urgent")}
-          >
-            🚨 Emergency Help (Urgent)
-          </Badge>
-          <Badge
-            variant={activeFilter === "quick" ? "default" : "outline"}
-            className={`cursor-pointer ${activeFilter === "quick" ? "bg-amber-500 hover:bg-amber-600" : ""}`}
-            onClick={() => setActiveFilter(activeFilter === "quick" ? null : "quick")}
-          >
-            ⚡ 10 Minute Quick Task
-          </Badge>
-          <Badge
-            variant={activeFilter === "campus" ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setActiveFilter(activeFilter === "campus" ? null : "campus")}
-          >
-            🎓 Campus Only (Taskly University)
-          </Badge>
-          <Badge
-            variant={activeFilter === "team" ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setActiveFilter(activeFilter === "team" ? null : "team")}
-          >
-            👥 Team Task
-          </Badge>
-          <Badge
-            variant={activeFilter === "mentoring" ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setActiveFilter(activeFilter === "mentoring" ? null : "mentoring")}
-          >
-            📚 Mentoring / Learning Mode
-          </Badge>
+          {/* Filters removed as per request */}
         </div>
 
         {filteredJobs.length > 0 ? (
