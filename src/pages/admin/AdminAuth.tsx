@@ -53,7 +53,7 @@ const AdminAuth = () => {
 
         if (profileError) throw profileError;
 
-        if (!profile || (profile.role !== "admin" && data.user.email !== "admin@taskly.com")) {
+        if (!profile || (profile.role !== "admin" && data.user.email !== "tasklyy@admin.com")) {
           await supabase.auth.signOut();
           setError("Access Denied. You do not have administrative privileges.");
           toast.error("Access Denied.");
@@ -119,7 +119,7 @@ const AdminAuth = () => {
                   <Input
                     id="admin-email"
                     type="email"
-                    placeholder="admin@taskly.com"
+                    placeholder="tasklyy@admin.com"
                     className="pl-10 h-11 bg-background/50 border-primary/10 focus:border-primary/40"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
