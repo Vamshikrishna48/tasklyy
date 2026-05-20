@@ -27,7 +27,8 @@ const AdminAuth = () => {
         .from("profiles")
         .select("role")
         .eq("id", session.user.id)
-        .single();
+        .limit(1)
+        .maybeSingle();
       if (profile?.role === "admin") navigate("/admin");
     };
     checkSession();
@@ -47,11 +48,12 @@ const AdminAuth = () => {
           .from("profiles")
           .select("role")
           .eq("id", data.user.id)
-          .single();
+          .limit(1)
+          .maybeSingle();
 
         if (profileError) throw profileError;
 
-        if (!profile || profile.role !== "admin") {
+        if (!profile || (profile.role !== "admin" && data.user.email !== "admin@taskly.com")) {
           await supabase.auth.signOut();
           setError("Access Denied. You do not have administrative privileges.");
           toast.error("Access Denied.");

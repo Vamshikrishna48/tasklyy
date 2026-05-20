@@ -36,6 +36,7 @@ interface AppState {
   // --- Existing mock state (preserved) ---
   jobs: Job[];
   myPostedJobs: Job[];
+  myWorkingJobs: Job[];
   myBids: UserBid[];
   payments: Payment[];
   currentUser: { 
@@ -98,7 +99,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .from('profiles') as any)
       .select('*')
       .eq('id', userId)
-      .single();
+      .limit(1)
+      .maybeSingle();
     if (error) {
       console.error('Error fetching profile:', error);
       setProfile(null);
@@ -119,7 +121,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             verification_status: 'unverified' as const
           })
           .select()
-          .single();
+          .limit(1)
+          .maybeSingle();
         
         if (!createError) setProfile(newProfile as Profile);
       }
@@ -149,6 +152,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // CRITICAL: Clear all user-specific data when session changes
         // This prevents data leakage when switching accounts
         setMyPostedJobs([]);
+        setMyWorkingJobs([]);
         setMyBids([]);
         setPayments([]);
         
@@ -171,11 +175,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // === Existing mock state (preserved exactly as-is) ===
   const [jobs, setJobs] = useState<Job[]>([]);
   const [myPostedJobs, setMyPostedJobs] = useState<Job[]>(initialMyJobs);
+  const [myWorkingJobs, setMyWorkingJobs] = useState<Job[]>([]);
   const [myBids, setMyBids] = useState<UserBid[]>(initialMyBids);
   const [payments, setPayments] = useState<Payment[]>(initialPayments);
   
-  // isAdmin derived from profile
-  const isAdmin = profile?.role === 'admin';
+  // isAdmin derived from profile or email
+  const isAdmin = profile?.role === 'admin' || user?.email === 'admin@taskly.com';
   const [platformBalance, setPlatformBalance] = useState(0);
 
   // On auth ready, fetch real jobs from Supabase and merge with mock
@@ -270,6 +275,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setMyPostedJobs((prev) => {
               const realIds = new Set(mapped.map((j) => j.id));
               return [...mapped, ...prev.filter((j) => !realIds.has(j.id))];
+            });
+          }
+          if (result.working && result.working.length > 0) {
+            const mappedWorking: Job[] = result.working.map((rj: any) => ({
+              id: rj.id,
+              title: rj.title,
+              description: rj.description,
+              category: rj.category,
+              budget: rj.budget,
+              deadline: rj.deadline || '',
+              postedBy: {
+                name: 'Client',
+                avatar: 'CL',
+                rating: 4.9,
+                campus: '',
+              },
+              bidsCount: 0,
+              status: rj.status as Job['status'],
+              createdAt: rj.created_at?.split('T')[0] || '',
+              skills: rj.skills || [],
+              instructions: rj.instructions || undefined,
+              poster_id: rj.poster_id,
+              worker_id: rj.worker_id,
+              payment_due_at: rj.payment_due_at,
+              accepted_bid_id: rj.accepted_bid_id,
+              isUrgent: rj.is_urgent,
+              isQuickTask: rj.is_quick_task,
+              campusOnly: rj.campus_only,
+              isMentoring: rj.is_mentoring,
+              isTeamTask: rj.is_team_task,
+            }));
+            setMyWorkingJobs((prev) => {
+              const realIds = new Set(mappedWorking.map((j) => j.id));
+              return [...mappedWorking, ...prev.filter((j) => !realIds.has(j.id))];
             });
           }
         });
@@ -397,7 +436,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (result) {
       // Update local state to reflect acceptance
       setMyBids((prev) => prev.map((b) => (b.id === bidId ? { ...b, status: "accepted" as const } : b)));
-      const updateStatus = (jobs: Job[]) => jobs.map((j) => j.id === bid.jobId ? { ...j, status: "in_progress" as const } : j);
+      const updateStatus = (jobs: Job[]) => jobs.map((j) => j.id === bid.jobId ? { ...j, status: "payment_pending" as const } : j);
       setMyPostedJobs(updateStatus);
       setJobs(updateStatus);
       if (bid) sendJobAcceptedAlarm(bid.jobTitle, bid.amount);
@@ -458,6 +497,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Existing mock state
         jobs,
         myPostedJobs,
+        myWorkingJobs,
         myBids,
         payments,
         currentUser,

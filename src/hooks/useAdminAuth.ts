@@ -21,9 +21,10 @@ export const useAdminAuth = () => {
           .from("profiles")
           .select("*")
           .eq("id", session.user.id)
-          .single();
+          .limit(1)
+          .maybeSingle();
 
-        if (error || !profile || profile.role !== "admin") {
+        if (error || !profile || (profile.role !== "admin" && session.user.email !== "admin@taskly.com")) {
           setIsAdmin(false);
           setAdminProfile(null);
         } else {

@@ -27,14 +27,13 @@ import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 
-const menuItems = [
+const baseMenuItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Jobs", url: "/dashboard/jobs", icon: Briefcase },
   { title: "Submitted Work", url: "/dashboard/submitted", icon: Upload },
   { title: "Portfolio", url: "/dashboard/portfolio", icon: FolderOutput },
   { title: "Earnings", url: "/dashboard/earnings", icon: DollarSign },
   { title: "Your Information", url: "/dashboard/profile", icon: UserCircle },
-  { title: "Admin Panel", url: "/admin", icon: Settings },
 ];
 
 
@@ -42,7 +41,12 @@ export function DashboardSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { profile } = useApp();
+  const { profile, isAdmin } = useApp();
+
+  const menuItems = [...baseMenuItems];
+  if (isAdmin) {
+    menuItems.push({ title: "Admin Panel", url: "/admin", icon: Settings });
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r">
