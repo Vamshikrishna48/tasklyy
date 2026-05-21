@@ -105,28 +105,30 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
           className="relative flex items-center justify-center mb-4"
         >
-          {/* Outer glow ring adjusted to match the smaller 290px circle */}
+          {/* Outer glow ring adjusted to match the smaller 240px circle */}
           <motion.div
             animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.15, 0.4] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute w-[310px] h-[310px] rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-400/20 blur-3xl pointer-events-none"
+            className="absolute w-[260px] h-[260px] rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-400/20 blur-3xl pointer-events-none"
           />
           <CircularText 
             text="TASKLYY • INDIA'S STUDENT MARKETPLACE • " 
             spinDuration={20}
             onHover="speedUp"
           >
-            {/* All matter beautifully aligned and fully visible inside the circle */}
-            <img
-              src="/taskly-logo.png"
-              alt="Tasklyy Logo"
-              className="w-32 h-32 object-contain animate-pulse mb-2"
-              style={{ animationDuration: '4s' }}
-            />
-            <h1 className="text-2xl font-black tracking-tight text-white leading-none mb-1">
-              Tasklyy
-            </h1>
-            <p className="text-[9px] font-semibold text-blue-300 tracking-widest uppercase">
+            {/* Brand elements aligned side-by-side with absolutely zero space */}
+            <div className="flex flex-row items-center justify-center gap-0">
+              <img
+                src="/taskly-logo.png"
+                alt="Tasklyy Logo"
+                className="w-20 h-20 object-contain animate-pulse"
+                style={{ animationDuration: '4s' }}
+              />
+              <h1 className="text-2xl font-black tracking-tight text-white leading-none">
+                Tasklyy
+              </h1>
+            </div>
+            <p className="text-[8px] font-semibold text-blue-300 tracking-widest uppercase mt-1">
               India's Student Marketplace
             </p>
           </CircularText>

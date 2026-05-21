@@ -36,8 +36,8 @@ const CircularText = ({
   onHover = 'speedUp',
   className = '',
   children,
-  size = 290,     // Default to 290px (smaller & more premium!)
-  radius = 115    // Default to 115px translateY (diameter 230px)
+  size = 240,     // Default to 240px (even smaller & more premium!)
+  radius = 92     // Default to 92px translateY (diameter 184px)
 }: CircularTextProps) => {
   const letters = Array.from(text);
   const controls = useAnimation();

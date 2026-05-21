@@ -13,6 +13,9 @@ interface RazorpayOptions {
   theme?: {
     color?: string;
   };
+  modal?: {
+    ondismiss?: () => void;
+  };
 }
 
 declare global {
@@ -75,6 +78,11 @@ export async function openRazorpayCheckout(
     },
     theme: {
       color: "#16a34a",
+    },
+    modal: {
+      ondismiss: () => {
+        onFailure();
+      },
     },
   };
 

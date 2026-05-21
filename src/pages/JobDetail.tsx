@@ -188,7 +188,7 @@ const JobDetail = () => {
     openRazorpayCheckout(
       bid.amount,
       job?.title || "Job",
-      null,
+      user?.email || null,
       async () => {
         // Create escrow
         const platformFee = Math.round(bid.amount * 0.30);
