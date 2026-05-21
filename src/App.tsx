@@ -31,6 +31,7 @@ import NotFound from "./pages/NotFound.tsx";
 import { useNotificationPermission } from "./hooks/useNotificationPermission";
 import NotificationBanner from "./components/NotificationBanner";
 import { motion } from "framer-motion";
+import CircularText from "./components/CircularText";
 
 const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   useNotificationPermission();
@@ -89,28 +90,25 @@ const SplashScreen = () => {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative z-10 flex flex-col items-center gap-8"
       >
-        {/* Logo + glow ring */}
-        <div className="relative flex items-center justify-center">
+        {/* Logo + Circular Text */}
+        <motion.div
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
+          className="relative flex items-center justify-center"
+        >
           {/* Outer glow ring */}
           <motion.div
             animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.15, 0.4] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute w-36 h-36 rounded-full bg-gradient-to-br from-blue-500 to-emerald-400 blur-2xl"
+            className="absolute w-44 h-44 rounded-full bg-gradient-to-br from-blue-500/30 to-emerald-400/30 blur-2xl pointer-events-none"
           />
-          {/* Logo container - no box */}
-          <motion.div
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
-            className="relative flex items-center justify-center"
-          >
-            <img
-              src="/taskly-logo.png"
-              alt="Taskly"
-              className="w-44 h-44 object-contain"
-            />
-          </motion.div>
-        </div>
+          <CircularText 
+            text="TASKLY • INDIA'S STUDENT MARKETPLACE • " 
+            spinDuration={20}
+            onHover="speedUp"
+          />
+        </motion.div>
 
         {/* Brand */}
         <div className="text-center">

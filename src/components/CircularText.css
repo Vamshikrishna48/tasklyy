@@ -1,0 +1,30 @@
+.circular-text {
+  margin: 0 auto;
+  border-radius: 50%;
+  width: 220px;
+  position: relative;
+  height: 220px;
+  font-weight: 900;
+  text-align: center;
+  cursor: pointer;
+  transform-origin: 50% 50%;
+  -webkit-transform-origin: 50% 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circular-text span {
+  position: absolute;
+  display: inline-block;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  font-size: 14px; /* Slightly adjusted to fit India's Student Marketplace text nicely */
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #10b981; /* Premium emerald color */
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.4); /* Subtle glow effect */
+  transition: all 0.5s cubic-bezier(0, 0, 0, 1);
+}
