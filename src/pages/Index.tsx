@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <Navbar />
 
       {/* Hero Section - Sticky Fixed */}
@@ -87,7 +87,7 @@ const Index = () => {
       </section>
 
       {/* Categories - Scrolls over Hero */}
-      <section className="relative z-10 border-t bg-card py-16 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
+      <section className="relative z-10 border-t bg-gray-50 py-16 shadow-[0_-20px_50px_rgba(0,0,0,0.05)]">
         <div className="container mx-auto px-4">
           <div className="mb-10 text-center">
             <h2 className="font-display text-3xl font-black text-foreground md:text-5xl tracking-tight">
@@ -106,7 +106,7 @@ const Index = () => {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
               >
                 <Link to={`/jobs?category=${encodeURIComponent(cat.name)}`}>
-                  <div className="group flex cursor-pointer flex-col p-8 rounded-3xl border bg-background/50 backdrop-blur-sm transition-all hover:border-primary hover:shadow-2xl hover:-translate-y-2">
+                  <div className="group flex cursor-pointer flex-col p-8 rounded-3xl border bg-white/80 backdrop-blur-sm transition-all hover:border-primary hover:shadow-2xl hover:-translate-y-2">
                     <span className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">{cat.icon}</span>
                     <span className="font-display text-xl font-bold text-foreground mb-2">
                       {cat.name}
@@ -121,7 +121,7 @@ const Index = () => {
       </section>
 
       {/* FAQ Section (Pulsewave style) */}
-      <section className="relative z-10 bg-card py-24 border-t">
+      <section className="relative z-10 bg-white py-24 border-t">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div>
@@ -144,7 +144,7 @@ const Index = () => {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="group rounded-2xl border bg-background/50 p-6 transition-all hover:border-primary/50 cursor-pointer"
+                  className="group rounded-2xl border bg-gray-50 p-6 transition-all hover:border-primary/50 cursor-pointer"
                 >
                   <h4 className="font-display text-xl font-bold text-foreground flex justify-between items-center group-hover:text-primary transition-colors">
                     {item.q}

@@ -76,31 +76,21 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white relative overflow-hidden">
 
-      {/* Dynamic Wave Background Animation */}
-      <div className="absolute inset-0 z-0 opacity-40">
-        <ColorBends
-          colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
-          rotation={0}
-          speed={0.2}
-          scale={1}
-          frequency={1}
-          warpStrength={1}
-          mouseInfluence={1}
-          parallax={0.5}
-          noise={0.1}
-          transparent
-          autoRotate={0}
-        />
+      {/* Soft colorful gradient blobs — light theme */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-violet-200 via-pink-100 to-transparent opacity-70 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-tl from-emerald-200 via-cyan-100 to-transparent opacity-60 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-blue-100 via-indigo-50 to-transparent opacity-50 blur-3xl" />
       </div>
 
-      {/* Grid overlay */}
+      {/* Subtle dot grid */}
       <div
-        className="absolute inset-0 opacity-[0.04] z-0"
+        className="absolute inset-0 opacity-[0.07] z-0"
         style={{
-          backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
+          backgroundImage: "radial-gradient(circle, #6366f1 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
         }}
       />
 
@@ -118,37 +108,34 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
           className="relative flex items-center justify-center mb-6 scale-[0.75] xs:scale-[0.85] sm:scale-100 origin-center"
         >
-          {/* Premium Glass Card Backdrop */}
-          <div className="absolute w-[470px] h-[470px] rounded-full bg-white/[0.01] border border-white/[0.03] backdrop-blur-[2px] shadow-[inset_0_0_40px_rgba(255,255,255,0.02)] pointer-events-none" />
-          
-          {/* Outer glow ring adjusted to match the enlarged circle */}
+          {/* Soft glow ring */}
           <motion.div
-            animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0.15, 0.4] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute w-[450px] h-[450px] rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-400/20 blur-3xl pointer-events-none"
+            animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.1, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute w-[450px] h-[450px] rounded-full bg-gradient-to-br from-violet-300/30 to-emerald-300/30 blur-3xl pointer-events-none"
           />
-          
-          <CircularText 
-            text="TASKLYY • INDIA'S STUDENT MARKETPLACE • " 
+
+          <CircularText
+            text="TASKLYY • INDIA'S STUDENT MARKETPLACE • "
             spinDuration={20}
             onHover="speedUp"
             size={440}
             radius={176}
           >
-            {/* Brand — logo flush beside text, zero gap */}
+            {/* Brand — bigger logo + text, dark color for light bg */}
             <div className="flex flex-col items-center justify-center">
               <div className="flex flex-row items-center justify-center gap-0">
                 <img
                   src="/taskly-logo.png"
                   alt="Tasklyy Logo"
-                  style={{ width: '48px', height: '48px', marginRight: '0px', animationDuration: '4s' }}
+                  style={{ width: '80px', height: '80px', marginRight: '0px', animationDuration: '4s' }}
                   className="object-contain animate-pulse shrink-0"
                 />
-                <h1 className="font-black tracking-tighter text-white leading-none font-display" style={{ fontSize: '36px' }}>
+                <h1 className="font-black tracking-tighter text-gray-900 leading-none font-display" style={{ fontSize: '56px' }}>
                   Tasklyy
                 </h1>
               </div>
-              <p className="text-[9px] font-bold text-emerald-400 tracking-widest uppercase mt-1">
+              <p className="text-[9px] font-bold text-violet-600 tracking-widest uppercase mt-1">
                 India's Student Marketplace
               </p>
             </div>
@@ -162,23 +149,23 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
-          className="text-xs text-gray-400 tracking-wide"
+          className="text-xs text-gray-500 tracking-wide"
         >
           {loadingTexts[currentText]}
         </motion.p>
 
         {/* Progress bar */}
         <div className="w-64">
-          <div className="w-full h-[3px] bg-white/10 rounded-full overflow-hidden">
+          <div className="w-full h-[3px] bg-gray-200 rounded-full overflow-hidden">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 via-teal-400 to-emerald-400"
+              className="h-full rounded-full bg-gradient-to-r from-violet-500 via-pink-400 to-emerald-500"
               animate={{ width: `${progress}%` }}
               transition={{ ease: "easeOut", duration: 0.3 }}
             />
           </div>
           <div className="flex justify-between mt-1.5">
-            <span className="text-[10px] text-gray-600">Loading</span>
-            <span className="text-[10px] text-gray-500">{Math.round(progress)}%</span>
+            <span className="text-[10px] text-gray-400">Loading</span>
+            <span className="text-[10px] text-gray-400">{Math.round(progress)}%</span>
           </div>
         </div>
       </motion.div>
@@ -188,7 +175,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="absolute bottom-8 text-[11px] text-gray-600 tracking-widest uppercase"
+        className="absolute bottom-8 text-[11px] text-gray-400 tracking-widest uppercase"
       >
         Upload · Assign · Deliver
       </motion.p>
@@ -197,6 +184,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
 };
 
 const queryClient = new QueryClient();
+
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, authLoading } = useApp();

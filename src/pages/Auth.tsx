@@ -96,8 +96,8 @@ const Auth = () => {
 
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center relative overflow-hidden px-4">
-      <div className="absolute inset-0 z-0">
+    <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden px-4">
+      <div className="absolute inset-0 z-0 opacity-5">
         <ColorBends
           colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
           rotation={0} speed={0.2} scale={1} frequency={1}
@@ -116,15 +116,15 @@ const Auth = () => {
         <motion.div className="w-full flex flex-col items-center justify-center text-center mb-6"
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <motion.div className="flex flex-row items-center justify-center mb-3 gap-0" whileHover={{ scale: 1.05 }}>
-            <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '72px', height: '72px', marginRight: '-8px' }} className="object-contain shrink-0" />
-            <span className="font-display font-black text-foreground leading-none" style={{ fontSize: '72px' }}>Tasklyy</span>
+            <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '140px', height: '140px', marginRight: '-4px' }} className="object-contain shrink-0" />
+            <span className="font-display font-black text-foreground leading-none" style={{ fontSize: '120px' }}>Tasklyy</span>
           </motion.div>
           <p className="text-sm text-muted-foreground">
             {isLogin ? "Welcome back to the student marketplace" : "Join the student freelance community"}
           </p>
         </motion.div>
 
-        <Card className="shadow-card border-border/50 backdrop-blur-sm bg-card/95 mx-auto">
+        <Card className="shadow-lg border-gray-200/50 backdrop-blur-sm bg-white/95 mx-auto">
           <CardContent className="p-6">
             {/* Toggle */}
             <div className="relative flex rounded-lg bg-muted p-1 mb-6">
@@ -226,9 +226,9 @@ const Auth = () => {
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 12, delay: 0.1 }}
                 className="mx-auto flex flex-row items-center justify-center mb-2 gap-0">
-                <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '72px', height: '72px', marginRight: '-8px' }} className="object-contain shrink-0" />
+                <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '96px', height: '96px', marginRight: '-4px' }} className="object-contain shrink-0" />
                 <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                  className="font-display font-black text-foreground tracking-tight leading-none" style={{ fontSize: '72px' }}>Tasklyy</motion.h1>
+                  className="font-display font-black text-foreground tracking-tight leading-none" style={{ fontSize: '96px' }}>Tasklyy</motion.h1>
               </motion.div>
               <div>
                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}

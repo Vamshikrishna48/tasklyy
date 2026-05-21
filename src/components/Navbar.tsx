@@ -22,13 +22,13 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-md shadow-sm dark:bg-card/95">
+    <nav className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-md shadow-sm">
       <div className="container mx-auto flex h-24 items-center justify-between px-4">
         <Link to="/" className="flex items-center">
           <img
             src="/taskly-logo.png"
             alt="Tasklyy logo"
-            style={{ width: "96px", height: "96px" }}
+            style={{ width: "110px", height: "110px" }}
             className="object-contain"
           />
           <span className="font-display font-bold text-foreground" style={{ fontSize: "28px", lineHeight: 1, marginLeft: "-12px" }}>
