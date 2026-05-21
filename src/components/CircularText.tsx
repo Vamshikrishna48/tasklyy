@@ -25,9 +25,10 @@ interface CircularTextProps {
   spinDuration?: number;
   onHover?: 'slowDown' | 'speedUp' | 'pause' | 'goBonkers' | '';
   className?: string;
+  children?: React.ReactNode;
 }
 
-const CircularText = ({ text, spinDuration = 20, onHover = 'speedUp', className = '' }: CircularTextProps) => {
+const CircularText = ({ text, spinDuration = 20, onHover = 'speedUp', className = '', children }: CircularTextProps) => {
   const letters = Array.from(text);
   const controls = useAnimation();
   const rotation = useMotionValue(0);
@@ -88,15 +89,10 @@ const CircularText = ({ text, spinDuration = 20, onHover = 'speedUp', className 
   };
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: '380px', height: '380px' }}>
-      {/* Tasklyy Logo placed in the middle of the circular text */}
-      <div className="absolute z-10 flex items-center justify-center pointer-events-none">
-        <img
-          src="/taskly-logo.png"
-          alt="Tasklyy Logo"
-          className="w-64 h-64 object-contain animate-pulse"
-          style={{ animationDuration: '4s' }}
-        />
+    <div className="relative flex items-center justify-center" style={{ width: '340px', height: '340px' }}>
+      {/* Central content (Logo, text, etc.) */}
+      <div className="absolute z-10 flex flex-col items-center justify-center text-center pointer-events-none">
+        {children}
       </div>
 
       <motion.div
@@ -109,8 +105,8 @@ const CircularText = ({ text, spinDuration = 20, onHover = 'speedUp', className 
       >
         {letters.map((letter, i) => {
           const rotationDeg = (360 / letters.length) * i;
-          // Standard circular translation logic - scaled up to match the 380px container
-          const transform = `rotate(${rotationDeg}deg) translateY(-160px)`;
+          // Standard circular translation logic - scaled down to match the 340px container
+          const transform = `rotate(${rotationDeg}deg) translateY(-135px)`;
 
           return (
             <span key={i} style={{ transform, WebkitTransform: transform }}>

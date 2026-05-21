@@ -96,47 +96,41 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="relative z-10 flex flex-col items-center gap-10"
+        className="relative z-10 flex flex-col items-center gap-8"
       >
         {/* Logo + Circular Text */}
         <motion.div
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
-          className="relative flex items-center justify-center mb-6"
+          className="relative flex items-center justify-center mb-4"
         >
           {/* Outer glow ring */}
           <motion.div
             animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.15, 0.4] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute w-[400px] h-[400px] rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-400/20 blur-3xl pointer-events-none"
+            className="absolute w-[360px] h-[360px] rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-400/20 blur-3xl pointer-events-none"
           />
           <CircularText 
             text="TASKLYY • INDIA'S STUDENT MARKETPLACE • " 
             spinDuration={20}
             onHover="speedUp"
-          />
+          >
+            {/* All matter visible inside the circle */}
+            <img
+              src="/taskly-logo.png"
+              alt="Tasklyy Logo"
+              className="w-28 h-28 object-contain animate-pulse mb-3"
+              style={{ animationDuration: '4s' }}
+            />
+            <h1 className="text-3xl font-black tracking-tight text-white leading-none mb-1.5">
+              Tasklyy
+            </h1>
+            <p className="text-[10px] font-semibold text-blue-300 tracking-widest uppercase">
+              India's Student Marketplace
+            </p>
+          </CircularText>
         </motion.div>
-
-        {/* Brand */}
-        <div className="text-center mt-2">
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-5xl font-black tracking-tight text-white animate-pulse"
-          >
-            Tasklyy
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-            className="mt-2 text-sm font-medium text-blue-300 tracking-widest uppercase"
-          >
-            India's Student Marketplace
-          </motion.p>
-        </div>
 
         {/* Animated loading text */}
         <motion.p

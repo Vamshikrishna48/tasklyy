@@ -1,9 +1,9 @@
 .circular-text {
   margin: 0 auto;
   border-radius: 50%;
-  width: 380px;
+  width: 340px;
   position: relative;
-  height: 380px;
+  height: 340px;
   font-weight: 900;
   text-align: center;
   cursor: pointer;
@@ -21,7 +21,7 @@
   right: 0;
   top: 0;
   bottom: 0;
-  font-size: 13px; /* Scaled up for the 280px diameter circle */
+  font-size: 11px; /* Scaled down for premium small circle */
   text-transform: uppercase;
   letter-spacing: 2px;
   color: #10b981; /* Premium emerald color */
