@@ -22,7 +22,7 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 border-b nav-aurora-bg nav-aurora-glow">
+    <nav className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-md shadow-sm dark:bg-card/95">
       <div className="container mx-auto flex h-24 items-center justify-between px-4">
         <Link to="/" className="flex items-center">
           <img
