@@ -40,7 +40,8 @@ export const useJobs = () => {
       .from('jobs')
       .select('*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url)')
       .eq('id', id)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching job:", error);
@@ -78,7 +79,8 @@ export const useJobs = () => {
           status: 'open'
         })
         .select()
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -201,7 +203,7 @@ export const useJobs = () => {
 
   const releaseEscrow = async (jobId: string, userId: string) => {
     try {
-      const { data: jobData } = await (supabase as any).from('jobs').select('*').eq('id', jobId).single();
+      const { data: jobData } = await (supabase as any).from('jobs').select('*').eq('id', jobId).limit(1).maybeSingle();
       if (!jobData || jobData.poster_id !== userId) throw new Error("Unauthorized");
 
       await (supabase as any).from('jobs').update({ status: 'completed' }).eq('id', jobId);
@@ -212,10 +214,10 @@ export const useJobs = () => {
       
       await (supabase as any).from('job_files').update({ is_watermarked: false }).eq('job_id', jobId);
 
-      const { data: escrowData } = await (supabase as any).from('escrow_transactions').select('*').eq('job_id', jobId).single();
+      const { data: escrowData } = await (supabase as any).from('escrow_transactions').select('*').eq('job_id', jobId).limit(1).maybeSingle();
       if (!escrowData) throw new Error("Escrow record missing");
       
-      const { data: worker } = await (supabase as any).from('profiles').select('wallet_balance').eq('id', jobData.worker_id).single();
+      const { data: worker } = await (supabase as any).from('profiles').select('wallet_balance').eq('id', jobData.worker_id).limit(1).maybeSingle();
       await (supabase as any).from('profiles').update({ 
         wallet_balance: ((worker as any)?.wallet_balance || 0) + escrowData.worker_amount 
       }).eq('id', jobData.worker_id);
@@ -231,7 +233,7 @@ export const useJobs = () => {
   const placeBid = async (bidData: any) => {
     try {
       await ensureProfile(bidData.bidder_id);
-      const { data, error } = await (supabase as any).from('bids').insert(bidData).select().single();
+      const { data, error } = await (supabase as any).from('bids').insert(bidData).select().limit(1).maybeSingle();
       if (error) throw error;
       return data;
     } catch (error: any) {
@@ -244,16 +246,11 @@ export const useJobs = () => {
     try {
       const { error } = await (supabase as any)
         .from('jobs')
-        .update({ 
-          status: 'disputed',
-          worker_id: null, 
-          payment_due_at: null,
-          accepted_bid_id: null
-        })
+        .delete()
         .eq('id', jobId);
       
       if (error) throw error;
-      toast.error("Payment deadline missed. Project has been rejected.");
+      toast.error("Payment deadline missed. Job deleted from website.");
       return true;
     } catch (err: any) {
       toast.error(err.message);

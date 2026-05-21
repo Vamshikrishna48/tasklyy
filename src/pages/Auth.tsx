@@ -155,7 +155,7 @@ const Auth = () => {
                 {!isLogin && (
                   <motion.div key="name" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
-                    <Label htmlFor="name" className="text-foreground">Display Name</Label>
+                    <Label htmlFor="name" className="block text-left mb-1.5 text-sm font-medium text-foreground">Display Name</Label>
                     <div className="relative mt-1">
                       <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input id="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
@@ -166,7 +166,7 @@ const Auth = () => {
               </AnimatePresence>
 
               <motion.div layout>
-                <Label htmlFor="email" className="text-foreground">Email</Label>
+                <Label htmlFor="email" className="block text-left mb-1.5 text-sm font-medium text-foreground">Email</Label>
                 <div className="relative mt-1">
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
@@ -175,7 +175,7 @@ const Auth = () => {
               </motion.div>
 
               <motion.div layout>
-                <Label htmlFor="password" className="text-foreground">Password</Label>
+                <Label htmlFor="password" className="block text-left mb-1.5 text-sm font-medium text-foreground">Password</Label>
                 <div className="relative mt-1">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input id="password" type={showPassword ? "text" : "password"} value={password}

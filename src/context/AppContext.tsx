@@ -186,60 +186,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // On auth ready, fetch real jobs from Supabase and merge with mock
   useEffect(() => {
     if (!authLoading) {
-      supabaseFetchJobs().then((realJobs) => {
-        if (realJobs && realJobs.length > 0) {
-          // Map Supabase jobs to the mock Job shape for UI compatibility
-          const mapped: Job[] = realJobs.map((rj: any) => ({
-            id: rj.id,
-            title: rj.title,
-            description: rj.description,
-            category: rj.category,
-            budget: rj.budget,
-            deadline: rj.deadline || '',
-            postedBy: {
-              name: rj.poster?.full_name || 'Unknown',
-              avatar: (rj.poster?.full_name || 'U').substring(0, 2).toUpperCase(),
-              rating: 4.5,
-              campus: '',
-            },
-            bidsCount: 0,
-            status: rj.status as Job['status'],
-            createdAt: rj.created_at?.split('T')[0] || '',
-            skills: rj.skills || [],
-            instructions: rj.instructions || undefined,
-            poster_id: rj.poster_id,
-            worker_id: rj.worker_id,
-            payment_due_at: rj.payment_due_at,
-            accepted_bid_id: rj.accepted_bid_id,
-            isUrgent: rj.is_urgent,
-            isQuickTask: rj.is_quick_task,
-            campusOnly: rj.campus_only,
-            isMentoring: rj.is_mentoring,
-            isTeamTask: rj.is_team_task,
-            is_urgent: rj.is_urgent,
-            is_quick_task: rj.is_quick_task,
-            campus_only: rj.campus_only,
-            is_mentoring: rj.is_mentoring,
-            is_team_task: rj.is_team_task,
-          }));
-          setJobs((prev) => {
-            const existingIds = new Set(prev.map(j => j.id));
-            const newOnes = mapped.filter(j => !existingIds.has(j.id));
-            // Update existing ones if they changed
-            const updated = prev.map(p => {
-              const match = mapped.find(m => m.id === p.id);
-              return match ? { ...p, ...match } : p;
-            });
-            return [...newOnes, ...updated];
-          });
-        }
-      });
+      const fetchAllJobsData = () => {
+        supabaseFetchJobs().then((realJobs) => {
+          if (realJobs && realJobs.length > 0) {
+            // Map Supabase jobs to the mock Job shape for UI compatibility
+            const mapped: Job[] = realJobs.map((rj: any) => ({
+              id: rj.id,
+              title: rj.title,
+              description: rj.description,
+              category: rj.category,
+              budget: rj.budget,
+              deadline: rj.deadline || '',
+              postedBy: {
+                name: rj.poster?.full_name || 'Unknown',
+                avatar: (rj.poster?.full_name || 'U').substring(0, 2).toUpperCase(),
+                rating: 4.5,
+                campus: '',
+              },
+              bidsCount: 0,
+              status: rj.status as Job['status'],
+              createdAt: rj.created_at?.split('T')[0] || '',
+              skills: rj.skills || [],
+              instructions: rj.instructions || undefined,
+              poster_id: rj.poster_id,
+              worker_id: rj.worker_id,
+              payment_due_at: rj.payment_due_at,
+              accepted_bid_id: rj.accepted_bid_id,
+              isUrgent: rj.is_urgent,
+              isQuickTask: rj.is_quick_task,
+              campusOnly: rj.campus_only,
+              isMentoring: rj.is_mentoring,
+              isTeamTask: rj.is_team_task,
+              is_urgent: rj.is_urgent,
+              is_quick_task: rj.is_quick_task,
+              campus_only: rj.campus_only,
+              is_mentoring: rj.is_mentoring,
+              is_team_task: rj.is_team_task,
+            }));
+            setJobs(mapped);
+          } else {
+            setJobs([]);
+          }
+        });
+      };
 
-      // Also fetch user's own jobs
-      if (user?.id) {
-        supabaseFetchMyJobs(user.id).then((result) => {
-          if (result.posted.length > 0) {
-            const mapped: Job[] = result.posted.map((rj: any) => ({
+      const updateMyJobs = () => {
+        if (user?.id) {
+          supabaseFetchMyJobs(user.id).then((result) => {
+            const mappedPosted: Job[] = (result.posted || []).map((rj: any) => ({
               id: rj.id,
               title: rj.title,
               description: rj.description,
@@ -272,13 +266,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
               is_mentoring: rj.is_mentoring,
               is_team_task: rj.is_team_task,
             }));
-            setMyPostedJobs((prev) => {
-              const realIds = new Set(mapped.map((j) => j.id));
-              return [...mapped, ...prev.filter((j) => !realIds.has(j.id))];
-            });
-          }
-          if (result.working && result.working.length > 0) {
-            const mappedWorking: Job[] = result.working.map((rj: any) => ({
+            setMyPostedJobs(mappedPosted);
+
+            const mappedWorking: Job[] = (result.working || []).map((rj: any) => ({
               id: rj.id,
               title: rj.title,
               description: rj.description,
@@ -305,67 +295,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
               campusOnly: rj.campus_only,
               isMentoring: rj.is_mentoring,
               isTeamTask: rj.is_team_task,
+              is_urgent: rj.is_urgent,
+              is_quick_task: rj.is_quick_task,
+              campus_only: rj.campus_only,
+              is_mentoring: rj.is_mentoring,
+              is_team_task: rj.is_team_task,
             }));
-            setMyWorkingJobs((prev) => {
-              const realIds = new Set(mappedWorking.map((j) => j.id));
-              return [...mappedWorking, ...prev.filter((j) => !realIds.has(j.id))];
-            });
-          }
-        });
-      }
+            setMyWorkingJobs(mappedWorking);
+          });
+        } else {
+          setMyPostedJobs([]);
+          setMyWorkingJobs([]);
+        }
+      };
+
+      fetchAllJobsData();
+      updateMyJobs();
 
       // Real-time subscription to keep dashboard updated across accounts
       const channel = supabase.channel('public:jobs')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, () => {
-          // Re-fetch all jobs on any change to keep everyone in sync
-          supabaseFetchJobs().then((realJobs) => {
-            if (realJobs && realJobs.length > 0) {
-              const mapped: Job[] = realJobs.map((rj: any) => ({
-                id: rj.id,
-                title: rj.title,
-                description: rj.description,
-                category: rj.category,
-                budget: rj.budget,
-                deadline: rj.deadline || '',
-                postedBy: {
-                  name: rj.poster?.full_name || 'Unknown',
-                  avatar: (rj.poster?.full_name || 'U').substring(0, 2).toUpperCase(),
-                  rating: 4.5,
-                  campus: '',
-                },
-                bidsCount: 0,
-                status: rj.status as Job['status'],
-                createdAt: rj.created_at?.split('T')[0] || '',
-                skills: rj.skills || [],
-                instructions: rj.instructions || undefined,
-                poster_id: rj.poster_id,
-                worker_id: rj.worker_id,
-                payment_due_at: rj.payment_due_at,
-                accepted_bid_id: rj.accepted_bid_id,
-                isUrgent: rj.is_urgent,
-                isQuickTask: rj.is_quick_task,
-                campusOnly: rj.campus_only,
-                isMentoring: rj.is_mentoring,
-                isTeamTask: rj.is_team_task,
-                is_urgent: rj.is_urgent,
-                is_quick_task: rj.is_quick_task,
-                campus_only: rj.campus_only,
-                is_mentoring: rj.is_mentoring,
-                is_team_task: rj.is_team_task,
-              }));
-              setJobs((prev) => {
-                const existingIds = new Set(prev.map(j => j.id));
-                const newOnes = mapped.filter(j => !existingIds.has(j.id));
-                const updated = prev.map(p => {
-                  const match = mapped.find(m => m.id === p.id);
-                  return match ? { ...p, ...match } : p;
-                });
-                return [...newOnes, ...updated].filter(j => mapped.some(m => m.id === j.id));
-              });
-            } else {
-              setJobs([]);
-            }
-          });
+          fetchAllJobsData();
+          updateMyJobs();
         })
         .subscribe();
 

@@ -23,14 +23,33 @@ declare global {
   }
 }
 
-export function openRazorpayCheckout(
+export const loadRazorpay = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => {
+      console.error("Razorpay SDK failed to load. Are you offline or using an adblocker?");
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+};
+
+export async function openRazorpayCheckout(
   amountInRupees: number,
   jobTitle: string,
   userEmail: string | null,
   onSuccess: () => void,
   onFailure: () => void
 ) {
-  if (!window.Razorpay) {
+  const isLoaded = await loadRazorpay();
+  if (!isLoaded || !window.Razorpay) {
+    console.error("Razorpay script not available.");
     onFailure();
     return;
   }
