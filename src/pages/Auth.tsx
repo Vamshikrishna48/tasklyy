@@ -116,7 +116,7 @@ const Auth = () => {
         <motion.div className="w-full flex flex-col items-center justify-center text-center mb-6"
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <motion.div className="flex flex-row items-center justify-center mb-3 gap-0" whileHover={{ scale: 1.05 }}>
-            <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '180px', height: '180px' }} className="object-contain shrink-0" />
+            <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '80px', height: '80px' }} className="object-contain shrink-0" />
             <span className="font-display font-black text-foreground leading-none" style={{ fontSize: '72px' }}>Tasklyy</span>
           </motion.div>
           <p className="text-sm text-muted-foreground">
