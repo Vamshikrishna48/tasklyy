@@ -45,11 +45,11 @@ const PageLoader = () => {
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="flex flex-row items-center justify-center gap-4 mt-8 mb-8 z-10"
           >
-            <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center">
+            <div className="w-40 h-40 rounded-full bg-white shadow-lg flex items-center justify-center">
               <img
                 src="/taskly-logo.png"
                 alt="Tasklyy logo"
-                className="w-20 h-20 object-contain"
+                className="w-36 h-36 object-contain"
               />
             </div>
             <span className="font-display text-4xl font-black text-gray-700">
