@@ -190,31 +190,39 @@ const JobDetail = () => {
       job?.title || "Job",
       user?.email || null,
       async () => {
-        // Create escrow
-        const platformFee = Math.round(bid.amount * 0.30);
-        const workerAmount = bid.amount - platformFee;
-        await (supabase as any).from("escrow_transactions").insert({
-          job_id: id!,
-          poster_id: user!.id,
-          worker_id: bid.bidder_id,
-          total_amount: bid.amount,
-          platform_fee: platformFee,
-          worker_amount: workerAmount,
-          status: "held",
-        });
-        await (supabase as any).from("jobs").update({ status: "accepted", instructions_locked: false } as any).eq("id", id!);
-        await (supabase as any).from("admin_ledger").insert({
-          job_id: id!,
-          type: "fee_collected",
-          amount: platformFee,
-          from_user_id: user!.id,
-          note: `30% platform fee for: ${job?.title}`,
-        });
-        toast.success(`Payment confirmed! Job is now in progress.`);
-        setPaymentDue(null);
-        loadJob();
+        try {
+          // Create escrow
+          const platformFee = Math.round(bid.amount * 0.30);
+          const workerAmount = bid.amount - platformFee;
+          await (supabase as any).from("escrow_transactions").insert({
+            job_id: id!,
+            poster_id: user!.id,
+            worker_id: bid.bidder_id,
+            total_amount: bid.amount,
+            platform_fee: platformFee,
+            worker_amount: workerAmount,
+            status: "held",
+          });
+          await (supabase as any).from("jobs").update({ status: "accepted", instructions_locked: false } as any).eq("id", id!);
+          await (supabase as any).from("admin_ledger").insert({
+            job_id: id!,
+            type: "fee_collected",
+            amount: platformFee,
+            from_user_id: user!.id,
+            note: `30% platform fee for: ${job?.title}`,
+          });
+          toast.success(`Payment confirmed! Job is now in progress.`);
+          setPaymentDue(null);
+          loadJob();
+        } catch (err) {
+          console.error("Error processing payment:", err);
+          toast.error("Payment processed but failed to confirm. Please contact support.");
+        }
       },
-      () => toast.error("Payment failed or cancelled.")
+      () => {
+        console.log("Payment cancelled or failed");
+        toast.error("Payment was cancelled or failed. Please try again.");
+      }
     );
   };
 

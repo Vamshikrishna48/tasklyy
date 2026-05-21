@@ -70,8 +70,14 @@ export async function openRazorpayCheckout(
     currency: "INR",
     name: "Tasklyy Platform",
     description: `Payment for job: ${jobTitle}`,
-    handler: () => {
-      onSuccess();
+    handler: (response: any) => {
+      console.log("Payment successful:", response);
+      if (response.razorpay_payment_id) {
+        onSuccess();
+      } else {
+        console.error("Payment response missing payment ID");
+        onFailure();
+      }
     },
     prefill: {
       email: userEmail ?? undefined,
@@ -81,7 +87,7 @@ export async function openRazorpayCheckout(
     },
     modal: {
       ondismiss: () => {
-        onFailure();
+        console.log("Razorpay modal dismissed - user cancelled payment");
       },
     },
   };
@@ -90,7 +96,7 @@ export async function openRazorpayCheckout(
   try {
     rzp.open();
   } catch (e) {
-    console.error(e);
+    console.error("Razorpay error:", e);
     onFailure();
   }
 }
