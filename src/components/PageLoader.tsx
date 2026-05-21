@@ -52,7 +52,7 @@ const PageLoader = () => {
                 className="w-36 h-36 object-contain"
               />
             </div>
-            <span className="font-display text-4xl font-black text-gray-700">
+            <span className="font-display text-2xl font-black text-gray-700">
               Tasklyy
             </span>
           </motion.div>
