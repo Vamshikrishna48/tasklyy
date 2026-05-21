@@ -102,7 +102,7 @@ const JobDetail = () => {
   const isMyJob = job?.poster_id === user?.id;
   const isMyWorkerJob = job?.worker_id === user?.id;
   const isAuthorized = isMyJob || isMyWorkerJob;
-  const maxBidAmount = 100;
+  const maxBidAmount = job?.budget || 1000000;
   const myBid = bids.find(b => b.bidder_id === user?.id);
   const acceptedBid = bids.find(b => b.status === "accepted");
 

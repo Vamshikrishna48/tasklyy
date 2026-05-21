@@ -103,38 +103,38 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
-          className="relative flex items-center justify-center mb-6"
+          className="relative flex items-center justify-center mb-6 scale-[0.75] xs:scale-[0.85] sm:scale-100 origin-center"
         >
           {/* Premium Glass Card Backdrop */}
-          <div className="absolute w-[310px] h-[310px] rounded-full bg-white/[0.01] border border-white/[0.03] backdrop-blur-[2px] shadow-[inset_0_0_40px_rgba(255,255,255,0.02)] pointer-events-none" />
+          <div className="absolute w-[470px] h-[470px] rounded-full bg-white/[0.01] border border-white/[0.03] backdrop-blur-[2px] shadow-[inset_0_0_40px_rgba(255,255,255,0.02)] pointer-events-none" />
           
-          {/* Outer glow ring adjusted to match the smaller circle */}
+          {/* Outer glow ring adjusted to match the enlarged circle */}
           <motion.div
             animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0.15, 0.4] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute w-[300px] h-[300px] rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-400/20 blur-3xl pointer-events-none"
+            className="absolute w-[450px] h-[450px] rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-400/20 blur-3xl pointer-events-none"
           />
           
           <CircularText 
             text="TASKLYY • INDIA'S STUDENT MARKETPLACE • " 
             spinDuration={20}
             onHover="speedUp"
-            size={280}
-            radius={112}
+            size={440}
+            radius={176}
           >
             {/* Brand elements aligned side-by-side with absolutely zero space */}
             <div className="flex flex-row items-center justify-center gap-0">
               <img
                 src="/taskly-logo.png"
                 alt="Tasklyy Logo"
-                style={{ width: '84px', height: '84px', marginRight: '-12px', animationDuration: '4s' }}
+                style={{ width: '130px', height: '130px', marginRight: '-16px', animationDuration: '4s' }}
                 className="object-contain animate-pulse shrink-0"
               />
-              <h1 className="text-5xl font-black tracking-tighter text-white leading-none">
+              <h1 className="font-black tracking-tighter text-white leading-none" style={{ fontSize: '64px' }}>
                 Tasklyy
               </h1>
             </div>
-            <p className="text-[8px] font-bold text-emerald-400 tracking-widest uppercase mt-2">
+            <p className="text-[10px] font-bold text-emerald-400 tracking-widest uppercase mt-2">
               India's Student Marketplace
             </p>
           </CircularText>

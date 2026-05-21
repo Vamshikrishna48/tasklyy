@@ -92,8 +92,8 @@ const PostJob = () => {
     }
     
     const numericBudget = Number(budget);
-    if (!numericBudget || numericBudget < 500) {
-      toast.error("Minimum budget must be ₹500");
+    if (isNaN(numericBudget) || numericBudget <= 0) {
+      toast.error("Please enter a valid budget greater than ₹0");
       return;
     }
 
@@ -227,7 +227,7 @@ const PostJob = () => {
                     <label className="mb-1.5 block text-sm font-medium text-foreground">Budget (₹) *</label>
                     <Input
                       type="number"
-                      placeholder="Min ₹500"
+                      placeholder="e.g. 500"
                       value={budget}
                       onChange={(e) => setBudget(e.target.value)}
                     />
