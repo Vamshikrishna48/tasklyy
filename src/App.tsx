@@ -38,7 +38,7 @@ const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const SplashScreen = () => {
+const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [progress, setProgress] = useState(0);
   const [currentText, setCurrentText] = useState(0);
 
@@ -50,19 +50,27 @@ const SplashScreen = () => {
   ];
 
   useEffect(() => {
+    const duration = 8000; // 8 seconds total loading
+    const intervalTime = 50; // update progress every 50ms
+    const step = 100 / (duration / intervalTime); // increment step: 0.625% per step
+
     const timer = setInterval(() => {
       setProgress((old) => {
-        if (old >= 100) { clearInterval(timer); return 100; }
-        return Math.min(old + Math.random() * 8 + 2, 100);
+        if (old >= 100) {
+          clearInterval(timer);
+          setTimeout(onComplete, 300); // Pause briefly at 100% so it is fully visible
+          return 100;
+        }
+        return Math.min(old + step, 100);
       });
-    }, 120);
+    }, intervalTime);
     return () => clearInterval(timer);
-  }, []);
+  }, [onComplete]);
 
   useEffect(() => {
     const t = setInterval(() => {
       setCurrentText((old) => (old + 1) % loadingTexts.length);
-    }, 900);
+    }, 2000); // calm transition matching the 8 second load time
     return () => clearInterval(t);
   }, []);
 
@@ -195,11 +203,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -210,7 +213,7 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               {showSplash ? (
-                <SplashScreen />
+                <SplashScreen onComplete={() => setShowSplash(false)} />
               ) : (
                 <Routes>
                   <Route path="/auth" element={<Auth />} />

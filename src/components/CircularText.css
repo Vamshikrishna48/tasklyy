@@ -1,9 +1,9 @@
 .circular-text {
   margin: 0 auto;
   border-radius: 50%;
-  width: 220px;
+  width: 160px;
   position: relative;
-  height: 220px;
+  height: 160px;
   font-weight: 900;
   text-align: center;
   cursor: pointer;
@@ -21,9 +21,9 @@
   right: 0;
   top: 0;
   bottom: 0;
-  font-size: 14px; /* Slightly adjusted to fit India's Student Marketplace text nicely */
+  font-size: 10px; /* Adjusted to fit text nicely on a smaller radius */
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   color: #10b981; /* Premium emerald color */
   text-shadow: 0 0 8px rgba(16, 185, 129, 0.4); /* Subtle glow effect */
   transition: all 0.5s cubic-bezier(0, 0, 0, 1);
