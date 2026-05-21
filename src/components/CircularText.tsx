@@ -88,13 +88,13 @@ const CircularText = ({ text, spinDuration = 20, onHover = 'speedUp', className 
   };
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: '160px', height: '160px' }}>
-      {/* Taskly Logo placed in the middle of the circular text */}
+    <div className="relative flex items-center justify-center" style={{ width: '380px', height: '380px' }}>
+      {/* Tasklyy Logo placed in the middle of the circular text */}
       <div className="absolute z-10 flex items-center justify-center pointer-events-none">
         <img
           src="/taskly-logo.png"
-          alt="Taskly Logo"
-          className="w-24 h-24 object-contain animate-pulse"
+          alt="Tasklyy Logo"
+          className="w-64 h-64 object-contain animate-pulse"
           style={{ animationDuration: '4s' }}
         />
       </div>
@@ -109,8 +109,8 @@ const CircularText = ({ text, spinDuration = 20, onHover = 'speedUp', className 
       >
         {letters.map((letter, i) => {
           const rotationDeg = (360 / letters.length) * i;
-          // Standard circular translation logic - reduced to match the 160px circle
-          const transform = `rotate(${rotationDeg}deg) translateY(-68px)`;
+          // Standard circular translation logic - scaled up to match the 380px container
+          const transform = `rotate(${rotationDeg}deg) translateY(-160px)`;
 
           return (
             <span key={i} style={{ transform, WebkitTransform: transform }}>

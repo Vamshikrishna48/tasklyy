@@ -65,7 +65,7 @@ export async function openRazorpayCheckout(
     key,
     amount: amountInRupees * 100, // Razorpay works in paise
     currency: "INR",
-    name: "Taskly Platform",
+    name: "Tasklyy Platform",
     description: `Payment for job: ${jobTitle}`,
     handler: () => {
       onSuccess();

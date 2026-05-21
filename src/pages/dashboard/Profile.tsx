@@ -88,7 +88,7 @@ const Profile = () => {
                 <UserCircle className="h-5 w-5 text-primary" />
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">University</p>
-                  <p className="text-sm font-semibold text-foreground">Taskly University</p>
+                  <p className="text-sm font-semibold text-foreground">Tasklyy University</p>
                 </div>
               </div>
 

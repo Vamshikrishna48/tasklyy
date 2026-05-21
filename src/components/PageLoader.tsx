@@ -35,27 +35,27 @@ const PageLoader = () => {
         className="flex flex-col items-center gap-6"
       >
         {/* Logo pill / card */}
-        <div className="relative flex flex-col items-center justify-center">
+        <div className="relative flex flex-col items-center justify-center px-6">
           {/* Outer pill border */}
-          <div className="absolute inset-0 rounded-[3rem] border border-rose-200 w-36 h-52 -translate-x-1/2 left-1/2" />
+          <div className="absolute inset-0 rounded-[4rem] border border-rose-200 w-80 h-40 -translate-x-1/2 left-1/2" />
 
-          {/* White circle with logo */}
+          {/* White circle with logo and Brand name inline */}
           <motion.div
             animate={{ scale: [1, 1.04, 1] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center mb-4 mt-6"
+            className="flex flex-row items-center justify-center gap-4 mt-8 mb-8 z-10"
           >
-            <img
-              src="/taskly-logo.png"
-              alt="Taskly logo"
-              className="w-24 h-24 object-contain"
-            />
+            <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center">
+              <img
+                src="/taskly-logo.png"
+                alt="Tasklyy logo"
+                className="w-20 h-20 object-contain"
+              />
+            </div>
+            <span className="font-display text-4xl font-black text-gray-700">
+              Tasklyy
+            </span>
           </motion.div>
-
-          {/* Brand name */}
-          <span className="font-display text-3xl font-bold text-gray-700 mb-6">
-            Taskly
-          </span>
         </div>
 
         {/* Progress bar */}

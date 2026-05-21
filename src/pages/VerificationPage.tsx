@@ -164,7 +164,7 @@ const VerificationPage = () => {
             </div>
             <div>
               <p className="font-bold text-blue-800">Complete verification to unlock full access</p>
-              <p className="text-sm text-blue-700">Start the process below to become a trusted member of Taskly.</p>
+              <p className="text-sm text-blue-700">Start the process below to become a trusted member of Tasklyy.</p>
             </div>
           </motion.div>
         )}

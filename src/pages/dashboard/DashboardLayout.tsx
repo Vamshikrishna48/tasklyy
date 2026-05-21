@@ -21,7 +21,7 @@ const DashboardLayout = () => {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center border-b bg-card/80 backdrop-blur-lg px-4 gap-3">
             <SidebarTrigger />
-            <span className="font-display font-semibold text-foreground">Taskly Dashboard</span>
+            <span className="font-display font-semibold text-foreground">Tasklyy Dashboard</span>
           </header>
           <main className="flex-1 overflow-auto">
             <Outlet />

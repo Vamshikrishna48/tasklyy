@@ -27,12 +27,12 @@ const Navbar = () => {
         <Link to="/" className="flex items-center">
           <img
             src="/taskly-logo.png"
-            alt="Taskly logo"
+            alt="Tasklyy logo"
             style={{ width: "96px", height: "96px" }}
             className="object-contain"
           />
           <span className="font-display font-bold text-foreground" style={{ fontSize: "28px", lineHeight: 1, marginLeft: "-12px" }}>
-            Taskly
+            Tasklyy
           </span>
         </Link>
 
