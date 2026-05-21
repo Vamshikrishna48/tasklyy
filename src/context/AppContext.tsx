@@ -93,6 +93,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  // Track the logged-in user ID to prevent background token refreshes from wiping out dashboard states
+  const lastUserIdRef = React.useRef<string | null>(null);
+
   // Fetch profile row from Supabase when user changes
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await (supabase
@@ -138,6 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       if (currentSession?.user) {
+        lastUserIdRef.current = currentSession.user.id;
         await fetchProfile(currentSession.user.id);
       }
       setAuthLoading(false);
@@ -146,20 +150,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // 2. Listen for auth state changes (login / logout / token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
+        const newUserId = newSession?.user?.id || null;
+        const oldUserId = lastUserIdRef.current;
+
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        // CRITICAL: Clear all user-specific data when session changes
-        // This prevents data leakage when switching accounts
-        setMyPostedJobs([]);
-        setMyWorkingJobs([]);
-        setMyBids([]);
-        setPayments([]);
-        
-        if (newSession?.user) {
-          fetchProfile(newSession.user.id);
-        } else {
-          setProfile(null);
+        // ONLY clear and refresh states if the user ID actually changed (e.g. login, logout, switch)
+        if (newUserId !== oldUserId) {
+          lastUserIdRef.current = newUserId;
+          setMyPostedJobs([]);
+          setMyWorkingJobs([]);
+          setMyBids([]);
+          setPayments([]);
+          
+          if (newSession?.user) {
+            fetchProfile(newSession.user.id);
+          } else {
+            setProfile(null);
+          }
         }
       }
     );

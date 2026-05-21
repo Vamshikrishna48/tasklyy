@@ -101,7 +101,7 @@ const CircularText = ({
   return (
     <div className="relative flex items-center justify-center" style={{ width: `${size}px`, height: `${size}px` }}>
       {/* Central content (Logo, text, etc.) */}
-      <div className="absolute z-10 flex flex-col items-center justify-center text-center pointer-events-none">
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center pointer-events-none">
         {children}
       </div>
 
