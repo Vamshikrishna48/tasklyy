@@ -105,28 +105,28 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
           className="relative flex items-center justify-center mb-4"
         >
-          {/* Outer glow ring */}
+          {/* Outer glow ring adjusted to match the smaller 290px circle */}
           <motion.div
             animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.15, 0.4] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute w-[360px] h-[360px] rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-400/20 blur-3xl pointer-events-none"
+            className="absolute w-[310px] h-[310px] rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-400/20 blur-3xl pointer-events-none"
           />
           <CircularText 
             text="TASKLYY • INDIA'S STUDENT MARKETPLACE • " 
             spinDuration={20}
             onHover="speedUp"
           >
-            {/* All matter visible inside the circle */}
+            {/* All matter beautifully aligned and fully visible inside the circle */}
             <img
               src="/taskly-logo.png"
               alt="Tasklyy Logo"
-              className="w-28 h-28 object-contain animate-pulse mb-3"
+              className="w-32 h-32 object-contain animate-pulse mb-2"
               style={{ animationDuration: '4s' }}
             />
-            <h1 className="text-3xl font-black tracking-tight text-white leading-none mb-1.5">
+            <h1 className="text-2xl font-black tracking-tight text-white leading-none mb-1">
               Tasklyy
             </h1>
-            <p className="text-[10px] font-semibold text-blue-300 tracking-widest uppercase">
+            <p className="text-[9px] font-semibold text-blue-300 tracking-widest uppercase">
               India's Student Marketplace
             </p>
           </CircularText>

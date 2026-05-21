@@ -113,13 +113,13 @@ const Auth = () => {
         className="relative z-10 w-full max-w-md"
       >
         {/* Logo */}
-        <motion.div className="w-full flex flex-col items-center justify-center text-center mb-8"
+        <motion.div className="w-full flex flex-col items-center justify-center text-center mb-6"
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <motion.div className="flex flex-row items-center justify-center mb-4 gap-4" whileHover={{ scale: 1.05 }}>
-            <img src="/taskly-logo.png" alt="Tasklyy logo" className="h-28 w-28 object-contain shrink-0" />
-            <span className="font-display text-4xl font-black text-foreground leading-none">Tasklyy</span>
+          <motion.div className="flex flex-col items-center justify-center mb-3 gap-2" whileHover={{ scale: 1.05 }}>
+            <img src="/taskly-logo.png" alt="Tasklyy logo" className="h-20 w-20 object-contain shrink-0" />
+            <span className="font-display text-3xl font-black text-foreground leading-none">Tasklyy</span>
           </motion.div>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {isLogin ? "Welcome back to the student marketplace" : "Join the student freelance community"}
           </p>
         </motion.div>
@@ -222,13 +222,13 @@ const Auth = () => {
               <ColorBends colors={["#ff5c7a", "#8a5cff", "#00ffd1"]} rotation={0} speed={0.2} scale={1}
                 frequency={1} warpStrength={1} mouseInfluence={1} parallax={0.5} noise={0.1} transparent autoRotate={0} />
             </div>
-            <div className="relative z-10 text-center space-y-6 flex flex-col items-center">
+            <div className="relative z-10 text-center space-y-4 flex flex-col items-center">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 12, delay: 0.1 }}
-                className="mx-auto flex flex-row items-center justify-center mb-6 gap-4">
-                <img src="/taskly-logo.png" alt="Tasklyy logo" className="h-28 w-28 object-contain" />
+                className="mx-auto flex flex-col items-center justify-center mb-2 gap-2">
+                <img src="/taskly-logo.png" alt="Tasklyy logo" className="h-20 w-20 object-contain" />
                 <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                  className="font-display text-4xl font-black text-foreground tracking-tight leading-none">Tasklyy</motion.h1>
+                  className="font-display text-3xl font-black text-foreground tracking-tight leading-none">Tasklyy</motion.h1>
               </motion.div>
               <div>
                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}

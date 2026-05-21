@@ -26,9 +26,19 @@ interface CircularTextProps {
   onHover?: 'slowDown' | 'speedUp' | 'pause' | 'goBonkers' | '';
   className?: string;
   children?: React.ReactNode;
+  size?: number;     // width and height of the container in px
+  radius?: number;   // radius of the circle in px (translateY value)
 }
 
-const CircularText = ({ text, spinDuration = 20, onHover = 'speedUp', className = '', children }: CircularTextProps) => {
+const CircularText = ({
+  text,
+  spinDuration = 20,
+  onHover = 'speedUp',
+  className = '',
+  children,
+  size = 290,     // Default to 290px (smaller & more premium!)
+  radius = 115    // Default to 115px translateY (diameter 230px)
+}: CircularTextProps) => {
   const letters = Array.from(text);
   const controls = useAnimation();
   const rotation = useMotionValue(0);
@@ -89,7 +99,7 @@ const CircularText = ({ text, spinDuration = 20, onHover = 'speedUp', className 
   };
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: '340px', height: '340px' }}>
+    <div className="relative flex items-center justify-center" style={{ width: `${size}px`, height: `${size}px` }}>
       {/* Central content (Logo, text, etc.) */}
       <div className="absolute z-10 flex flex-col items-center justify-center text-center pointer-events-none">
         {children}
@@ -97,7 +107,7 @@ const CircularText = ({ text, spinDuration = 20, onHover = 'speedUp', className 
 
       <motion.div
         className={`circular-text ${className}`}
-        style={{ rotate: rotation }}
+        style={{ rotate: rotation, width: `${size}px`, height: `${size}px` }}
         initial={{ rotate: 0 }}
         animate={controls}
         onMouseEnter={handleHoverStart}
@@ -105,8 +115,8 @@ const CircularText = ({ text, spinDuration = 20, onHover = 'speedUp', className 
       >
         {letters.map((letter, i) => {
           const rotationDeg = (360 / letters.length) * i;
-          // Standard circular translation logic - scaled down to match the 340px container
-          const transform = `rotate(${rotationDeg}deg) translateY(-135px)`;
+          // Dynamically translate by the custom radius
+          const transform = `rotate(${rotationDeg}deg) translateY(-${radius}px)`;
 
           return (
             <span key={i} style={{ transform, WebkitTransform: transform }}>
