@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Send, ArrowLeft, Sparkles, AlertTriangle } from "lucide-react";
+import { Send, ArrowLeft, Sparkles, AlertTriangle, CreditCard } from "lucide-react";
 import { categories } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import Navbar from "@/components/Navbar";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
 import { Switch } from "@/components/ui/switch";
@@ -20,7 +19,7 @@ import { FileUp, X, Loader2 } from "lucide-react";
 
 const PostJob = () => {
   const navigate = useNavigate();
-  const { addJob, recordPostingFee } = useApp();
+  const { addJob, recordPostingFee, profile } = useApp();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -67,6 +66,18 @@ const PostJob = () => {
 
 
   const handleSubmit = () => {
+    // Check UPI ID first
+    const upiId = (profile as any)?.upi_id;
+    if (!upiId) {
+      toast.error("You must set your UPI ID in your Profile before posting a job.", {
+        action: {
+          label: "Go to Profile",
+          onClick: () => navigate("/dashboard/profile"),
+        },
+      });
+      return;
+    }
+
     if (!title.trim() || !description.trim() || !category || !deadline) {
       toast.error("Please fill in all required fields (Title, Description, Category, Deadline)");
       return;
@@ -176,7 +187,26 @@ const PostJob = () => {
           <h1 className="font-display text-3xl font-bold text-foreground">Post a Job</h1>
           <p className="mt-1 mb-8 text-muted-foreground">Describe what you need done and how you want to pay.</p>
 
+          {/* UPI ID Required Warning */}
+          {!(profile as any)?.upi_id && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <CreditCard className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-bold text-red-800 text-sm">UPI ID Required Before Posting</p>
+                <p className="text-xs text-red-600 mt-0.5">
+                  You must add your UPI ID to your profile so the platform can process payments to you.
+                </p>
+              </div>
+              <Link to="/dashboard/profile">
+                <Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-100 shrink-0">
+                  Add UPI ID →
+                </Button>
+              </Link>
+            </div>
+          )}
+
           <Card className="shadow-card">
+
             <CardContent className="space-y-6 p-6">
               
               {/* Basic Details */}

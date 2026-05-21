@@ -150,9 +150,12 @@ const AdminUsers = () => {
                 <thead className="bg-muted/50 text-muted-foreground font-medium text-[10px] uppercase tracking-wider border-b">
                   <tr>
                     <th className="px-5 py-4">User</th>
+                    <th className="px-5 py-4">Role</th>
                     <th className="px-5 py-4">Status</th>
+                    <th className="px-5 py-4">UPI ID</th>
                     <th className="px-5 py-4">Active Project</th>
-                    <th className="px-5 py-4">Accepted Bid</th>
+                    <th className="px-5 py-4">Jobs Posted</th>
+                    <th className="px-5 py-4">Jobs Worked</th>
                     <th className="px-5 py-4">Wallet</th>
                     <th className="px-5 py-4">Joined</th>
                     <th className="px-5 py-4">Actions</th>
@@ -179,6 +182,14 @@ const AdminUsers = () => {
                         </td>
                         <td className="px-5 py-4">
                           <Badge variant="outline" className={`text-[9px] font-black h-5 uppercase
+                            ${user.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                              user.role === 'poster' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                              'bg-gray-50 text-gray-700 border-gray-200'}`}>
+                            {user.role}
+                          </Badge>
+                        </td>
+                        <td className="px-5 py-4">
+                          <Badge variant="outline" className={`text-[9px] font-black h-5 uppercase
                             ${user.verification_status === 'verified' ? 'bg-green-50 text-green-700 border-green-200' :
                               user.verification_status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                               'bg-muted text-muted-foreground'}`}>
@@ -189,24 +200,27 @@ const AdminUsers = () => {
                           </Badge>
                         </td>
                         <td className="px-5 py-4">
-                          {user.active_project ? (
-                            <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
-                              <Briefcase className="h-3 w-3 text-primary shrink-0" />
-                              <span className="truncate max-w-[140px]">{user.active_project}</span>
-                            </div>
+                          {user.upi_id ? (
+                            <span className="text-xs font-mono text-foreground">{user.upi_id}</span>
                           ) : (
-                            <span className="text-xs text-muted-foreground italic">No active project</span>
+                            <span className="text-[10px] text-destructive font-bold">Not set</span>
                           )}
                         </td>
                         <td className="px-5 py-4">
-                          {user.bid_price ? (
-                            <div className="flex items-center gap-1 text-sm font-black text-green-700">
-                              <IndianRupee className="h-3 w-3" />
-                              {user.bid_price.toLocaleString('en-IN')}
+                          {user.active_project ? (
+                            <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                              <Briefcase className="h-3 w-3 text-primary shrink-0" />
+                              <span className="truncate max-w-[120px]">{user.active_project}</span>
                             </div>
                           ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
+                            <span className="text-xs text-muted-foreground italic">None</span>
                           )}
+                        </td>
+                        <td className="px-5 py-4 text-center text-sm font-bold text-foreground">
+                          {user.total_jobs_posted || 0}
+                        </td>
+                        <td className="px-5 py-4 text-center text-sm font-bold text-foreground">
+                          {user.total_jobs_worked || 0}
                         </td>
                         <td className="px-5 py-4 font-display font-bold text-foreground text-sm">
                           ₹{user.wallet_balance?.toLocaleString('en-IN') || 0}
@@ -327,7 +341,7 @@ const AdminUsers = () => {
             <DialogDescription>Full profile and project information</DialogDescription>
           </DialogHeader>
           {selectedUser && (
-            <div className="space-y-4 py-2">
+              <div className="space-y-4 py-2">
               {/* Avatar + name */}
               <div className="flex items-center gap-3">
                 <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary text-xl">
@@ -336,6 +350,7 @@ const AdminUsers = () => {
                 <div>
                   <p className="font-bold text-lg text-foreground">{selectedUser.full_name}</p>
                   <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                  <Badge variant="outline" className="text-[9px] mt-1 capitalize">{selectedUser.role}</Badge>
                 </div>
               </div>
 
@@ -357,7 +372,30 @@ const AdminUsers = () => {
                     <p className="text-sm font-black text-foreground">₹{selectedUser.wallet_balance?.toLocaleString('en-IN') || 0}</p>
                   </CardContent>
                 </Card>
+                <Card className="bg-muted/30">
+                  <CardContent className="p-3">
+                    <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">Jobs Posted</p>
+                    <p className="text-sm font-black text-foreground">{selectedUser.total_jobs_posted || 0}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-muted/30">
+                  <CardContent className="p-3">
+                    <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">Jobs Worked</p>
+                    <p className="text-sm font-black text-foreground">{selectedUser.total_jobs_worked || 0}</p>
+                  </CardContent>
+                </Card>
               </div>
+
+              <Card className={selectedUser.upi_id ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}>
+                <CardContent className="p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-[9px] font-black uppercase mb-0.5 text-muted-foreground">UPI ID</p>
+                    <p className={`text-sm font-mono font-bold ${selectedUser.upi_id ? 'text-green-800' : 'text-red-600'}`}>
+                      {selectedUser.upi_id || 'Not set — cannot receive payments'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
               {selectedUser.active_project && (
                 <Card className="bg-blue-50 border-blue-200">
@@ -379,8 +417,9 @@ const AdminUsers = () => {
                 </Card>
               )}
 
-              <div className="text-xs text-muted-foreground">
-                Joined: {format(new Date(selectedUser.created_at), 'dd MMMM yyyy')}
+              <div className="text-xs text-muted-foreground space-y-1">
+                <div>Account ID: <span className="font-mono">{selectedUser.id}</span></div>
+                <div>Joined: {format(new Date(selectedUser.created_at), 'dd MMMM yyyy')}</div>
               </div>
             </div>
           )}

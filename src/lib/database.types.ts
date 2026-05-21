@@ -51,6 +51,7 @@ export interface Database {
           wallet_balance: number
           is_verified: boolean
           verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
+          upi_id: string | null
           created_at: string
         }
         Insert: {
@@ -62,6 +63,7 @@ export interface Database {
           wallet_balance?: number
           is_verified?: boolean
           verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
+          upi_id?: string | null
           created_at?: string
         }
         Update: {
@@ -73,6 +75,7 @@ export interface Database {
           wallet_balance?: number
           is_verified?: boolean
           verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
+          upi_id?: string | null
           created_at?: string
         }
       }

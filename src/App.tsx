@@ -32,6 +32,7 @@ import { useNotificationPermission } from "./hooks/useNotificationPermission";
 import NotificationBanner from "./components/NotificationBanner";
 import { motion } from "framer-motion";
 import CircularText from "./components/CircularText";
+import ColorBends from "./components/ColorBends";
 
 const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   useNotificationPermission();
@@ -77,14 +78,26 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 relative overflow-hidden">
 
-      {/* Animated gradient orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-500/20 blur-[120px] animate-pulse" style={{ animationDelay: "1s" }} />
-      <div className="absolute top-[40%] left-[50%] w-[300px] h-[300px] rounded-full bg-teal-400/10 blur-[100px]" />
+      {/* Dynamic Wave Background Animation */}
+      <div className="absolute inset-0 z-0 opacity-40">
+        <ColorBends
+          colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+          rotation={0}
+          speed={0.2}
+          scale={1}
+          frequency={1}
+          warpStrength={1}
+          mouseInfluence={1}
+          parallax={0.5}
+          noise={0.1}
+          transparent
+          autoRotate={0}
+        />
+      </div>
 
       {/* Grid overlay */}
       <div
-        className="absolute inset-0 opacity-[0.04]"
+        className="absolute inset-0 opacity-[0.04] z-0"
         style={{
           backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
           backgroundSize: "40px 40px",
@@ -122,21 +135,23 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
             size={440}
             radius={176}
           >
-            {/* Brand elements aligned side-by-side with absolutely zero space */}
-            <div className="flex flex-row items-center justify-center gap-0">
-              <img
-                src="/taskly-logo.png"
-                alt="Tasklyy Logo"
-                style={{ width: '130px', height: '130px', marginRight: '-16px', animationDuration: '4s' }}
-                className="object-contain animate-pulse shrink-0"
-              />
-              <h1 className="font-black tracking-tighter text-white leading-none" style={{ fontSize: '64px' }}>
-                Tasklyy
-              </h1>
+            {/* Brand — logo flush beside text, zero gap */}
+            <div className="flex flex-col items-center justify-center">
+              <div className="flex flex-row items-center justify-center gap-0">
+                <img
+                  src="/taskly-logo.png"
+                  alt="Tasklyy Logo"
+                  style={{ width: '48px', height: '48px', marginRight: '0px', animationDuration: '4s' }}
+                  className="object-contain animate-pulse shrink-0"
+                />
+                <h1 className="font-black tracking-tighter text-white leading-none font-display" style={{ fontSize: '36px' }}>
+                  Tasklyy
+                </h1>
+              </div>
+              <p className="text-[9px] font-bold text-emerald-400 tracking-widest uppercase mt-1">
+                India's Student Marketplace
+              </p>
             </div>
-            <p className="text-[10px] font-bold text-emerald-400 tracking-widest uppercase mt-2">
-              India's Student Marketplace
-            </p>
           </CircularText>
         </motion.div>
 

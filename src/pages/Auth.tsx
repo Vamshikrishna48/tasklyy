@@ -116,8 +116,8 @@ const Auth = () => {
         <motion.div className="w-full flex flex-col items-center justify-center text-center mb-6"
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <motion.div className="flex flex-row items-center justify-center mb-3 gap-0" whileHover={{ scale: 1.05 }}>
-            <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '130px', height: '130px', marginRight: '-16px' }} className="object-contain shrink-0" />
-            <span className="font-display font-black text-foreground leading-none" style={{ fontSize: '64px' }}>Tasklyy</span>
+            <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '72px', height: '72px', marginRight: '-8px' }} className="object-contain shrink-0" />
+            <span className="font-display font-black text-foreground leading-none" style={{ fontSize: '72px' }}>Tasklyy</span>
           </motion.div>
           <p className="text-sm text-muted-foreground">
             {isLogin ? "Welcome back to the student marketplace" : "Join the student freelance community"}
@@ -226,9 +226,9 @@ const Auth = () => {
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 12, delay: 0.1 }}
                 className="mx-auto flex flex-row items-center justify-center mb-2 gap-0">
-                <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '130px', height: '130px', marginRight: '-16px' }} className="object-contain shrink-0" />
+                <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '72px', height: '72px', marginRight: '-8px' }} className="object-contain shrink-0" />
                 <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                  className="font-display font-black text-foreground tracking-tight leading-none" style={{ fontSize: '64px' }}>Tasklyy</motion.h1>
+                  className="font-display font-black text-foreground tracking-tight leading-none" style={{ fontSize: '72px' }}>Tasklyy</motion.h1>
               </motion.div>
               <div>
                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}

@@ -16,10 +16,10 @@ export interface JobFile {
 }
 
 /**
- * Fetches job files for a job. Only returns files if the current user is
- * a poster or accepted worker (isAuthorized=true).
- * For submission files (is_submission=true) the downloadUrl is only populated
- * once the job status is 'completed' so the link stays disabled otherwise.
+ * Fetches job files for a job.
+ * - Brief files (is_submission=false) are ALWAYS visible to everyone.
+ * - Submission files (is_submission=true) are only shown to authorized job
+ *   participants, and downloadUrls are only populated when job is 'completed'.
  */
 export const useJobFiles = (jobId: string, isAuthorized: boolean, jobStatus?: string) => {
   const [files, setFiles] = useState<JobFile[]>([]);
@@ -44,40 +44,39 @@ export const useJobFiles = (jobId: string, isAuthorized: boolean, jobStatus?: st
 
       const withUrls: JobFile[] = await Promise.all(
         (data as JobFile[]).map(async (f) => {
-          // Submission files: only generate signed URL if job is completed
-          if (f.is_submission && jobStatus !== "completed") {
-            return { ...f, downloadUrl: undefined };
-          }
-          
-          if (!f.is_submission) {
-            // For brief files, try to get a signed URL, fallback to public URL
+          // Submission files: only show to authorized participants
+          if (f.is_submission) {
+            if (!isAuthorized) return null as any; // filter out below
+            // Download URL only available when job is completed
+            if (jobStatus !== "completed") return { ...f, downloadUrl: undefined };
             try {
               const downloadUrl = await getSignedUrl("job-files", f.file_url);
               return { ...f, downloadUrl };
             } catch {
-              const { data: publicData } = supabase.storage.from("job-files").getPublicUrl(f.file_url);
-              return { ...f, downloadUrl: publicData.publicUrl };
+              return { ...f, downloadUrl: undefined };
             }
           }
 
-          // For submission files that are completed
+          // Brief files: visible to EVERYONE — generate signed URL or public URL
           try {
             const downloadUrl = await getSignedUrl("job-files", f.file_url);
             return { ...f, downloadUrl };
           } catch {
-            return { ...f, downloadUrl: undefined };
+            const { data: publicData } = supabase.storage.from("job-files").getPublicUrl(f.file_url);
+            return { ...f, downloadUrl: publicData.publicUrl };
           }
         })
       );
 
-      setFiles(withUrls);
+      // Filter out null entries (hidden submission files for unauthorized users)
+      setFiles(withUrls.filter(Boolean));
     } catch (err) {
       console.error("useJobFiles error:", err);
       setFiles([]);
     } finally {
       setLoading(false);
     }
-  }, [jobId, jobStatus]);
+  }, [jobId, isAuthorized, jobStatus]);
 
   useEffect(() => {
     fetchFiles();
