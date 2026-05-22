@@ -7,48 +7,44 @@ interface RazorpayOptions {
   name: string;
   description: string;
   handler: RazorpayHandler;
-  prefill?: {
-    email?: string;
-  };
-  theme?: {
-    color?: string;
-  };
-  modal?: {
-    ondismiss?: () => void;
-  };
+  prefill?: { email?: string };
+  theme?: { color?: string };
+  modal?: { ondismiss?: () => void };
 }
 
 declare global {
   interface Window {
-    Razorpay?: new (options: RazorpayOptions) => {
-      open: () => void;
-    };
+    Razorpay?: new (options: RazorpayOptions) => { open: () => void };
   }
 }
 
 export const loadRazorpay = (): Promise<boolean> => {
   return new Promise((resolve) => {
-    if (window.Razorpay) {
-      resolve(true);
-      return;
-    }
+    if (window.Razorpay) { resolve(true); return; }
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.onload = () => resolve(true);
     script.onerror = () => {
-      console.error("Razorpay SDK failed to load. Are you offline or using an adblocker?");
+      console.error("Razorpay SDK failed to load.");
       resolve(false);
     };
     document.body.appendChild(script);
   });
 };
 
+/**
+ * Opens the Razorpay checkout modal.
+ * onSuccess  — payment completed successfully
+ * onFailure  — payment genuinely failed (network / API error)
+ * onCancel   — user dismissed the modal (no error toast)
+ */
 export async function openRazorpayCheckout(
   amountInRupees: number,
   jobTitle: string,
   userEmail: string | null,
   onSuccess: () => void,
-  onFailure: () => void
+  onFailure: () => void,
+  onCancel?: () => void
 ) {
   const isLoaded = await loadRazorpay();
   if (!isLoaded || !window.Razorpay) {
@@ -59,45 +55,46 @@ export async function openRazorpayCheckout(
 
   const key = import.meta.env.VITE_RAZORPAY_KEY_ID;
   if (!key) {
-    console.error("VITE_RAZORPAY_KEY_ID is not set");
+    console.error(
+      "VITE_RAZORPAY_KEY_ID is missing. " +
+      "Add it to your Vercel/Netlify environment variables."
+    );
     onFailure();
     return;
   }
 
+  let paymentDone = false;
+
   const options: RazorpayOptions = {
     key,
-    amount: amountInRupees * 100, // Razorpay works in paise
+    amount: amountInRupees * 100, // paise
     currency: "INR",
     name: "Tasklyy Platform",
-    description: `Payment for job: ${jobTitle}`,
+    description: `Payment for: ${jobTitle}`,
     handler: (response: any) => {
-      console.log("Payment successful:", response);
       if (response.razorpay_payment_id) {
+        paymentDone = true;
         onSuccess();
       } else {
         console.error("Payment response missing payment ID");
         onFailure();
       }
     },
-    prefill: {
-      email: userEmail ?? undefined,
-    },
-    theme: {
-      color: "#16a34a",
-    },
+    prefill: { email: userEmail ?? undefined },
+    theme: { color: "#7c3aed" },
     modal: {
       ondismiss: () => {
-        console.log("Razorpay modal dismissed - user cancelled payment");
+        // Only fire if payment wasn't completed
+        if (!paymentDone && onCancel) onCancel();
       },
     },
   };
 
-  const rzp = new window.Razorpay!(options);
   try {
+    const rzp = new window.Razorpay!(options);
     rzp.open();
   } catch (e) {
     console.error("Razorpay error:", e);
     onFailure();
   }
 }
-

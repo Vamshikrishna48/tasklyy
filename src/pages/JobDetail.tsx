@@ -220,8 +220,12 @@ const JobDetail = () => {
         }
       },
       () => {
-        console.log("Payment cancelled or failed");
-        toast.error("Payment was cancelled or failed. Please try again.");
+        // onFailure — real payment error
+        toast.error("Payment failed. Please try again or contact support.");
+      },
+      () => {
+        // onCancel — user closed the modal (no error shown)
+        toast("Payment cancelled. You can try again anytime.", { icon: "ℹ️" });
       }
     );
   };
