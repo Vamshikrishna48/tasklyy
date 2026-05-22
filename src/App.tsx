@@ -128,7 +128,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
                 <img
                   src="/taskly-logo.png"
                   alt="Tasklyy Logo"
-                  style={{ width: '120px', height: '120px', marginRight: '-4px', animationDuration: '4s' }}
+                  style={{ width: '120px', height: '120px', marginRight: '-16px', animationDuration: '4s' }}
                   className="object-contain animate-pulse shrink-0"
                 />
                 <h1 className="font-black tracking-tighter text-gray-900 leading-none font-display" style={{ fontSize: '40px' }}>

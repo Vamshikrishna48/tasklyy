@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, ArrowRight, Sparkles, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import ColorBends from "@/components/ColorBends";
 import { supabase } from "@/lib/supabase";
 
 const Auth = () => {
@@ -30,14 +29,13 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return; // Prevent double submission
-    
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
     try {
       if (isLogin) {
-        // Sign in with Supabase
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         setShowWelcome(true);
@@ -47,17 +45,29 @@ const Auth = () => {
           navigate("/dashboard");
         }, 900);
       } else {
-        // Sign up with Supabase
         if (!displayName.trim()) throw new Error("Please enter your display name");
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { full_name: displayName.trim() } },
         });
-        if (error) throw error;
 
-        // If email confirmation is off, we get a session immediately.
-        // Let's create the profile manually from the frontend so we don't rely on database triggers.
+        // Handle "user already registered" gracefully
+        if (error) {
+          if (
+            error.message.toLowerCase().includes("already") ||
+            error.message.toLowerCase().includes("registered") ||
+            error.message.toLowerCase().includes("exists")
+          ) {
+            setError("An account with this email already exists. Please sign in instead.");
+            setIsLogin(true);
+            setLoading(false);
+            return;
+          }
+          throw error;
+        }
+
         if (data.user) {
           const { error: profileError } = await (supabase as any).from("profiles").insert({
             id: data.user.id,
@@ -66,22 +76,21 @@ const Auth = () => {
             role: "worker",
             is_verified: false,
             verification_status: "unverified",
-            wallet_balance: 0
+            wallet_balance: 0,
           });
-          // Ignore unique constraint errors if the row already exists
-          if (profileError && profileError.code !== '23505') {
+          if (profileError && profileError.code !== "23505") {
             console.error("Profile creation error:", profileError);
           }
         }
 
         if (data.session) {
-          // Explicitly sign out because we want them to sign in manually
           await supabase.auth.signOut();
         }
+
         setShowWelcome(true);
         setTimeout(() => {
           setShowWelcome(false);
-          toast.success("Account created successfully! Please sign in.");
+          toast.success("Account created! Please sign in.");
           setIsLogin(true);
           setLoading(false);
         }, 900);
@@ -94,17 +103,26 @@ const Auth = () => {
     }
   };
 
-
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center relative overflow-hidden px-4">
-      <div className="absolute inset-0 z-0">
-        <ColorBends
-          colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
-          rotation={0} speed={0.2} scale={1} frequency={1}
-          warpStrength={1} mouseInfluence={1} parallax={0.5}
-          noise={0.1} transparent autoRotate={0}
-        />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4"
+      style={{
+        background: "linear-gradient(135deg, #f0f7ff 0%, #fef6fb 30%, #f0fdf9 60%, #fdf4ff 100%)",
+      }}
+    >
+      {/* Soft pastel blob backgrounds */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-violet-200/50 blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-emerald-200/50 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-pink-100/40 blur-3xl" />
       </div>
+
+      {/* Subtle dot grid */}
+      <div className="absolute inset-0 z-0 opacity-[0.06] pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(circle, #6366f1 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      />
 
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -112,25 +130,44 @@ const Auth = () => {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative z-10 w-full max-w-md"
       >
-        {/* Logo */}
-        <motion.div className="w-full flex flex-col items-center justify-center text-center mb-6"
-          initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <motion.div className="flex flex-row items-center justify-center mb-3" style={{ gap: 0 }} whileHover={{ scale: 1.05 }}>
-            <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '120px', height: '120px', marginRight: '-4px' }} className="object-contain shrink-0" />
-            <span className="font-display font-black text-gray-900 leading-none" style={{ fontSize: '44px' }}>Tasklyy</span>
+        {/* Logo — centered, zero gap */}
+        <motion.div
+          className="w-full flex flex-col items-center justify-center text-center mb-6"
+          initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        >
+          <motion.div
+            className="flex flex-row items-center justify-center"
+            style={{ gap: 0 }}
+            whileHover={{ scale: 1.05 }}
+          >
+            <img
+              src="/taskly-logo.png"
+              alt="Tasklyy logo"
+              style={{ width: "120px", height: "120px", marginRight: "-12px" }}
+              className="object-contain shrink-0"
+            />
+            <span
+              className="font-display font-black text-gray-900 leading-none"
+              style={{ fontSize: "44px" }}
+            >
+              Tasklyy
+            </span>
           </motion.div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500 mt-1">
             {isLogin ? "Welcome back to the student marketplace" : "Join the student freelance community"}
           </p>
         </motion.div>
 
-        <Card className="shadow-lg border-gray-200/50 backdrop-blur-sm bg-white/95 mx-auto">
+        <Card className="shadow-xl border-white/60 backdrop-blur-sm bg-white/90 mx-auto">
           <CardContent className="p-6">
             {/* Toggle */}
-            <div className="relative flex rounded-lg bg-muted p-1 mb-6">
-              <motion.div className="absolute top-1 bottom-1 rounded-md bg-primary" initial={false}
+            <div className="relative flex rounded-lg bg-gray-100 p-1 mb-6">
+              <motion.div
+                className="absolute top-1 bottom-1 rounded-md bg-primary"
+                initial={false}
                 animate={{ left: isLogin ? "4px" : "50%", width: "calc(50% - 4px)" }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }} />
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
               <button type="button" onClick={() => setIsLogin(true)}
                 className={`relative z-10 flex-1 py-2 text-sm font-semibold transition-colors ${isLogin ? "text-primary-foreground" : "text-muted-foreground"}`}>
                 Sign In
@@ -151,6 +188,7 @@ const Auth = () => {
                   <span className="flex-1">{error}</span>
                 </motion.div>
               )}
+
               <AnimatePresence mode="wait">
                 {!isLogin && (
                   <motion.div key="name" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
@@ -200,7 +238,6 @@ const Auth = () => {
               </motion.div>
             </form>
 
-
             {!isLogin && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
                 className="mt-4 flex items-center gap-2 rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
@@ -217,22 +254,23 @@ const Auth = () => {
         {showWelcome && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.1 }} transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-            <div className="absolute inset-0 z-0">
-              <ColorBends colors={["#ff5c7a", "#8a5cff", "#00ffd1"]} rotation={0} speed={0.2} scale={1}
-                frequency={1} warpStrength={1} mouseInfluence={1} parallax={0.5} noise={0.1} transparent autoRotate={0} />
-            </div>
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, #f0f7ff 0%, #fef6fb 30%, #f0fdf9 60%, #fdf4ff 100%)" }}
+          >
             <div className="relative z-10 text-center space-y-4 flex flex-col items-center">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 12, delay: 0.1 }}
-                className="mx-auto flex flex-row items-center justify-center mb-2 gap-0">
-                <img src="/taskly-logo.png" alt="Tasklyy logo" style={{ width: '120px', height: '120px', marginRight: '-4px' }} className="object-contain shrink-0" />
+                className="mx-auto flex flex-row items-center justify-center" style={{ gap: 0 }}>
+                <img src="/taskly-logo.png" alt="Tasklyy logo"
+                  style={{ width: "120px", height: "120px", marginRight: "-12px" }}
+                  className="object-contain shrink-0" />
                 <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                  className="font-display font-black text-gray-900 tracking-tight leading-none" style={{ fontSize: '44px' }}>Tasklyy</motion.h1>
+                  className="font-display font-black text-gray-900 tracking-tight leading-none"
+                  style={{ fontSize: "44px" }}>Tasklyy</motion.h1>
               </motion.div>
               <div>
                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                  className="mt-1 text-sm font-medium text-muted-foreground">Welcome to the student marketplace</motion.p>
+                  className="mt-1 text-sm font-medium text-gray-500">Welcome to the student marketplace</motion.p>
               </div>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
                 className="flex flex-col items-center gap-2 mt-8">
@@ -240,7 +278,7 @@ const Auth = () => {
                   <motion.div className="h-full bg-primary" initial={{ width: "0%" }} animate={{ width: "100%" }}
                     transition={{ duration: 0.8 }} />
                 </div>
-                <p className="text-muted-foreground text-xs font-medium mt-1 uppercase tracking-widest text-primary/70">
+                <p className="text-xs font-medium mt-1 uppercase tracking-widest text-primary/70">
                   Loading workspace
                 </p>
               </motion.div>
