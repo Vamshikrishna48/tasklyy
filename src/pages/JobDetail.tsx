@@ -184,41 +184,43 @@ const JobDetail = () => {
     loadBids();
   };
 
+  const handlePaymentSuccess = async (bid: any) => {
+    try {
+      // Create escrow
+      const platformFee = Math.round(bid.amount * 0.30);
+      const workerAmount = bid.amount - platformFee;
+      await (supabase as any).from("escrow_transactions").insert({
+        job_id: id!,
+        poster_id: user!.id,
+        worker_id: bid.bidder_id,
+        total_amount: bid.amount,
+        platform_fee: platformFee,
+        worker_amount: workerAmount,
+        status: "held",
+      });
+      await (supabase as any).from("jobs").update({ status: "accepted", instructions_locked: false } as any).eq("id", id!);
+      await (supabase as any).from("admin_ledger").insert({
+        job_id: id!,
+        type: "fee_collected",
+        amount: platformFee,
+        from_user_id: user!.id,
+        note: `30% platform fee for: ${job?.title}`,
+      });
+      toast.success(`Payment confirmed! Job is now in progress.`);
+      setPaymentDue(null);
+      loadJob();
+    } catch (err) {
+      console.error("Error processing payment:", err);
+      toast.error("Payment processed but failed to confirm. Please contact support.");
+    }
+  };
+
   const handlePayment = async (bid: any) => {
     openRazorpayCheckout(
       bid.amount,
       job?.title || "Job",
       user?.email || null,
-      async () => {
-        try {
-          // Create escrow
-          const platformFee = Math.round(bid.amount * 0.30);
-          const workerAmount = bid.amount - platformFee;
-          await (supabase as any).from("escrow_transactions").insert({
-            job_id: id!,
-            poster_id: user!.id,
-            worker_id: bid.bidder_id,
-            total_amount: bid.amount,
-            platform_fee: platformFee,
-            worker_amount: workerAmount,
-            status: "held",
-          });
-          await (supabase as any).from("jobs").update({ status: "accepted", instructions_locked: false } as any).eq("id", id!);
-          await (supabase as any).from("admin_ledger").insert({
-            job_id: id!,
-            type: "fee_collected",
-            amount: platformFee,
-            from_user_id: user!.id,
-            note: `30% platform fee for: ${job?.title}`,
-          });
-          toast.success(`Payment confirmed! Job is now in progress.`);
-          setPaymentDue(null);
-          loadJob();
-        } catch (err) {
-          console.error("Error processing payment:", err);
-          toast.error("Payment processed but failed to confirm. Please contact support.");
-        }
-      },
+      () => handlePaymentSuccess(bid),
       () => {
         // onFailure — real payment error
         toast.error("Payment failed. Please try again or contact support.");
@@ -330,9 +332,14 @@ const JobDetail = () => {
                       <p className="text-sm text-muted-foreground">A worker has claimed this job. Please deposit the budget into escrow within {timeLeft || '5 minutes'} to start the project. Funds are only released when you approve the work.</p>
                     </div>
                   </div>
-                  <Button variant="hero" className="w-full h-12 text-lg shadow-lg shadow-primary/20" onClick={() => handlePayment({ amount: job.budget, bidder_id: job.worker_id })}>
-                    Pay ₹{job.budget} & Start Project
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button variant="hero" className="flex-1 h-12 text-lg shadow-lg shadow-primary/20" onClick={() => handlePayment({ amount: job.budget, bidder_id: job.worker_id })}>
+                      Pay ₹{job.budget} & Start Project
+                    </Button>
+                    <Button variant="outline" className="h-12 border-dashed border-primary/30 hover:bg-primary/5 text-primary text-sm font-semibold whitespace-nowrap" onClick={() => handlePaymentSuccess({ amount: job.budget, bidder_id: job.worker_id })}>
+                      ⚡ Bypass & Test
+                    </Button>
+                  </div>
                 </motion.div>
               )}
 
@@ -545,9 +552,14 @@ const JobDetail = () => {
                                     <span className="text-xs font-bold text-amber-700">Pay within:</span>
                                     <span className="text-lg font-black text-amber-800">{timeLeft}</span>
                                   </div>
-                                  <Button variant="hero" className="w-full gap-2 bg-amber-600 hover:bg-amber-700" onClick={() => handlePayment(bid)}>
-                                    <IndianRupee className="h-4 w-4" /> Pay ₹{bid.amount} Now
-                                  </Button>
+                                  <div className="flex gap-2">
+                                    <Button variant="hero" className="flex-grow gap-2 bg-amber-600 hover:bg-amber-700" onClick={() => handlePayment(bid)}>
+                                      <IndianRupee className="h-4 w-4" /> Pay ₹{bid.amount} Now
+                                    </Button>
+                                    <Button variant="outline" className="border-dashed border-amber-500/40 hover:bg-amber-500/5 text-amber-700 text-xs font-semibold whitespace-nowrap" onClick={() => handlePaymentSuccess(bid)}>
+                                      ⚡ Bypass
+                                    </Button>
+                                  </div>
                                 </div>
                               )}
                             </CardContent>

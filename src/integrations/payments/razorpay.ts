@@ -63,11 +63,16 @@ export async function openRazorpayCheckout(
     return;
   }
 
+  // Ensure amount is a clean integer and at least 1 Rupee (100 paise)
+  const sanitizedAmount = Math.max(1, Math.round(Number(amountInRupees) || 1));
+  // Ensure email is formatted correctly or omitted if empty
+  const sanitizedEmail = (userEmail && userEmail.trim()) ? userEmail.trim() : undefined;
+
   let paymentDone = false;
 
   const options: RazorpayOptions = {
     key,
-    amount: amountInRupees * 100, // paise
+    amount: sanitizedAmount * 100, // paise
     currency: "INR",
     name: "Tasklyy Platform",
     description: `Payment for: ${jobTitle}`,
@@ -80,7 +85,7 @@ export async function openRazorpayCheckout(
         onFailure();
       }
     },
-    prefill: { email: userEmail ?? undefined },
+    prefill: { email: sanitizedEmail },
     theme: { color: "#7c3aed" },
     modal: {
       ondismiss: () => {
