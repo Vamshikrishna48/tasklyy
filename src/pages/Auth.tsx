@@ -68,32 +68,20 @@ const Auth = () => {
           throw error;
         }
 
-        if (data.user) {
-          const { error: profileError } = await (supabase as any).from("profiles").insert({
-            id: data.user.id,
-            email: email,
-            full_name: displayName.trim(),
-            role: "worker",
-            is_verified: false,
-            verification_status: "unverified",
-            wallet_balance: 0,
-          });
-          if (profileError && profileError.code !== "23505") {
-            console.error("Profile creation error:", profileError);
-          }
-        }
-
         if (data.session) {
-          await supabase.auth.signOut();
-        }
-
-        setShowWelcome(true);
-        setTimeout(() => {
-          setShowWelcome(false);
-          toast.success("Account created! Please sign in.");
+          // Email confirmation is disabled, user is automatically logged in!
+          setShowWelcome(true);
+          setTimeout(() => {
+            setShowWelcome(false);
+            toast.success("Account created and signed in successfully!");
+            navigate("/dashboard");
+          }, 900);
+        } else {
+          // Email confirmation is enabled, user needs to verify email first.
+          toast.success("Account created! Please check your email to verify your account before signing in.");
           setIsLogin(true);
           setLoading(false);
-        }, 900);
+        }
       }
     } catch (err: any) {
       console.error("Auth Error:", err);
@@ -136,14 +124,14 @@ const Auth = () => {
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         >
           <motion.div
-            className="flex flex-row items-center justify-center"
-            style={{ gap: 0 }}
+            className="flex flex-col items-center justify-center"
+            style={{ gap: "4px" }}
             whileHover={{ scale: 1.05 }}
           >
             <img
               src="/taskly-logo.png"
               alt="Tasklyy logo"
-              style={{ width: "120px", height: "120px", marginRight: "-12px" }}
+              style={{ width: "120px", height: "120px", marginBottom: "-8px" }}
               className="object-contain shrink-0"
             />
             <span
@@ -153,7 +141,7 @@ const Auth = () => {
               Tasklyy
             </span>
           </motion.div>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-2">
             {isLogin ? "Welcome back to the student marketplace" : "Join the student freelance community"}
           </p>
         </motion.div>
@@ -180,13 +168,39 @@ const Auth = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium"
-                >
-                  <span className="flex-1">{error}</span>
-                </motion.div>
+                <div className="space-y-3">
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium"
+                  >
+                    <span className="flex-1">{error}</span>
+                  </motion.div>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 text-xs rounded-xl border border-amber-200/80 bg-amber-50/90 text-amber-800 space-y-2 text-left shadow-md shadow-amber-500/5 backdrop-blur-sm"
+                  >
+                    <p className="font-bold flex items-center gap-1.5 text-sm text-amber-900">
+                      <span>⚠️</span> Supabase Auth Guide
+                    </p>
+                    <p className="text-[11px] leading-relaxed">
+                      This happens because <strong>Email Confirmation</strong> is enabled in your Supabase project:
+                    </p>
+                    <ol className="list-decimal pl-4 space-y-1.5 text-[11px] leading-relaxed">
+                      <li>
+                        <strong>Quick Fix:</strong> Check your inbox (or spam) for the verification email sent by Supabase.
+                      </li>
+                      <li>
+                        <strong>Best Fix (Development):</strong> Go to your <strong>Supabase Dashboard &rarr; Authentication &rarr; Providers &rarr; Email</strong>, toggle <strong>OFF</strong> "Confirm email", and save.
+                      </li>
+                      <li>
+                        <strong>If tables were deleted:</strong> Make sure you also delete your email address from the <strong>Authentication &rarr; Users</strong> tab in the Supabase dashboard before trying to register again.
+                      </li>
+                    </ol>
+                  </motion.div>
+                </div>
               )}
 
               <AnimatePresence mode="wait">
@@ -260,9 +274,9 @@ const Auth = () => {
             <div className="relative z-10 text-center space-y-4 flex flex-col items-center">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 12, delay: 0.1 }}
-                className="mx-auto flex flex-row items-center justify-center" style={{ gap: 0 }}>
+                className="mx-auto flex flex-col items-center justify-center" style={{ gap: "4px" }}>
                 <img src="/taskly-logo.png" alt="Tasklyy logo"
-                  style={{ width: "120px", height: "120px", marginRight: "-12px" }}
+                  style={{ width: "120px", height: "120px", marginBottom: "-8px" }}
                   className="object-contain shrink-0" />
                 <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                   className="font-display font-black text-gray-900 tracking-tight leading-none"

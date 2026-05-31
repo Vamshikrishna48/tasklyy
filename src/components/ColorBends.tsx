@@ -20,6 +20,9 @@ uniform vec2 uPointer; // in NDC [-1,1]
 uniform float uMouseInfluence;
 uniform float uParallax;
 uniform float uNoise;
+uniform int uIterations;
+uniform float uIntensity;
+uniform float uBandWidth;
 varying vec2 vUv;
 
 void main() {
@@ -33,6 +36,12 @@ void main() {
   q += 0.2 * cos(t) - 7.56;
   vec2 toward = (uPointer - rp);
   q += toward * uMouseInfluence * 0.2;
+
+    for (int j = 0; j < 5; j++) {
+      if (j >= uIterations - 1) break;
+      vec2 rr = sin(1.5 * (q.yx * uFrequency) + 2.0 * cos(q * uFrequency));
+      q += (rr - q) * 0.15;
+    }
 
     vec3 col = vec3(0.0);
     float a = 1.0;
@@ -53,7 +62,7 @@ void main() {
             vec2 warped = s + disp * gain;
             float m1 = length(warped + sin(5.0 * warped.y * uFrequency - 3.0 * t + float(i)) / 4.0);
             float m = mix(m0, m1, kMix);
-            float w = 1.0 - exp(-6.0 / exp(6.0 * m));
+            float w = 1.0 - exp(-uBandWidth / exp(uBandWidth * m));
             sumCol += uColors[i] * w;
             cover = max(cover, w);
       }
@@ -63,7 +72,7 @@ void main() {
         vec2 s = q;
         for (int k = 0; k < 3; ++k) {
             s -= 0.01;
-            vec2 r = sin(1.5 * (s.yx * uFrequency) + 2.0 * cos(s * uFrequency));
+            vec2 r = sin(1.5 * (s.yx * uFrequency) + 2.0 * cos(s.yx * uFrequency));
             float m0 = length(r + sin(5.0 * r.y * uFrequency - 3.0 * t + float(k)) / 4.0);
             float kBelow = clamp(uWarpStrength, 0.0, 1.0);
             float kMix = pow(kBelow, 0.3);
@@ -72,10 +81,12 @@ void main() {
             vec2 warped = s + disp * gain;
             float m1 = length(warped + sin(5.0 * warped.y * uFrequency - 3.0 * t + float(k)) / 4.0);
             float m = mix(m0, m1, kMix);
-            col[k] = 1.0 - exp(-6.0 / exp(6.0 * m));
+            col[k] = 1.0 - exp(-uBandWidth / exp(uBandWidth * m));
         }
         a = uTransparent > 0 ? max(max(col.r, col.g), col.b) : 1.0;
     }
+
+    col *= uIntensity;
 
     if (uNoise > 0.0001) {
       float n = fract(sin(dot(gl_FragCoord.xy + vec2(uTime), vec2(12.9898, 78.233))) * 43758.5453123);
@@ -110,13 +121,15 @@ interface ColorBendsProps {
   mouseInfluence?: number;
   parallax?: number;
   noise?: number;
-  color?: string;
+  iterations?: number;
+  intensity?: number;
+  bandWidth?: number;
 }
 
 export default function ColorBends({
-  className = "",
+  className = '',
   style,
-  rotation = 45,
+  rotation = 90,
   speed = 0.2,
   colors = [],
   transparent = true,
@@ -126,7 +139,10 @@ export default function ColorBends({
   warpStrength = 1,
   mouseInfluence = 1,
   parallax = 0.5,
-  noise = 0.1
+  noise = 0.15,
+  iterations = 1,
+  intensity = 1.5,
+  bandWidth = 6
 }: ColorBendsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -164,7 +180,10 @@ export default function ColorBends({
         uPointer: { value: new THREE.Vector2(0, 0) },
         uMouseInfluence: { value: mouseInfluence },
         uParallax: { value: parallax },
-        uNoise: { value: noise }
+        uNoise: { value: noise },
+        uIterations: { value: iterations },
+        uIntensity: { value: intensity },
+        uBandWidth: { value: bandWidth }
       },
       premultipliedAlpha: true,
       transparent: true
@@ -188,6 +207,8 @@ export default function ColorBends({
     renderer.domElement.style.display = 'block';
     container.appendChild(renderer.domElement);
 
+    const clock = new THREE.Clock();
+
     const handleResize = () => {
       const w = container.clientWidth || 1;
       const h = container.clientHeight || 1;
@@ -197,7 +218,7 @@ export default function ColorBends({
 
     handleResize();
 
-    if (typeof ResizeObserver !== 'undefined') {
+    if ('ResizeObserver' in window) {
       const ro = new ResizeObserver(handleResize);
       ro.observe(container);
       resizeObserverRef.current = ro;
@@ -205,14 +226,9 @@ export default function ColorBends({
       window.addEventListener('resize', handleResize);
     }
 
-    let startTime = performance.now();
-    let lastTime = startTime;
-
     const loop = () => {
-      const now = performance.now();
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
-      const elapsed = (now - startTime) / 1000;
+      const dt = clock.getDelta();
+      const elapsed = clock.elapsedTime;
       material.uniforms.uTime.value = elapsed;
 
       const deg = (rotationRef.current % 360) + autoRotateRef.current * elapsed;
@@ -233,11 +249,8 @@ export default function ColorBends({
 
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-      } else {
-        window.removeEventListener('resize', handleResize);
-      }
+      if (resizeObserverRef.current) resizeObserverRef.current.disconnect();
+      else window.removeEventListener('resize', handleResize);
       geometry.dispose();
       material.dispose();
       renderer.dispose();
@@ -246,7 +259,7 @@ export default function ColorBends({
         container.removeChild(renderer.domElement);
       }
     };
-  }, [frequency, mouseInfluence, noise, parallax, scale, speed, transparent, warpStrength]);
+  }, [bandWidth, frequency, intensity, iterations, mouseInfluence, noise, parallax, scale, speed, transparent, warpStrength]);
 
   useEffect(() => {
     const material = materialRef.current;
@@ -262,6 +275,9 @@ export default function ColorBends({
     material.uniforms.uMouseInfluence.value = mouseInfluence;
     material.uniforms.uParallax.value = parallax;
     material.uniforms.uNoise.value = noise;
+    material.uniforms.uIterations.value = iterations;
+    material.uniforms.uIntensity.value = intensity;
+    material.uniforms.uBandWidth.value = bandWidth;
 
     const toVec3 = (hex: string) => {
       const h = hex.replace('#', '').trim();
@@ -292,25 +308,28 @@ export default function ColorBends({
     mouseInfluence,
     parallax,
     noise,
+    iterations,
+    intensity,
+    bandWidth,
     colors,
     transparent
   ]);
 
   useEffect(() => {
     const material = materialRef.current;
-    const containerEl = containerRef.current as HTMLDivElement | null;
-    if (!material || !containerEl) return;
+    const container = containerRef.current;
+    if (!material || !container) return;
 
     const handlePointerMove = (e: PointerEvent) => {
-      const rect = containerEl.getBoundingClientRect();
+      const rect = container.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / (rect.width || 1)) * 2 - 1;
       const y = -(((e.clientY - rect.top) / (rect.height || 1)) * 2 - 1);
       pointerTargetRef.current.set(x, y);
     };
 
-    containerEl.addEventListener('pointermove', handlePointerMove as any);
+    container.addEventListener('pointermove', handlePointerMove as any);
     return () => {
-      containerEl.removeEventListener('pointermove', handlePointerMove as any);
+      container.removeEventListener('pointermove', handlePointerMove as any);
     };
   }, []);
 
