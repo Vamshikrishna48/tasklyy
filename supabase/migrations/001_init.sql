@@ -102,7 +102,7 @@ CREATE POLICY "Public profiles are viewable by everyone" ON profiles FOR SELECT 
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Jobs: Open jobs visible to all; full access for poster/worker
-CREATE POLICY "Open jobs are viewable by everyone" ON jobs FOR SELECT USING (status = 'open' OR auth.uid() = poster_id OR auth.uid() = worker_id);
+CREATE POLICY "Jobs are viewable by everyone" ON jobs FOR SELECT USING (true);
 CREATE POLICY "Posters can insert jobs" ON jobs FOR INSERT WITH CHECK (auth.uid() = poster_id);
 CREATE POLICY "Posters/Workers can update their jobs" ON jobs FOR UPDATE USING (auth.uid() = poster_id OR auth.uid() = worker_id);
 

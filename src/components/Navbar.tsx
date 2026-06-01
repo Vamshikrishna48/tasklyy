@@ -24,14 +24,14 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-md shadow-sm">
       <div className="container mx-auto flex h-24 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-0">
+        <Link to="/" className="flex items-center" style={{ gap: 0 }}>
           <img
             src="/taskly-logo.png"
             alt="Tasklyy logo"
-            style={{ width: "68px", height: "68px", marginRight: "-4px" }}
+            style={{ width: "50px", height: "50px", marginRight: "-6px" }}
             className="object-contain"
           />
-          <span className="font-display font-black text-foreground" style={{ fontSize: "38px", lineHeight: 1 }}>
+          <span className="font-display font-black text-foreground" style={{ fontSize: "26px", lineHeight: 1 }}>
             Tasklyy
           </span>
         </Link>
