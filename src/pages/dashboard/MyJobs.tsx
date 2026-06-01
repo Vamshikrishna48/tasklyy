@@ -1,12 +1,22 @@
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
+import { useJobs } from "@/hooks/useJobs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, CheckCircle, Clock, Loader2, PlusCircle } from "lucide-react";
+import { Trash2, CheckCircle, Clock, Loader2, PlusCircle, FileUp, Upload, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,9 +42,51 @@ const statusConfig = {
 
 const MyJobs = () => {
   const { myPostedJobs, myWorkingJobs, deleteJob, profile } = useApp();
+  const { submitWork } = useJobs();
   const { subscribeToAllMessages } = useChat();
   const [filter, setFilter] = useState<"all" | "open" | "payment_pending" | "in_progress" | "completed" | "submitted">("all");
   const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>({});
+  const [uploadDialogJob, setUploadDialogJob] = useState<any | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUploadDeliverable = async () => {
+    if (!uploadDialogJob || !selectedFile || !profile?.id) return;
+    setUploading(true);
+    try {
+      const file = selectedFile;
+      const timestamp = Date.now();
+      const fileExt = file.name.split('.').pop();
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const filePath = `${uploadDialogJob.id}/submission_${timestamp}_${cleanFileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("job-files")
+        .upload(filePath, file);
+        
+      if (uploadError) throw uploadError;
+      
+      const success = await submitWork(
+        uploadDialogJob.id,
+        profile.id,
+        filePath,
+        file.name,
+        file.type
+      );
+      
+      if (success) {
+        setUploadDialogJob(null);
+        setSelectedFile(null);
+        toast.success("Deliverables submitted successfully!");
+        window.location.reload();
+      }
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      toast.error(err.message || "Failed to upload files");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const allMyJobs = [...myPostedJobs, ...myWorkingJobs];
 
@@ -146,6 +198,12 @@ const MyJobs = () => {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
+                        {!isClient && (job.status === "accepted" || job.status === "in_progress" || job.status === "rejected") && (
+                          <Button variant="hero" size="sm" className="gap-1.5" onClick={() => setUploadDialogJob(job)}>
+                            <Upload className="h-3.5 w-3.5" />
+                            Submit Work
+                          </Button>
+                        )}
                         <Link to={`/jobs/${job.id}`}>
                           <Button variant="outline" size="sm">
                             View Details
@@ -183,6 +241,84 @@ const MyJobs = () => {
           })}
         </div>
       )}
+
+      {/* Upload Deliverables Dialog */}
+      <Dialog open={!!uploadDialogJob} onOpenChange={() => { if (!uploading) { setUploadDialogJob(null); setSelectedFile(null); } }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Upload Deliverables</DialogTitle>
+            <DialogDescription>
+              Submit your completed work for "{uploadDialogJob?.title}". The poster will review and approve it to release your payment.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="flex flex-col gap-2">
+              {!selectedFile ? (
+                <div className="relative border-2 border-dashed border-muted rounded-xl p-8 transition-colors hover:border-primary/50 group">
+                  <input
+                    type="file"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  />
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <FileUp className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground">Click to upload or drag and drop</p>
+                    <p className="text-xs text-muted-foreground mt-1">PDF, Word, Images, or Zip (Max 10MB)</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-primary/20">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded bg-primary/20 flex items-center justify-center text-primary">
+                      <FileUp className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate max-w-[220px]">{selectedFile.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => setSelectedFile(null)}
+                    disabled={uploading}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setUploadDialogJob(null); setSelectedFile(null); }} disabled={uploading}>
+              Cancel
+            </Button>
+            <Button
+              variant="hero"
+              disabled={uploading || !selectedFile}
+              onClick={handleUploadDeliverable}
+              className="gap-2"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Submit Work
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
