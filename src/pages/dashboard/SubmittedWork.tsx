@@ -29,6 +29,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { FilePreviewModal } from "@/components/FilePreviewModal";
 import { Link } from "react-router-dom";
 
 interface SubmittedFile {
@@ -70,6 +71,7 @@ const SubmittedWork = () => {
   const [isGeneralUploadOpen, setIsGeneralUploadOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string; jobTitle: string; budget: number } | null>(null);
 
   const fetchJobs = useCallback(async () => {
     if (!user?.id) return;
@@ -87,11 +89,17 @@ const SubmittedWork = () => {
 
       if (error) throw error;
 
+      if (!data) {
+        setJobs([]);
+        return;
+      }
+
       // Attach signed URLs to submission files for completed jobs
       const enriched = await Promise.all(
         (data as SubmittedJob[]).map(async (job) => {
+          const filesArray = job.files || [];
           const enrichedFiles = await Promise.all(
-            job.files.map(async (f) => {
+            filesArray.map(async (f) => {
               // Download link available for completed or submitted jobs
               if (job.status === "completed" || job.status === "submitted") {
                 try {
@@ -109,8 +117,9 @@ const SubmittedWork = () => {
       );
 
       setJobs(enriched);
-    } catch (err) {
+    } catch (err: any) {
       console.error("SubmittedWork fetch error:", err);
+      toast.error(err.message || "Failed to fetch submitted work");
     } finally {
       setLoading(false);
     }
@@ -360,8 +369,8 @@ const SubmittedWork = () => {
               const isWorker = job.worker_id === user?.id;
               const isCompleted = job.status === "completed";
               const isRejected = job.status === "disputed";
-              const submissionFiles = job.files.filter((f) => f.is_submission);
-              const briefFiles = job.files.filter((f) => !f.is_submission);
+              const submissionFiles = (job.files || []).filter((f) => f.is_submission);
+              const briefFiles = (job.files || []).filter((f) => !f.is_submission);
 
               return (
                 <motion.div
@@ -412,7 +421,7 @@ const SubmittedWork = () => {
                           <span>
                             {isPoster
                               ? `👤 Worker: ${job.worker?.full_name || "—"}`
-                              : `👤 Poster: ${job.poster.full_name}`}
+                              : `👤 Poster: ${job.poster?.full_name || "—"}`}
                           </span>
                           {job.deadline && (
                             <span className="flex items-center gap-1 font-medium">
@@ -475,33 +484,58 @@ const SubmittedWork = () => {
                                     <p className="text-[10px] text-muted-foreground uppercase">
                                       {f.file_type?.split("/")[1] || "file"}
                                     </p>
-                                    {/* Inline image preview if file is an image and downloadUrl is available */}
+                                    {/* Inline image preview if file is an image and downlo                                    {/* Inline image preview if file is an image and downloadUrl is available */}
                                     {(job.status === "submitted" || isCompleted) && f.downloadUrl && (f.file_type?.startsWith("image/") || ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(f.file_name.split('.').pop()?.toLowerCase() || "")) && (
-                                      <div className="mt-2 rounded-lg overflow-hidden border border-muted max-w-[150px] shadow-sm hover:scale-105 transition-transform duration-200 cursor-pointer">
-                                        <a href={f.downloadUrl} target="_blank" rel="noopener noreferrer">
-                                          <img src={f.downloadUrl} alt={f.file_name} className="w-full h-auto object-cover max-h-[100px]" />
-                                        </a>
+                                      <div 
+                                        className="mt-2 rounded-lg overflow-hidden border border-muted max-w-[150px] shadow-sm hover:scale-105 transition-transform duration-200 cursor-pointer"
+                                        onClick={() => setPreviewFile({
+                                          url: f.downloadUrl || "",
+                                          name: f.file_name,
+                                          type: f.file_type,
+                                          jobTitle: job.title,
+                                          budget: job.budget
+                                        })}
+                                      >
+                                        <img src={f.downloadUrl} alt={f.file_name} className="w-full h-auto object-cover max-h-[100px]" />
                                       </div>
                                     )}
                                     {/* Inline PDF link */}
                                     {(job.status === "submitted" || isCompleted) && f.downloadUrl && (f.file_type === "application/pdf" || f.file_name.split('.').pop()?.toLowerCase() === "pdf") && (
                                       <div className="mt-1.5">
-                                        <a href={f.downloadUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline font-medium hover:text-primary-hover flex items-center gap-1">
+                                        <button 
+                                          onClick={() => setPreviewFile({
+                                            url: f.downloadUrl || "",
+                                            name: f.file_name,
+                                            type: f.file_type,
+                                            jobTitle: job.title,
+                                            budget: job.budget
+                                          })}
+                                          className="text-xs text-primary underline font-medium hover:text-primary-hover flex items-center gap-1"
+                                        >
                                           📄 Open PDF Preview
-                                        </a>
+                                        </button>
                                       </div>
                                     )}
                                   </div>
                                 </div>
-
+ 
                                 {/* Download and Preview always available for review on submitted or completed jobs */}
                                 {(isCompleted || job.status === "submitted") && f.downloadUrl ? (
                                   <div className="flex gap-2">
-                                    <a href={f.downloadUrl} target="_blank" rel="noopener noreferrer">
-                                      <Button size="sm" variant="outline" className="text-primary border-primary/20 gap-1">
-                                        View Preview
-                                      </Button>
-                                    </a>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className="text-primary border-primary/20 gap-1"
+                                      onClick={() => setPreviewFile({
+                                        url: f.downloadUrl || "",
+                                        name: f.file_name,
+                                        type: f.file_type,
+                                        jobTitle: job.title,
+                                        budget: job.budget
+                                      })}
+                                    >
+                                      View Preview
+                                    </Button>
                                     <a href={f.downloadUrl} download={f.file_name}>
                                       <Button size="sm" variant="ghost" className="text-primary gap-1">
                                         <Download className="h-3.5 w-3.5" />
@@ -788,6 +822,18 @@ const SubmittedWork = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {previewFile && (
+        <FilePreviewModal
+          isOpen={!!previewFile}
+          onClose={() => setPreviewFile(null)}
+          fileUrl={previewFile.url}
+          fileName={previewFile.name}
+          fileType={previewFile.type}
+          jobTitle={previewFile.jobTitle}
+          budget={previewFile.budget}
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from "@/components/ui/sidebar";
-import { LayoutDashboard, Shield, ArrowLeft, BookOpen, Users, Bell } from "lucide-react";
+import { LayoutDashboard, Shield, ArrowLeft, BookOpen, Users, Bell, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -9,6 +9,7 @@ const menuItems = [
   { title: "Escrow Payments", url: "/admin/escrow", icon: Shield },
   { title: "Financial Ledger", url: "/admin/ledger", icon: BookOpen },
   { title: "User Management", url: "/admin/users", icon: Users },
+  { title: "Refunds Log", url: "/admin/refunds", icon: RefreshCw },
   { title: "Notifications", url: "/admin/notifications", icon: Bell },
 ];
 

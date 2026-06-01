@@ -77,7 +77,7 @@ export const useAdmin = () => {
   const fetchAllUsers = useCallback(async () => {
     const { data, error } = await (supabase as any)
       .from("profiles")
-      .select("*, jobs_posted:jobs!jobs_poster_id_fkey(id, title, status, budget, created_at), jobs_working:jobs!jobs_worker_id_fkey(id, title, status, budget)")
+      .select("*, jobs_posted:jobs!jobs_poster_id_fkey(id, title, status, budget, created_at), jobs_working:jobs!jobs_worker_id_fkey(id, title, status, budget, created_at)")
       .order("created_at", { ascending: false });
 
     if (error) { console.error(error); return []; }
@@ -86,12 +86,44 @@ export const useAdmin = () => {
       const activeJob = (u.jobs_posted || []).find((j: any) => ["accepted", "submitted", "payment_pending"].includes(j.status))
         || (u.jobs_working || []).find((j: any) => ["accepted", "submitted", "payment_pending"].includes(j.status));
       const acceptedBid = (u.jobs_working || []).find((j: any) => ["accepted", "submitted"].includes(j.status));
+
+      // Calculate completed jobs for worker level
+      const completedJobs = (u.jobs_working || []).filter((j: any) => j.status === 'completed');
+      const totalCompleted = completedJobs.length;
+
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+
+      const monthlyCompleted = completedJobs.filter((j: any) => {
+        if (!j.created_at) return false;
+        const date = new Date(j.created_at);
+        return date.getFullYear() === currentYear && date.getMonth() === currentMonth;
+      }).length;
+
+      let level = 1;
+      let payoutPercent = 70;
+      if (totalCompleted >= 25) {
+        level = 3;
+        payoutPercent = 90;
+      } else if (monthlyCompleted >= 15) {
+        level = 2;
+        payoutPercent = 80;
+      } else if (monthlyCompleted >= 10) {
+        level = 1;
+        payoutPercent = 75;
+      }
+
       return {
         ...u,
         active_project: activeJob?.title || null,
         bid_price: acceptedBid?.budget || null,
         total_jobs_posted: (u.jobs_posted || []).length,
         total_jobs_worked: (u.jobs_working || []).length,
+        total_jobs_completed: totalCompleted,
+        monthly_jobs_completed: monthlyCompleted,
+        level,
+        payout_percent: payoutPercent
       };
     });
   }, []);
@@ -211,6 +243,100 @@ export const useAdmin = () => {
     }
   };
 
+  const processSplitRefund = async (jobId: string) => {
+    setLoading(true);
+    try {
+      // 1. Fetch escrow record
+      const { data: escrow } = await (supabase as any)
+        .from("escrow_transactions")
+        .select("*")
+        .eq("job_id", jobId)
+        .eq("status", "held")
+        .maybeSingle();
+      
+      if (!escrow) {
+        toast.error("Escrow transaction not found or already processed.");
+        return false;
+      }
+
+      const budget = escrow.total_amount || 0;
+      const posterRefund = Math.floor(budget * 0.70);
+      const workerComp = Math.floor(budget * 0.25);
+      const fee = budget - posterRefund - workerComp; // 5% platform fee
+
+      // 2. Mark escrow as refunded/resolved with split metadata
+      await (supabase as any)
+        .from("escrow_transactions")
+        .update({ 
+          status: "refunded", 
+          released_at: new Date().toISOString(),
+          platform_fee: fee,
+          worker_amount: workerComp
+        })
+        .eq("id", escrow.id);
+
+      // 3. Mark job status as completed (resolved dispute)
+      await (supabase as any)
+        .from("jobs")
+        .update({ status: "completed" })
+        .eq("id", jobId);
+
+      // 4. Update Poster wallet (70%)
+      if (escrow.poster_id) {
+        const { data: poster } = await (supabase as any)
+          .from("profiles")
+          .select("wallet_balance")
+          .eq("id", escrow.poster_id)
+          .maybeSingle();
+        
+        await (supabase as any)
+          .from("profiles")
+          .update({ wallet_balance: ((poster as any)?.wallet_balance || 0) + posterRefund })
+          .eq("id", escrow.poster_id);
+      }
+
+      // 5. Update Worker wallet (25%)
+      if (escrow.worker_id) {
+        const { data: worker } = await (supabase as any)
+          .from("profiles")
+          .select("wallet_balance")
+          .eq("id", escrow.worker_id)
+          .maybeSingle();
+
+        await (supabase as any)
+          .from("profiles")
+          .update({ wallet_balance: ((worker as any)?.wallet_balance || 0) + workerComp })
+          .eq("id", escrow.worker_id);
+      }
+
+      // 6. Insert admin ledger entries for split tracking
+      await (supabase as any).from("admin_ledger").insert([
+        {
+          job_id: jobId,
+          type: "escrow_refunded",
+          amount: posterRefund,
+          from_user_id: escrow.poster_id,
+          note: `Split Refund (70% Poster Refund): ₹${posterRefund}`
+        },
+        {
+          job_id: jobId,
+          type: "worker_paid",
+          amount: workerComp,
+          from_user_id: escrow.worker_id,
+          note: `Split Refund (25% Worker Compensation): ₹${workerComp}`
+        }
+      ]);
+
+      toast.success("Auto-split refund processed successfully! (70% Poster / 25% Worker) ✅");
+      return true;
+    } catch (e: any) {
+      toast.error("Refund split execution failed: " + e.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     fetchAdminStats,
@@ -223,6 +349,7 @@ export const useAdmin = () => {
     rejectVerification,
     releaseEscrow,
     refundEscrow,
+    processSplitRefund,
   };
 };
 

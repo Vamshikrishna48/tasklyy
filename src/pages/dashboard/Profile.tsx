@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import { UserCircle, Mail, Star, Briefcase, Calendar, ShieldCheck, CreditCard, Pencil, Check, X } from "lucide-react";
-import { useState } from "react";
+import { UserCircle, Mail, Star, Briefcase, Calendar, ShieldCheck, CreditCard, Pencil, Check, X, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -14,6 +14,84 @@ const Profile = () => {
   const [editingUpi, setEditingUpi] = useState(false);
   const [upiValue, setUpiValue] = useState("");
   const [savingUpi, setSavingUpi] = useState(false);
+
+  const [levelInfo, setLevelInfo] = useState<any>(null);
+  const [levelLoading, setLevelLoading] = useState(true);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    const fetchLevel = async () => {
+      setLevelLoading(true);
+      try {
+        const { data } = await supabase
+          .from("jobs")
+          .select("created_at")
+          .eq("worker_id", profile.id)
+          .eq("status", "completed");
+        
+        const jobsList = data || [];
+        const totalCompleted = jobsList.length;
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+
+        const monthlyCompleted = jobsList.filter((j: any) => {
+          if (!j.created_at) return false;
+          const date = new Date(j.created_at);
+          return date.getFullYear() === currentYear && date.getMonth() === currentMonth;
+        }).length;
+
+        let level = 1;
+        let payoutPercent = 70;
+        let feePercent = 30;
+        let nextThresholdText = "";
+        let progressVal = 0;
+
+        if (totalCompleted >= 25) {
+          level = 3;
+          payoutPercent = 90;
+          feePercent = 10;
+          nextThresholdText = "👑 Max Tier Unlocked! Permanent 90% payout.";
+          progressVal = 100;
+        } else if (monthlyCompleted >= 15) {
+          level = 2;
+          payoutPercent = 80;
+          feePercent = 20;
+          nextThresholdText = `Complete ${25 - totalCompleted} more historical jobs for Level 3 (90% payout)`;
+          progressVal = (totalCompleted / 25) * 100;
+        } else if (monthlyCompleted >= 10) {
+          level = 1;
+          payoutPercent = 75;
+          feePercent = 25;
+          nextThresholdText = `Complete ${15 - monthlyCompleted} more jobs this month for Level 2 (80% payout)`;
+          progressVal = (monthlyCompleted / 15) * 100;
+        } else {
+          level = 1;
+          payoutPercent = 70;
+          feePercent = 30;
+          nextThresholdText = `Complete ${10 - monthlyCompleted} more jobs this month for Level 1 Update (75% payout)`;
+          progressVal = (monthlyCompleted / 10) * 100;
+        }
+
+        setLevelInfo({
+          level,
+          payoutPercent,
+          feePercent,
+          totalCompleted,
+          monthlyCompleted,
+          nextThresholdText,
+          progressVal
+        });
+      } catch (err) {
+        console.error("Error loading level stats:", err);
+      } finally {
+        setLevelLoading(false);
+      }
+    };
+
+    fetchLevel();
+  }, [profile?.id]);
 
   const handleSaveUpi = async () => {
     if (!upiValue.trim()) {
@@ -81,6 +159,70 @@ const Profile = () => {
               You must set your UPI ID before posting a job. Without it you cannot receive payments.
             </p>
           </div>
+        </motion.div>
+      )}
+
+      {/* Worker Level / Tier Card */}
+      {profile.role === "worker" && !levelLoading && levelInfo && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <Card className="overflow-hidden border-none shadow-xl bg-gradient-to-r from-indigo-50/50 via-purple-50/50 to-pink-50/50">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex justify-between items-start gap-4 flex-wrap">
+                <div>
+                  <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                    Worker Progression
+                  </span>
+                  <h3 className="font-display font-black text-2xl text-slate-800 mt-1.5 flex items-center gap-2">
+                    Level {levelInfo.level} Tier
+                    <span className="text-sm font-normal text-slate-500">
+                      ({levelInfo.payoutPercent}% Payment Payout)
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Your platform fee is currently <span className="font-bold text-primary">{levelInfo.feePercent}%</span>.
+                  </p>
+                </div>
+                <Badge className={`text-xs px-3 py-1 font-black uppercase tracking-wider border-none
+                  ${levelInfo.level === 3 ? 'bg-green-600 text-white animate-pulse' :
+                    levelInfo.level === 2 ? 'bg-amber-500 text-white' : 'bg-primary text-white'}`}>
+                  {levelInfo.level === 3 ? "👑 TIER 3 (ELITE)" : levelInfo.level === 2 ? "⭐️ TIER 2 (EXPERT)" : "🌱 TIER 1 (START)"}
+                </Badge>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-1.5 pt-2">
+                <div className="flex justify-between items-center text-xs font-bold text-slate-600">
+                  <span>{levelInfo.nextThresholdText}</span>
+                  <span>{Math.round(levelInfo.progressVal)}%</span>
+                </div>
+                <div className="h-2 w-full bg-slate-200/60 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r transition-all duration-500
+                      ${levelInfo.level === 3 ? 'from-green-500 to-emerald-400' :
+                        levelInfo.level === 2 ? 'from-amber-500 to-yellow-400' :
+                        'from-violet-500 to-indigo-400'}`}
+                    style={{ width: `${levelInfo.progressVal}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Statistics Grid */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="p-3 bg-white/70 backdrop-blur-sm border rounded-xl">
+                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-wide">Jobs Completed (Month)</p>
+                  <p className="text-lg font-black text-slate-800">{levelInfo.monthlyCompleted} jobs</p>
+                </div>
+                <div className="p-3 bg-white/70 backdrop-blur-sm border rounded-xl">
+                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-wide">Total Historical Jobs</p>
+                  <p className="text-lg font-black text-slate-800">{levelInfo.totalCompleted} jobs</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       )}
 

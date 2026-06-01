@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,14 +10,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { getWorkerLevelInfo } from "@/utils/levels";
 import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
 import { sendBidNotification, sendBidRejectedNotification, sendPaymentRequiredNotification } from "@/hooks/useNotificationPermission";
 import { useJobs } from "@/hooks/useJobs";
 import { useJobFiles } from "@/hooks/useJobFiles";
 import { NoScreenshotWrapper } from "@/components/NoScreenshotWrapper";
-
+ 
 const JobDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useApp();
   const { releaseEscrow, declineWork, placeBid, acceptJob, cancelJobForNonPayment } = useJobs();
 
@@ -125,7 +127,8 @@ const JobDetail = () => {
     if (!bidMessage.trim()) { toast.error("Add a message with your bid"); return; }
     
     if (!user?.id) { 
-      toast.error("Please sign in to place a bid."); 
+      toast.error("Please sign in or sign up first to place a bid."); 
+      navigate("/auth");
       return; 
     }
 
@@ -186,9 +189,11 @@ const JobDetail = () => {
 
   const handlePaymentSuccess = async (bid: any) => {
     try {
-      // Create escrow
-      const platformFee = Math.round(bid.amount * 0.30);
+      // Calculate split dynamically based on worker's level!
+      const levelInfo = await getWorkerLevelInfo(bid.bidder_id);
+      const platformFee = Math.round(bid.amount * (levelInfo.feePercent / 100));
       const workerAmount = bid.amount - platformFee;
+
       await (supabase as any).from("escrow_transactions").insert({
         job_id: id!,
         poster_id: user!.id,
@@ -204,7 +209,7 @@ const JobDetail = () => {
         type: "fee_collected",
         amount: platformFee,
         from_user_id: user!.id,
-        note: `30% platform fee for: ${job?.title}`,
+        note: `Platform fee for: ${job?.title} (Worker Level ${levelInfo.level}, ${levelInfo.feePercent}% fee)`,
       });
       toast.success(`Payment confirmed! Job is now in progress.`);
       setPaymentDue(null);
@@ -233,7 +238,11 @@ const JobDetail = () => {
   };
 
   const handleDirectAccept = async () => {
-    if (!user?.id) { toast.error("Please sign in to accept jobs"); return; }
+    if (!user?.id) { 
+      toast.error("Please sign in or sign up first to accept jobs."); 
+      navigate("/auth");
+      return; 
+    }
     
     setSubmittingBid(true);
     const result = await acceptJob(id!, user.id);

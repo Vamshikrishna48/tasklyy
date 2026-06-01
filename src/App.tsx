@@ -12,6 +12,7 @@ import AdminEscrow from "./pages/admin/AdminEscrow.tsx";
 import AdminLedger from "./pages/admin/AdminLedger.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminNotifications from "./pages/admin/AdminNotifications.tsx";
+import AdminRefunds from "./pages/admin/AdminRefunds.tsx";
 import AdminAuth from "./pages/admin/AdminAuth.tsx";
 import AdminGuard from "./components/AdminGuard.tsx";
 import Index from "./pages/Index.tsx";
@@ -222,9 +223,9 @@ const App = () => {
               ) : (
                 <Routes>
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                  <Route path="/jobs" element={<ProtectedRoute><BrowseJobs /></ProtectedRoute>} />
-                  <Route path="/jobs/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
+                  <Route path="/" element={<Index />} />
+                  <Route path="/jobs" element={<BrowseJobs />} />
+                  <Route path="/jobs/:id" element={<JobDetail />} />
                   <Route path="/post-job" element={<ProtectedRoute><PostJob /></ProtectedRoute>} />
                   <Route path="/on-time-works" element={<ProtectedRoute><OnTimeWorks /></ProtectedRoute>} />
                   <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
@@ -241,6 +242,7 @@ const App = () => {
                     <Route path="escrow" element={<AdminEscrow />} />
                     <Route path="ledger" element={<AdminLedger />} />
                     <Route path="users" element={<AdminUsers />} />
+                    <Route path="refunds" element={<AdminRefunds />} />
                     <Route path="notifications" element={<AdminNotifications />} />
                   </Route>
                   <Route path="*" element={<NotFound />} />

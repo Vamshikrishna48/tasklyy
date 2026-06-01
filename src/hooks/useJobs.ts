@@ -1,12 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
+import { getWorkerLevelInfo } from "@/utils/levels";
 
 export const useJobs = () => {
   const [loading, setLoading] = useState(false);
  
   const ensureProfile = async (userId: string) => {
-    const { data: existingProfile } = await (supabase as any).from('profiles').select('id').eq('id', userId).maybeSingle();
+    const { data: existingProfile } = await (supabase as any).from('profiles').select('id, upi_id').eq('id', userId).maybeSingle();
     if (!existingProfile) {
       console.log(`Profile missing for ${userId}, creating...`);
       const { data: authUser } = await supabase.auth.getUser();
@@ -17,8 +18,16 @@ export const useJobs = () => {
         role: 'worker',
         wallet_balance: 0,
         is_verified: false,
-        verification_status: 'unverified'
+        verification_status: 'unverified',
+        upi_id: authUser.user?.user_metadata?.upi_id || null
       });
+    } else if (!existingProfile.upi_id) {
+      // Sync UPI ID if it's in auth metadata but not profiles table
+      const { data: authUser } = await supabase.auth.getUser();
+      const metaUpi = authUser.user?.user_metadata?.upi_id;
+      if (metaUpi) {
+        await (supabase as any).from('profiles').update({ upi_id: metaUpi }).eq('id', userId);
+      }
     }
   };
 
@@ -124,7 +133,8 @@ export const useJobs = () => {
       const { data: job } = await (supabase as any).from('jobs').select('*').eq('id', jobId).maybeSingle();
       if (!job) throw new Error("Job not found");
 
-      const platformFee = Math.round(amount * 0.30);
+      const levelInfo = await getWorkerLevelInfo(job.worker_id);
+      const platformFee = Math.round(amount * (levelInfo.feePercent / 100));
       const workerAmount = amount - platformFee;
 
       await (supabase as any).from('escrow_transactions').upsert({
@@ -144,7 +154,7 @@ export const useJobs = () => {
         type: 'escrow_held',
         amount: amount,
         from_user_id: job.poster_id,
-        note: `Payment for job: ${job.title}`
+        note: `Payment for job: ${job.title} (Worker Level ${levelInfo.level}, ${levelInfo.payoutPercent}% payout)`
       });
 
       toast.success("Payment successful! Job is now in progress.");

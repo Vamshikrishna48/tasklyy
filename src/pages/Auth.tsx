@@ -18,6 +18,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showWelcome, setShowWelcome] = useState(false);
+  const [upiId, setUpiId] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const navigate = useNavigate();
 
   // Redirect if already logged in
@@ -46,11 +48,18 @@ const Auth = () => {
         }, 900);
       } else {
         if (!displayName.trim()) throw new Error("Please enter your display name");
+        if (!upiId.trim()) throw new Error("Please enter your UPI ID");
+        if (!agreeTerms) throw new Error("You must agree to the Terms & Conditions and Privacy Policy");
 
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: displayName.trim() } },
+          options: { 
+            data: { 
+              full_name: displayName.trim(),
+              upi_id: upiId.trim()
+            } 
+          },
         });
 
         // Handle "user already registered" gracefully
@@ -66,6 +75,14 @@ const Auth = () => {
             return;
           }
           throw error;
+        }
+
+        if (data.user) {
+          // Sync UPI ID immediately to public profiles table (RLS triggers handles insert, but let's try direct update/upsert)
+          await supabase
+            .from("profiles")
+            .update({ upi_id: upiId.trim() })
+            .eq("id", data.user.id);
         }
 
         if (data.session) {
@@ -205,13 +222,50 @@ const Auth = () => {
 
               <AnimatePresence mode="wait">
                 {!isLogin && (
-                  <motion.div key="name" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
-                    <Label htmlFor="name" className="block text-left mb-1.5 text-sm font-medium text-foreground">Display Name</Label>
-                    <div className="relative mt-1">
-                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input id="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="Your name" className="pl-10" required={!isLogin} />
+                  <motion.div
+                    key="signup-extra"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden space-y-4 pb-2"
+                  >
+                    <div>
+                      <Label htmlFor="name" className="block text-left mb-1.5 text-sm font-medium text-foreground">Display Name</Label>
+                      <div className="relative mt-1">
+                        <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input id="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
+                          placeholder="Your name" className="pl-10" required={!isLogin} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="upi" className="block text-left mb-1.5 text-sm font-medium text-foreground">UPI ID (for payments) *</Label>
+                      <div className="relative mt-1">
+                        <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+                        <Input id="upi" value={upiId} onChange={(e) => setUpiId(e.target.value)}
+                          placeholder="e.g. success@okaxis" className="pl-10" required={!isLogin} />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 text-left">
+                        This UPI ID will be used to send your earnings directly to your account.
+                      </p>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 pt-1 text-left">
+                      <input
+                        id="agreeTerms"
+                        type="checkbox"
+                        checked={agreeTerms}
+                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer shrink-0"
+                        required={!isLogin}
+                      />
+                      <Label htmlFor="agreeTerms" className="text-xs text-muted-foreground leading-normal font-normal cursor-pointer select-none">
+                        I agree to the{" "}
+                        <span className="text-primary hover:underline font-semibold cursor-pointer">Terms & Conditions</span>
+                        {" "}and{" "}
+                        <span className="text-primary hover:underline font-semibold cursor-pointer">Privacy Policy</span>.
+                      </Label>
                     </div>
                   </motion.div>
                 )}

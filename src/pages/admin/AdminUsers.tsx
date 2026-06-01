@@ -25,6 +25,12 @@ const AdminUsers = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [pending, setPending] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [levelFilter, setLevelFilter] = useState<string>("all");
+
+  const filteredUsers = users.filter((u) => {
+    if (levelFilter === "all") return true;
+    return String(u.level) === levelFilter;
+  });
 
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [docUrls, setDocUrls] = useState<any>(null);
@@ -139,10 +145,69 @@ const AdminUsers = () => {
 
       {/* ── Users Table ── */}
       <div className="space-y-4">
-        <h2 className="font-display font-bold text-foreground flex items-center gap-2">
-          <UserCheck className="h-5 w-5 text-accent" />
-          Active Marketplace Members
-        </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h2 className="font-display font-bold text-foreground flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-accent" />
+            Active Marketplace Members
+          </h2>
+
+          {/* Level Filters */}
+          <div className="flex gap-1.5 p-1 bg-muted/60 rounded-xl border self-start">
+            <button
+              onClick={() => setLevelFilter("all")}
+              className={`py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center gap-1 ${
+                levelFilter === "all"
+                  ? "bg-white text-foreground shadow-sm font-black"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All
+              <Badge variant="secondary" className="px-1.5 py-0 h-4 text-[9px] font-black shrink-0">
+                {users.length}
+              </Badge>
+            </button>
+            <button
+              onClick={() => setLevelFilter("1")}
+              className={`py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center gap-1 ${
+                levelFilter === "1"
+                  ? "bg-white text-blue-700 shadow-sm font-black border border-blue-100"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Lvl 1
+              <Badge variant="secondary" className="bg-blue-50 text-blue-700 px-1.5 py-0 h-4 text-[9px] font-black shrink-0">
+                {users.filter(u => String(u.level) === "1").length}
+              </Badge>
+            </button>
+            <button
+              onClick={() => setLevelFilter("2")}
+              className={`py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center gap-1 ${
+                levelFilter === "2"
+                  ? "bg-white text-amber-700 shadow-sm font-black border border-amber-100"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Lvl 2
+              <Badge variant="secondary" className="bg-amber-50 text-amber-700 px-1.5 py-0 h-4 text-[9px] font-black shrink-0">
+                {users.filter(u => String(u.level) === "2").length}
+              </Badge>
+            </button>
+            <button
+              onClick={() => setLevelFilter("3")}
+              className={`py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center gap-1 ${
+                levelFilter === "3"
+                  ? "bg-white text-green-700 shadow-sm font-black border border-green-100"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Lvl 3
+              <Badge variant="secondary" className="bg-green-50 text-green-700 px-1.5 py-0 h-4 text-[9px] font-black shrink-0">
+                {users.filter(u => String(u.level) === "3").length}
+              </Badge>
+            </button>
+          </div>
+        </div>
+
         <Card className="shadow-card border-none overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -151,6 +216,7 @@ const AdminUsers = () => {
                   <tr>
                     <th className="px-5 py-4">User</th>
                     <th className="px-5 py-4">Role</th>
+                    <th className="px-5 py-4">Level</th>
                     <th className="px-5 py-4">Status</th>
                     <th className="px-5 py-4">UPI ID</th>
                     <th className="px-5 py-4">Active Project</th>
@@ -162,10 +228,10 @@ const AdminUsers = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {users.length === 0 && !loading ? (
-                    <tr><td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">No users registered yet.</td></tr>
+                  {filteredUsers.length === 0 && !loading ? (
+                    <tr><td colSpan={11} className="px-6 py-12 text-center text-muted-foreground italic">No users found under this filter.</td></tr>
                   ) : (
-                    users.map((user) => (
+                    filteredUsers.map((user) => (
                       <tr key={user.id} className="hover:bg-muted/5 transition-colors">
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-2">
@@ -186,6 +252,14 @@ const AdminUsers = () => {
                               user.role === 'poster' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                               'bg-gray-50 text-gray-700 border-gray-200'}`}>
                             {user.role}
+                          </Badge>
+                        </td>
+                        <td className="px-5 py-4">
+                          <Badge variant="outline" className={`text-[9px] font-black h-5 uppercase
+                            ${user.level === 3 ? 'bg-green-50 text-green-700 border-green-200 animate-pulse' :
+                              user.level === 2 ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                              'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                            Lvl {user.level || 1}
                           </Badge>
                         </td>
                         <td className="px-5 py-4">
