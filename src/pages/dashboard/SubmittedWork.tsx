@@ -92,8 +92,8 @@ const SubmittedWork = () => {
         (data as SubmittedJob[]).map(async (job) => {
           const enrichedFiles = await Promise.all(
             job.files.map(async (f) => {
-              // Download link only available for completed jobs
-              if (job.status === "completed") {
+              // Download link available for completed or submitted jobs
+              if (job.status === "completed" || job.status === "submitted") {
                 try {
                   const downloadUrl = await getSignedUrl("job-files", f.file_url);
                   return { ...f, downloadUrl };
@@ -475,17 +475,43 @@ const SubmittedWork = () => {
                                     <p className="text-[10px] text-muted-foreground uppercase">
                                       {f.file_type?.split("/")[1] || "file"}
                                     </p>
+                                    {/* Inline image preview if file is an image and downloadUrl is available */}
+                                    {(job.status === "submitted" || isCompleted) && f.downloadUrl && f.file_type?.startsWith("image/") && (
+                                      <div className="mt-2 rounded-lg overflow-hidden border border-muted max-w-[150px] shadow-sm hover:scale-105 transition-transform duration-200 cursor-pointer">
+                                        <a href={f.downloadUrl} target="_blank" rel="noopener noreferrer">
+                                          <img src={f.downloadUrl} alt={f.file_name} className="w-full h-auto object-cover max-h-[100px]" />
+                                        </a>
+                                      </div>
+                                    )}
+                                    {/* Inline PDF link */}
+                                    {(job.status === "submitted" || isCompleted) && f.downloadUrl && f.file_type === "application/pdf" && (
+                                      <div className="mt-1.5">
+                                        <a href={f.downloadUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline font-medium hover:text-primary-hover flex items-center gap-1">
+                                          📄 Open PDF Preview
+                                        </a>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
 
-                                {/* Download only available after acceptance */}
-                                {isCompleted && f.downloadUrl ? (
-                                  <a href={f.downloadUrl} download={f.file_name}>
-                                    <Button size="sm" variant="ghost" className="text-primary gap-1">
-                                      <Download className="h-3.5 w-3.5" />
-                                      Download
-                                    </Button>
-                                  </a>
+                                {/* Download only available after acceptance or during submission review */}
+                                {(isCompleted || job.status === "submitted") && f.downloadUrl ? (
+                                  <div className="flex gap-2">
+                                    {/* Preview option for images/PDFs */}
+                                    {f.file_type?.startsWith("image/") && (
+                                      <a href={f.downloadUrl} target="_blank" rel="noopener noreferrer">
+                                        <Button size="sm" variant="outline" className="text-primary border-primary/20 gap-1">
+                                          View Preview
+                                        </Button>
+                                      </a>
+                                    )}
+                                    <a href={f.downloadUrl} download={f.file_name}>
+                                      <Button size="sm" variant="ghost" className="text-primary gap-1">
+                                        <Download className="h-3.5 w-3.5" />
+                                        {job.status === "submitted" ? "Download to Review" : "Download"}
+                                      </Button>
+                                    </a>
+                                  </div>
                                 ) : (
                                   <Badge variant="outline" className="text-[10px] opacity-60">
                                     <Lock className="h-3 w-3 mr-1" />
