@@ -198,7 +198,7 @@ const MyJobs = () => {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        {!isClient && (job.status === "accepted" || job.status === "in_progress" || job.status === "rejected") && (
+                        {!isClient && (job.status === "accepted" || job.status === "disputed") && (
                           <Button variant="hero" size="sm" className="gap-1.5" onClick={() => setUploadDialogJob(job)}>
                             <Upload className="h-3.5 w-3.5" />
                             Submit Work

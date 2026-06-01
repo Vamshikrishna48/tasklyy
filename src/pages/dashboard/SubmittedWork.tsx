@@ -82,7 +82,7 @@ const SubmittedWork = () => {
           "*, poster:profiles!jobs_poster_id_fkey(full_name), worker:profiles!jobs_worker_id_fkey(full_name), files:job_files(*)"
         )
         .or(`poster_id.eq.${user.id},worker_id.eq.${user.id}`)
-        .in("status", ["accepted", "in_progress", "submitted", "completed", "rejected"])
+        .in("status", ["accepted", "submitted", "completed", "disputed"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -231,10 +231,10 @@ const SubmittedWork = () => {
         .eq("job_id", rejectDialogJob.id)
         .eq("status", "held");
 
-      // Update job status to rejected + store reason
+      // Update job status to disputed + store reason
       await (supabase as any)
         .from("jobs")
-        .update({ status: "rejected", rejection_reason: rejectReason.trim() })
+        .update({ status: "disputed", rejection_reason: rejectReason.trim() })
         .eq("id", rejectDialogJob.id);
 
       // Refund Poster (70%)
@@ -311,7 +311,7 @@ const SubmittedWork = () => {
           className="gap-2 shrink-0 sm:w-auto w-full"
           onClick={() => {
             const activeJobs = jobs.filter(
-              (j) => j.worker_id === user?.id && ["accepted", "in_progress", "rejected"].includes(j.status)
+              (j) => j.worker_id === user?.id && ["accepted", "disputed"].includes(j.status)
             );
             if (activeJobs.length > 0) {
               setUploadDialogJob(activeJobs[0]);
@@ -338,7 +338,7 @@ const SubmittedWork = () => {
             className="gap-2 mx-auto"
             onClick={() => {
               const activeJobs = jobs.filter(
-                (j) => j.worker_id === user?.id && ["accepted", "in_progress", "rejected"].includes(j.status)
+                (j) => j.worker_id === user?.id && ["accepted", "disputed"].includes(j.status)
               );
               if (activeJobs.length > 0) {
                 setUploadDialogJob(activeJobs[0]);
@@ -359,7 +359,7 @@ const SubmittedWork = () => {
               const isPoster = job.poster_id === user?.id;
               const isWorker = job.worker_id === user?.id;
               const isCompleted = job.status === "completed";
-              const isRejected = job.status === "rejected";
+              const isRejected = job.status === "disputed";
               const submissionFiles = job.files.filter((f) => f.is_submission);
               const briefFiles = job.files.filter((f) => !f.is_submission);
 
@@ -383,16 +383,16 @@ const SubmittedWork = () => {
                                 ? "outline"
                                 : isRejected
                                 ? "destructive"
-                                : (job.status === "accepted" || job.status === "in_progress")
+                                : (job.status === "accepted")
                                 ? "default"
                                 : "secondary"
                             }
                             className="shrink-0"
                           >
-                            {(job.status === "accepted" || job.status === "in_progress") && "In Progress"}
+                            {job.status === "accepted" && "In Progress"}
                             {job.status === "submitted" && "Awaiting Review"}
                             {job.status === "completed" && "✓ Accepted"}
-                            {job.status === "rejected" && "✗ Rejected"}
+                            {job.status === "disputed" && "✗ Rejected"}
                           </Badge>
                         </div>
                         <span className="font-display text-lg font-bold text-primary">
@@ -568,7 +568,7 @@ const SubmittedWork = () => {
                       )}
 
                       {/* Poster: show banner if job is active */}
-                      {isPoster && (job.status === "accepted" || job.status === "in_progress") && (
+                      {isPoster && (job.status === "accepted") && (
                         <div className="p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm flex items-start gap-2">
                           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                           <div>
@@ -579,7 +579,7 @@ const SubmittedWork = () => {
                       )}
 
                       {/* Worker: upload deliverables option */}
-                      {isWorker && (job.status === "accepted" || job.status === "in_progress" || job.status === "rejected") && (
+                      {isWorker && (job.status === "accepted" || job.status === "disputed") && (
                         <div className="pt-2">
                           <Button
                             variant="hero"
@@ -587,7 +587,7 @@ const SubmittedWork = () => {
                             onClick={() => setUploadDialogJob(job)}
                           >
                             <Upload className="h-4 w-4" />
-                            {job.status === "rejected" ? "Re-submit / Upload New Deliverables" : "Upload Deliverables / Submit Work"}
+                            {job.status === "disputed" ? "Re-submit / Upload New Deliverables" : "Upload Deliverables / Submit Work"}
                           </Button>
                         </div>
                       )}
@@ -600,7 +600,7 @@ const SubmittedWork = () => {
                               ? "bg-green-50 border-green-200 text-green-700"
                               : isRejected
                               ? "bg-red-50 border-red-200 text-red-700"
-                              : (job.status === "accepted" || job.status === "in_progress")
+                              : (job.status === "accepted")
                               ? "bg-blue-50 border-blue-200 text-blue-700"
                               : "bg-amber-50 border-amber-200 text-amber-700"
                           }`}
@@ -611,7 +611,7 @@ const SubmittedWork = () => {
                             "✗ Your work was rejected. See the reason above and contact the poster."}
                           {job.status === "submitted" &&
                             "⏳ Awaiting poster review. You'll be notified once accepted or rejected."}
-                          {(job.status === "accepted" || job.status === "in_progress") &&
+                          {(job.status === "accepted") &&
                             "ℹ️ You have taken this job. Upload your deliverables to request payment."}
                         </div>
                       )}
@@ -678,7 +678,7 @@ const SubmittedWork = () => {
                   Select Job *
                 </label>
                 {jobs.filter(
-                  (j) => j.worker_id === user?.id && ["accepted", "in_progress", "rejected"].includes(j.status)
+                  (j) => j.worker_id === user?.id && ["accepted", "disputed"].includes(j.status)
                 ).length === 0 ? (
                   <div className="p-3 bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-lg">
                     ⚠️ You do not have any active or in-progress jobs that you have taken. Go to <Link to="/jobs" className="underline font-bold">Browse Jobs</Link> to take a job first.
@@ -694,7 +694,7 @@ const SubmittedWork = () => {
                   >
                     <option value="" disabled={!!uploadDialogJob}>-- Select a Job --</option>
                     {jobs.filter(
-                      (j) => j.worker_id === user?.id && ["accepted", "in_progress", "rejected"].includes(j.status)
+                      (j) => j.worker_id === user?.id && ["accepted", "disputed"].includes(j.status)
                     ).map((j) => (
                       <option key={j.id} value={j.id}>
                         {j.title} (₹{j.budget})
