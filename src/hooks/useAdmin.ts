@@ -93,12 +93,9 @@ export const useAdmin = () => {
         if (totalCompleted >= 25) {
           workerLevel = 3;
           payoutPercent = 90;
-        } else if (monthlyCompleted >= 15) {
+        } else if (monthlyCompleted >= 10) {
           workerLevel = 2;
           payoutPercent = 80;
-        } else if (monthlyCompleted >= 10) {
-          workerLevel = 1;
-          payoutPercent = 75;
         }
       }
 
@@ -150,12 +147,9 @@ export const useAdmin = () => {
       if (totalCompleted >= 25) {
         level = 3;
         payoutPercent = 90;
-      } else if (monthlyCompleted >= 15) {
+      } else if (monthlyCompleted >= 10) {
         level = 2;
         payoutPercent = 80;
-      } else if (monthlyCompleted >= 10) {
-        level = 1;
-        payoutPercent = 75;
       }
 
       return {

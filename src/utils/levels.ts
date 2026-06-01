@@ -41,19 +41,15 @@ export const getWorkerLevelInfo = async (workerId: string): Promise<LevelInfo> =
       return date.getFullYear() === currentYear && date.getMonth() === currentMonth;
     }).length;
 
-    // Level 3: Permanent lock with >= 25 jobs
+    // Level 3: Permanent lock with >= 25 jobs (10 jobs from Lvl 1 + 15 jobs from Lvl 2)
     if (totalCompleted >= 25) {
       return { level: 3, payoutPercent: 90, feePercent: 10, totalCompleted, monthlyCompleted };
     }
-    // Level 2: >= 15 jobs in the current month
-    if (monthlyCompleted >= 15) {
+    // Level 2: >= 10 jobs in the current month (80% payout)
+    if (monthlyCompleted >= 10) {
       return { level: 2, payoutPercent: 80, feePercent: 20, totalCompleted, monthlyCompleted };
     }
-    // Level 1 (Updated): >= 10 jobs in the current month
-    if (monthlyCompleted >= 10) {
-      return { level: 1, payoutPercent: 75, feePercent: 25, totalCompleted, monthlyCompleted };
-    }
-    // Level 1: Default starting tier
+    // Level 1: Default starting tier (70% payout)
     return { level: 1, payoutPercent: 70, feePercent: 30, totalCompleted, monthlyCompleted };
   } catch (err) {
     console.error("Error calculating worker level info:", err);

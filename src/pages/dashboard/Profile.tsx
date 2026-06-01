@@ -55,23 +55,18 @@ const Profile = () => {
           feePercent = 10;
           nextThresholdText = "👑 Max Tier Unlocked! Permanent 90% payout.";
           progressVal = 100;
-        } else if (monthlyCompleted >= 15) {
+        } else if (monthlyCompleted >= 10) {
           level = 2;
           payoutPercent = 80;
           feePercent = 20;
-          nextThresholdText = `Complete ${25 - totalCompleted} more historical jobs for Level 3 (90% payout)`;
-          progressVal = (totalCompleted / 25) * 100;
-        } else if (monthlyCompleted >= 10) {
-          level = 1;
-          payoutPercent = 75;
-          feePercent = 25;
-          nextThresholdText = `Complete ${15 - monthlyCompleted} more jobs this month for Level 2 (80% payout)`;
-          progressVal = (monthlyCompleted / 15) * 100;
+          const level2Completed = Math.max(0, totalCompleted - 10);
+          nextThresholdText = `Complete ${15 - level2Completed} more jobs in Level 2 (Level 2 progress: ${level2Completed}/15) to reach Level 3 (Permanent 90% payout)`;
+          progressVal = (level2Completed / 15) * 100;
         } else {
           level = 1;
           payoutPercent = 70;
           feePercent = 30;
-          nextThresholdText = `Complete ${10 - monthlyCompleted} more jobs this month for Level 1 Update (75% payout)`;
+          nextThresholdText = `Complete ${10 - monthlyCompleted} more jobs this month to enter Level 2 (80% payout) — Progress: ${monthlyCompleted}/10`;
           progressVal = (monthlyCompleted / 10) * 100;
         }
 
@@ -235,7 +230,7 @@ const Profile = () => {
                         : "bg-white text-slate-600 hover:bg-slate-50"
                     }`}
                   >
-                    Level 1 (70% - 75%)
+                    Level 1 (70%)
                   </button>
                   <button
                     onClick={() => setViewLevelDetails(2)}
@@ -265,15 +260,15 @@ const Profile = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-sm text-slate-800">Tier 1: Starter & Active</span>
-                        <Badge className="bg-blue-600 text-white">70% - 75% Payout</Badge>
+                        <Badge className="bg-blue-600 text-white">70% Payout</Badge>
                       </div>
                       <p className="text-xs text-slate-600 leading-relaxed">
-                        Default starting tier for all registered workers. Payout starts at <strong>70%</strong>. Once you complete <strong>10 assignments</strong> within the calendar month, your payout automatically increases to <strong>75%</strong>!
+                        Default starting tier for all registered workers. Payout starts at <strong>70%</strong>. Once you complete <strong>10 assignments</strong> within the calendar month, you enter Level 2 and your payout automatically increases to 80%!
                       </p>
                       <div className="text-[11px] font-bold text-slate-500 pt-1 flex items-center justify-between">
                         <span>Current Month Jobs: {levelInfo.monthlyCompleted}/10</span>
                         <span className={levelInfo.monthlyCompleted >= 10 ? "text-green-600 font-extrabold" : "text-blue-600"}>
-                          {levelInfo.monthlyCompleted >= 10 ? "Unlocked 75% Payout! 🎉" : `${10 - levelInfo.monthlyCompleted} jobs remaining for 75%`}
+                          {levelInfo.monthlyCompleted >= 10 ? "Level 2 Reached! 🎉" : `${10 - levelInfo.monthlyCompleted} jobs remaining to reach Level 2`}
                         </span>
                       </div>
                     </div>
@@ -285,12 +280,12 @@ const Profile = () => {
                         <Badge className="bg-amber-500 text-white">80% Payout</Badge>
                       </div>
                       <p className="text-xs text-slate-600 leading-relaxed">
-                        Unlock <strong>80% payout</strong> (only 20% platform fee) by completing <strong>15 assignments</strong> within the current calendar month.
+                        Unlock <strong>80% payout</strong> (only 20% platform fee) by completing 10 jobs in the month. Once you are in Level 2, you must complete <strong>15 assignments</strong> (tracked from 1 to 15) within this tier to reach Level 3.
                       </p>
                       <div className="text-[11px] font-bold text-slate-500 pt-1 flex items-center justify-between">
-                        <span>Current Month Jobs: {levelInfo.monthlyCompleted}/15</span>
-                        <span className={levelInfo.monthlyCompleted >= 15 ? "text-green-600 font-extrabold" : "text-amber-600"}>
-                          {levelInfo.monthlyCompleted >= 15 ? "Unlocked 80% Payout! 🚀" : `${15 - levelInfo.monthlyCompleted} jobs remaining for 80%`}
+                        <span>Level 2 Jobs Completed: {Math.max(0, levelInfo.totalCompleted - 10)}/15</span>
+                        <span className={levelInfo.totalCompleted >= 25 ? "text-green-600 font-extrabold" : "text-amber-600"}>
+                          {levelInfo.totalCompleted >= 25 ? "Level 3 Reached! 🚀" : `${15 - Math.max(0, levelInfo.totalCompleted - 10)} jobs remaining for Level 3`}
                         </span>
                       </div>
                     </div>
@@ -302,7 +297,7 @@ const Profile = () => {
                         <Badge className="bg-green-600 text-white">90% Payout</Badge>
                       </div>
                       <p className="text-xs text-slate-600 leading-relaxed">
-                        Get the ultimate <strong>90% payout</strong> (only 10% platform fee) by completing <strong>25 assignments historically</strong>. Once unlocked, you are permanently locked at this tier—<strong>no monthly drops ever</strong>, regardless of activity!
+                        Get the ultimate <strong>90% payout</strong> (only 10% platform fee) by completing <strong>25 assignments historically</strong> (10 jobs from Level 1 + 15 jobs from Level 2). Once unlocked, you are permanently locked at this tier—<strong>no monthly drops ever</strong>, regardless of activity!
                       </p>
                       <div className="text-[11px] font-bold text-slate-500 pt-1 flex items-center justify-between">
                         <span>Historical Total Jobs: {levelInfo.totalCompleted}/25</span>
