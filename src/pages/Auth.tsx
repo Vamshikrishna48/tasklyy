@@ -143,11 +143,20 @@ const Auth = () => {
             .eq("id", data.user.id);
         }
 
-        // Transition to Email Code Verification screen immediately
-        setInfoMessage("Account created successfully! We have sent a 6-digit email verification code to your email. Please verify it below to activate your account.");
-        setView("email_verify_signup");
-        setLoading(false);
-
+        if (data.session) {
+          // Email confirmation is disabled in Supabase! Auto logged in.
+          setShowWelcome(true);
+          setTimeout(() => {
+            setShowWelcome(false);
+            toast.success("Account created and signed in successfully! 🎉");
+            navigate("/dashboard");
+          }, 900);
+        } else {
+          // Email confirmation is enabled! Transition to code verification screen.
+          setInfoMessage("Account created successfully! We have sent a 6-digit email verification code to your email. Please verify it below to activate your account.");
+          setView("email_verify_signup");
+          setLoading(false);
+        }
       } else if (view === "email_verify_signup") {
         // 3. Confirm Email Code
         if (!otpCode.trim()) throw new Error("Please enter the 6-digit verification code");
