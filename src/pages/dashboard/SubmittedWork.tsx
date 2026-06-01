@@ -476,7 +476,7 @@ const SubmittedWork = () => {
                                       {f.file_type?.split("/")[1] || "file"}
                                     </p>
                                     {/* Inline image preview if file is an image and downloadUrl is available */}
-                                    {(job.status === "submitted" || isCompleted) && f.downloadUrl && f.file_type?.startsWith("image/") && (
+                                    {(job.status === "submitted" || isCompleted) && f.downloadUrl && (f.file_type?.startsWith("image/") || ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(f.file_name.split('.').pop()?.toLowerCase() || "")) && (
                                       <div className="mt-2 rounded-lg overflow-hidden border border-muted max-w-[150px] shadow-sm hover:scale-105 transition-transform duration-200 cursor-pointer">
                                         <a href={f.downloadUrl} target="_blank" rel="noopener noreferrer">
                                           <img src={f.downloadUrl} alt={f.file_name} className="w-full h-auto object-cover max-h-[100px]" />
@@ -484,7 +484,7 @@ const SubmittedWork = () => {
                                       </div>
                                     )}
                                     {/* Inline PDF link */}
-                                    {(job.status === "submitted" || isCompleted) && f.downloadUrl && f.file_type === "application/pdf" && (
+                                    {(job.status === "submitted" || isCompleted) && f.downloadUrl && (f.file_type === "application/pdf" || f.file_name.split('.').pop()?.toLowerCase() === "pdf") && (
                                       <div className="mt-1.5">
                                         <a href={f.downloadUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline font-medium hover:text-primary-hover flex items-center gap-1">
                                           📄 Open PDF Preview
@@ -494,17 +494,14 @@ const SubmittedWork = () => {
                                   </div>
                                 </div>
 
-                                {/* Download only available after acceptance or during submission review */}
+                                {/* Download and Preview always available for review on submitted or completed jobs */}
                                 {(isCompleted || job.status === "submitted") && f.downloadUrl ? (
                                   <div className="flex gap-2">
-                                    {/* Preview option for images/PDFs */}
-                                    {f.file_type?.startsWith("image/") && (
-                                      <a href={f.downloadUrl} target="_blank" rel="noopener noreferrer">
-                                        <Button size="sm" variant="outline" className="text-primary border-primary/20 gap-1">
-                                          View Preview
-                                        </Button>
-                                      </a>
-                                    )}
+                                    <a href={f.downloadUrl} target="_blank" rel="noopener noreferrer">
+                                      <Button size="sm" variant="outline" className="text-primary border-primary/20 gap-1">
+                                        View Preview
+                                      </Button>
+                                    </a>
                                     <a href={f.downloadUrl} download={f.file_name}>
                                       <Button size="sm" variant="ghost" className="text-primary gap-1">
                                         <Download className="h-3.5 w-3.5" />
