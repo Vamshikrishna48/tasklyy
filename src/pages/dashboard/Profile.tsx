@@ -17,6 +17,7 @@ const Profile = () => {
 
   const [levelInfo, setLevelInfo] = useState<any>(null);
   const [levelLoading, setLevelLoading] = useState(true);
+  const [viewLevelDetails, setViewLevelDetails] = useState<number>(1);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -219,6 +220,98 @@ const Profile = () => {
                 <div className="p-3 bg-white/70 backdrop-blur-sm border rounded-xl">
                   <p className="text-[10px] text-muted-foreground uppercase font-black tracking-wide">Total Historical Jobs</p>
                   <p className="text-lg font-black text-slate-800">{levelInfo.totalCompleted} jobs</p>
+                </div>
+              </div>
+
+              {/* Level Details Tabs */}
+              <div className="border-t pt-4">
+                <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Explore Tier Benefits & Options:</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setViewLevelDetails(1)}
+                    className={`py-2 px-2 text-center text-xs font-bold rounded-lg border transition-all ${
+                      viewLevelDetails === 1
+                        ? "bg-blue-50 text-blue-700 border-blue-200 shadow-sm"
+                        : "bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    Level 1 (70% - 75%)
+                  </button>
+                  <button
+                    onClick={() => setViewLevelDetails(2)}
+                    className={`py-2 px-2 text-center text-xs font-bold rounded-lg border transition-all ${
+                      viewLevelDetails === 2
+                        ? "bg-amber-50 text-amber-700 border-amber-200 shadow-sm"
+                        : "bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    Level 2 (80%)
+                  </button>
+                  <button
+                    onClick={() => setViewLevelDetails(3)}
+                    className={`py-2 px-2 text-center text-xs font-bold rounded-lg border transition-all ${
+                      viewLevelDetails === 3
+                        ? "bg-green-50 text-green-700 border-green-200 shadow-sm"
+                        : "bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    Level 3 (90%)
+                  </button>
+                </div>
+
+                {/* Tab content */}
+                <div className="mt-4 p-4 rounded-xl border bg-white/50 backdrop-blur-sm text-left">
+                  {viewLevelDetails === 1 && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-sm text-slate-800">Tier 1: Starter & Active</span>
+                        <Badge className="bg-blue-600 text-white">70% - 75% Payout</Badge>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        Default starting tier for all registered workers. Payout starts at <strong>70%</strong>. Once you complete <strong>10 assignments</strong> within the calendar month, your payout automatically increases to <strong>75%</strong>!
+                      </p>
+                      <div className="text-[11px] font-bold text-slate-500 pt-1 flex items-center justify-between">
+                        <span>Current Month Jobs: {levelInfo.monthlyCompleted}/10</span>
+                        <span className={levelInfo.monthlyCompleted >= 10 ? "text-green-600 font-extrabold" : "text-blue-600"}>
+                          {levelInfo.monthlyCompleted >= 10 ? "Unlocked 75% Payout! 🎉" : `${10 - levelInfo.monthlyCompleted} jobs remaining for 75%`}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {viewLevelDetails === 2 && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-sm text-slate-800">Tier 2: Expert Worker</span>
+                        <Badge className="bg-amber-500 text-white">80% Payout</Badge>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        Unlock <strong>80% payout</strong> (only 20% platform fee) by completing <strong>15 assignments</strong> within the current calendar month.
+                      </p>
+                      <div className="text-[11px] font-bold text-slate-500 pt-1 flex items-center justify-between">
+                        <span>Current Month Jobs: {levelInfo.monthlyCompleted}/15</span>
+                        <span className={levelInfo.monthlyCompleted >= 15 ? "text-green-600 font-extrabold" : "text-amber-600"}>
+                          {levelInfo.monthlyCompleted >= 15 ? "Unlocked 80% Payout! 🚀" : `${15 - levelInfo.monthlyCompleted} jobs remaining for 80%`}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {viewLevelDetails === 3 && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-sm text-slate-800">Tier 3: Elite Legend</span>
+                        <Badge className="bg-green-600 text-white">90% Payout</Badge>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        Get the ultimate <strong>90% payout</strong> (only 10% platform fee) by completing <strong>25 assignments historically</strong>. Once unlocked, you are permanently locked at this tier—<strong>no monthly drops ever</strong>, regardless of activity!
+                      </p>
+                      <div className="text-[11px] font-bold text-slate-500 pt-1 flex items-center justify-between">
+                        <span>Historical Total Jobs: {levelInfo.totalCompleted}/25</span>
+                        <span className={levelInfo.totalCompleted >= 25 ? "text-green-600 font-extrabold animate-pulse" : "text-green-600"}>
+                          {levelInfo.totalCompleted >= 25 ? "Permanent 90% Payout Active! 👑" : `${25 - levelInfo.totalCompleted} jobs remaining for Permanent Lock`}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
