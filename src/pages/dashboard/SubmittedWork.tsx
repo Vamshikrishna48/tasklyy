@@ -44,6 +44,10 @@ interface SubmittedFile {
 interface SubmittedJob {
   id: string;
   title: string;
+  description: string;
+  category: string;
+  deadline: string;
+  skills?: string[];
   status: string;
   budget: number;
   poster_id: string;
@@ -327,39 +331,73 @@ const SubmittedWork = () => {
                 >
                   <Card className="border-primary/10 shadow-card overflow-hidden">
                     <CardContent className="p-5 space-y-4">
-                      {/* Header */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <Link
-                            to={`/jobs/${job.id}`}
-                            className="font-display font-bold text-foreground hover:text-primary transition-colors"
+                      {/* Job Metadata & Status Header */}
+                      <div className="flex items-center justify-between gap-3 border-b border-muted pb-3">
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <Badge variant="category">{job.category || "General"}</Badge>
+                          <Badge
+                            variant={
+                              isCompleted
+                                ? "outline"
+                                : isRejected
+                                ? "destructive"
+                                : (job.status === "accepted" || job.status === "in_progress")
+                                ? "default"
+                                : "secondary"
+                            }
+                            className="shrink-0"
                           >
-                            {job.title}
-                          </Link>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {isPoster
-                              ? `Worker: ${job.worker?.full_name || "—"}`
-                              : `Poster: ${job.poster.full_name}`}
-                          </p>
+                            {(job.status === "accepted" || job.status === "in_progress") && "In Progress"}
+                            {job.status === "submitted" && "Awaiting Review"}
+                            {job.status === "completed" && "✓ Accepted"}
+                            {job.status === "rejected" && "✗ Rejected"}
+                          </Badge>
                         </div>
-                        <Badge
-                          variant={
-                            isCompleted
-                              ? "outline"
-                              : isRejected
-                              ? "destructive"
-                              : (job.status === "accepted" || job.status === "in_progress")
-                              ? "default"
-                              : "secondary"
-                          }
-                          className="shrink-0"
-                        >
-                          {(job.status === "accepted" || job.status === "in_progress") && "In Progress"}
-                          {job.status === "submitted" && "Awaiting Review"}
-                          {job.status === "completed" && "✓ Accepted"}
-                          {job.status === "rejected" && "✗ Rejected"}
-                        </Badge>
+                        <span className="font-display text-lg font-bold text-primary">
+                          ₹{job.budget}
+                        </span>
                       </div>
+
+                      {/* Job Title & Participants */}
+                      <div className="space-y-1">
+                        <Link
+                          to={`/jobs/${job.id}`}
+                          className="font-display text-lg font-bold text-foreground hover:text-primary transition-colors block leading-tight"
+                        >
+                          {job.title}
+                        </Link>
+                        <div className="flex flex-wrap justify-between items-center text-xs text-muted-foreground gap-2">
+                          <span>
+                            {isPoster
+                              ? `👤 Worker: ${job.worker?.full_name || "—"}`
+                              : `👤 Poster: ${job.poster.full_name}`}
+                          </span>
+                          {job.deadline && (
+                            <span className="flex items-center gap-1 font-medium">
+                              📅 Deadline: {new Date(job.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Job Description & Brief Details */}
+                      {job.description && (
+                        <div className="text-sm text-muted-foreground bg-muted/20 p-3.5 rounded-xl border border-muted/30">
+                          <p className="font-bold text-xs uppercase tracking-wider text-foreground/75 mb-1">Project Brief / Description</p>
+                          <p className="line-clamp-4 whitespace-pre-wrap leading-relaxed">{job.description}</p>
+                        </div>
+                      )}
+
+                      {/* Required Skills */}
+                      {job.skills && job.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {job.skills.map((skill) => (
+                            <Badge key={skill} variant="secondary" className="text-[10px] py-0.5">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Rejection reason (if any) */}
                       {isRejected && job.rejection_reason && (
