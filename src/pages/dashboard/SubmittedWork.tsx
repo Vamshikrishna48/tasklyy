@@ -67,6 +67,7 @@ const SubmittedWork = () => {
   const [rejectReason, setRejectReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [uploadDialogJob, setUploadDialogJob] = useState<SubmittedJob | null>(null);
+  const [isGeneralUploadOpen, setIsGeneralUploadOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -298,17 +299,58 @@ const SubmittedWork = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Submitted Work</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Review submitted deliverables and accept or reject work.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-muted pb-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Submitted Work</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Review submitted deliverables and accept or reject work.
+          </p>
+        </div>
+        <Button
+          variant="hero"
+          className="gap-2 shrink-0 sm:w-auto w-full"
+          onClick={() => {
+            const activeJobs = jobs.filter(
+              (j) => j.worker_id === user?.id && ["accepted", "in_progress", "rejected"].includes(j.status)
+            );
+            if (activeJobs.length > 0) {
+              setUploadDialogJob(activeJobs[0]);
+            } else {
+              setUploadDialogJob(null);
+            }
+            setIsGeneralUploadOpen(true);
+          }}
+        >
+          <Upload className="h-4 w-4" />
+          Submit Work
+        </Button>
       </div>
 
       {jobs.length === 0 ? (
-        <div className="py-16 text-center text-muted-foreground">
-          <Upload className="h-10 w-10 mx-auto mb-3 opacity-20" />
-          <p>No submitted work yet.</p>
+        <div className="py-16 text-center text-muted-foreground bg-muted/10 rounded-2xl border border-dashed border-muted/50 p-6 space-y-4">
+          <Upload className="h-12 w-12 mx-auto mb-1 opacity-20 text-primary" />
+          <div>
+            <p className="font-semibold text-foreground text-base">No work files uploaded yet</p>
+            <p className="text-sm mt-1 max-w-sm mx-auto">Upload and submit your deliverables for the jobs you have taken to request payouts.</p>
+          </div>
+          <Button
+            variant="hero"
+            className="gap-2 mx-auto"
+            onClick={() => {
+              const activeJobs = jobs.filter(
+                (j) => j.worker_id === user?.id && ["accepted", "in_progress", "rejected"].includes(j.status)
+              );
+              if (activeJobs.length > 0) {
+                setUploadDialogJob(activeJobs[0]);
+              } else {
+                setUploadDialogJob(null);
+              }
+              setIsGeneralUploadOpen(true);
+            }}
+          >
+            <Upload className="h-4 w-4" />
+            Upload Deliverables / Submit Work
+          </Button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -590,23 +632,76 @@ const SubmittedWork = () => {
       </Dialog>
 
       {/* Upload Deliverables Dialog */}
-      <Dialog open={!!uploadDialogJob} onOpenChange={() => { if (!uploading) { setUploadDialogJob(null); setSelectedFile(null); } }}>
+      <Dialog open={!!uploadDialogJob || isGeneralUploadOpen} onOpenChange={(open) => {
+        if (!uploading) {
+          setUploadDialogJob(null);
+          setIsGeneralUploadOpen(false);
+          setSelectedFile(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Upload Deliverables</DialogTitle>
             <DialogDescription>
-              Submit your completed work for "{uploadDialogJob?.title}". The poster will review and approve it to release your payment.
+              Submit your completed work. The poster will review and approve it to release your payment.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
+          <div className="py-4 space-y-4">
+            {/* Job Selector Dropdown if opened generally */}
+            {isGeneralUploadOpen && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                  Select Job *
+                </label>
+                {jobs.filter(
+                  (j) => j.worker_id === user?.id && ["accepted", "in_progress", "rejected"].includes(j.status)
+                ).length === 0 ? (
+                  <div className="p-3 bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-lg">
+                    ⚠️ You do not have any active or in-progress jobs that you have taken. Go to <Link to="/jobs" className="underline font-bold">Browse Jobs</Link> to take a job first.
+                  </div>
+                ) : (
+                  <select
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={uploadDialogJob?.id || ""}
+                    onChange={(e) => {
+                      const selected = jobs.find((j) => j.id === e.target.value);
+                      if (selected) setUploadDialogJob(selected);
+                    }}
+                  >
+                    <option value="" disabled={!!uploadDialogJob}>-- Select a Job --</option>
+                    {jobs.filter(
+                      (j) => j.worker_id === user?.id && ["accepted", "in_progress", "rejected"].includes(j.status)
+                    ).map((j) => (
+                      <option key={j.id} value={j.id}>
+                        {j.title} (₹{j.budget})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+
+            {/* Pre-selected Job Info */}
+            {!isGeneralUploadOpen && uploadDialogJob && (
+              <div className="p-3 bg-muted/30 rounded-lg border border-primary/10">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Submitting for</p>
+                <p className="font-semibold text-foreground truncate">{uploadDialogJob.title}</p>
+                <p className="text-xs text-primary font-bold">Budget: ₹{uploadDialogJob.budget}</p>
+              </div>
+            )}
+
             <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                Upload Work File *
+              </label>
               {!selectedFile ? (
                 <div className="relative border-2 border-dashed border-muted rounded-xl p-8 transition-colors hover:border-primary/50 group">
                   <input
                     type="file"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                    disabled={isGeneralUploadOpen && !uploadDialogJob}
                   />
                   <div className="flex flex-col items-center justify-center text-center">
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -642,12 +737,16 @@ const SubmittedWork = () => {
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => { setUploadDialogJob(null); setSelectedFile(null); }} disabled={uploading}>
+            <Button variant="outline" onClick={() => {
+              setUploadDialogJob(null);
+              setIsGeneralUploadOpen(false);
+              setSelectedFile(null);
+            }} disabled={uploading}>
               Cancel
             </Button>
             <Button
               variant="hero"
-              disabled={uploading || !selectedFile}
+              disabled={uploading || !selectedFile || !uploadDialogJob}
               onClick={handleUploadDeliverable}
               className="gap-2"
             >
