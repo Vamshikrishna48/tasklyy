@@ -61,16 +61,60 @@ export const useAdmin = () => {
   const fetchEscrowQueue = useCallback(async () => {
     const { data, error } = await (supabase as any)
       .from("escrow_transactions")
-      .select("*, poster:profiles!escrow_transactions_poster_id_fkey(full_name), worker:profiles!escrow_transactions_worker_id_fkey(full_name), job:jobs!escrow_transactions_job_id_fkey(title)")
+      .select("*, poster:profiles!escrow_transactions_poster_id_fkey(full_name), worker:profiles!escrow_transactions_worker_id_fkey(full_name), job:jobs!escrow_transactions_job_id_fkey(title, status, deadline)")
       .eq("status", "held")
       .order("created_at", { ascending: false });
     if (error) { console.error(error); return []; }
-    return (data || []).map((e: any) => ({
-      ...e,
-      poster_name: e.poster?.full_name || "—",
-      worker_name: e.worker?.full_name || "—",
-      job_title: e.job?.title || "—",
+
+    const mapped = await Promise.all((data || []).map(async (e: any) => {
+      let workerLevel = 1;
+      let payoutPercent = 70;
+
+      if (e.worker_id) {
+        const { data: completedJobs } = await (supabase as any)
+          .from("jobs")
+          .select("created_at")
+          .eq("worker_id", e.worker_id)
+          .eq("status", "completed");
+        
+        const jobsList = completedJobs || [];
+        const totalCompleted = jobsList.length;
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+
+        const monthlyCompleted = jobsList.filter((j: any) => {
+          if (!j.created_at) return false;
+          const date = new Date(j.created_at);
+          return date.getFullYear() === currentYear && date.getMonth() === currentMonth;
+        }).length;
+
+        if (totalCompleted >= 25) {
+          workerLevel = 3;
+          payoutPercent = 90;
+        } else if (monthlyCompleted >= 15) {
+          workerLevel = 2;
+          payoutPercent = 80;
+        } else if (monthlyCompleted >= 10) {
+          workerLevel = 1;
+          payoutPercent = 75;
+        }
+      }
+
+      return {
+        ...e,
+        poster_name: e.poster?.full_name || "—",
+        worker_name: e.worker?.full_name || "—",
+        job_title: e.job?.title || "—",
+        job_status: e.job?.status || "accepted",
+        job_deadline: e.job?.deadline ? new Date(e.job.deadline).toLocaleDateString("en-IN", { month: "short", day: "numeric" }) : "—",
+        worker_level: workerLevel,
+        worker_payout_percent: payoutPercent
+      };
     }));
+
+    return mapped;
   }, []);
 
   // ── All Users (real Supabase data with last login info) ──────────────────

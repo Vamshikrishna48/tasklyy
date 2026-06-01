@@ -13,6 +13,7 @@ const AdminEscrow = () => {
   const [escrowPayments, setEscrowPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [levelFilter, setLevelFilter] = useState<string>("all");
 
   const loadQueue = async () => {
     setLoading(true);
@@ -37,13 +38,14 @@ const AdminEscrow = () => {
     await loadQueue();
   };
 
-  // Calculate breakdown based on 30% platform fee
-  const getPlatformFee = (total: number) => Math.round(total * PLATFORM_FEE_PCT / 100);
-  const getWorkerPayout = (total: number) => total - getPlatformFee(total);
+  const filteredPayments = escrowPayments.filter((p) => {
+    if (levelFilter === "all") return true;
+    return String(p.worker_level) === levelFilter;
+  });
 
-  const totalEscrow = escrowPayments.reduce((sum, p) => sum + (p.total_amount || 0), 0);
-  const totalPlatformFee = escrowPayments.reduce((sum, p) => sum + getPlatformFee(p.total_amount || 0), 0);
-  const totalWorkerPayout = escrowPayments.reduce((sum, p) => sum + getWorkerPayout(p.total_amount || 0), 0);
+  const totalEscrow = filteredPayments.reduce((sum, p) => sum + (p.total_amount || 0), 0);
+  const totalPlatformFee = filteredPayments.reduce((sum, p) => sum + (p.platform_fee || 0), 0);
+  const totalWorkerPayout = filteredPayments.reduce((sum, p) => sum + (p.worker_amount || 0), 0);
 
   return (
     <div className="p-6 space-y-6">
@@ -52,17 +54,73 @@ const AdminEscrow = () => {
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Escrow Payments</h1>
           <p className="text-muted-foreground text-sm">
-            Platform takes <span className="font-bold text-primary">30%</span> fee. Worker receives <span className="font-bold text-green-600">70%</span> on release.
+            Platform splits dynamically based on worker levels: <span className="font-bold text-primary">Level 1</span> (70%-75% payout), <span className="font-bold text-amber-600">Level 2</span> (80% payout), <span className="font-bold text-green-600">Level 3</span> (90% payout).
           </p>
         </div>
         <Badge variant="secondary" className="flex items-center gap-1 text-sm px-3 py-1">
           <Shield className="h-3 w-3" />
-          {escrowPayments.length} pending
+          {filteredPayments.length} pending
         </Badge>
       </div>
 
+      {/* Level Filters */}
+      <div className="flex gap-1.5 p-1 bg-muted/60 rounded-xl border max-w-sm">
+        <button
+          onClick={() => setLevelFilter("all")}
+          className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
+            levelFilter === "all"
+              ? "bg-white text-foreground shadow-sm font-black"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          All
+          <Badge variant="secondary" className="px-1.5 py-0 h-4 text-[9px] font-black shrink-0">
+            {escrowPayments.length}
+          </Badge>
+        </button>
+        <button
+          onClick={() => setLevelFilter("1")}
+          className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
+            levelFilter === "1"
+              ? "bg-white text-blue-700 shadow-sm font-black border border-blue-100"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Lvl 1
+          <Badge variant="secondary" className="bg-blue-50 text-blue-700 px-1.5 py-0 h-4 text-[9px] font-black shrink-0">
+            {escrowPayments.filter(p => p.worker_level === 1).length}
+          </Badge>
+        </button>
+        <button
+          onClick={() => setLevelFilter("2")}
+          className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
+            levelFilter === "2"
+              ? "bg-white text-amber-700 shadow-sm font-black border border-amber-100"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Lvl 2
+          <Badge variant="secondary" className="bg-amber-50 text-amber-700 px-1.5 py-0 h-4 text-[9px] font-black shrink-0">
+            {escrowPayments.filter(p => p.worker_level === 2).length}
+          </Badge>
+        </button>
+        <button
+          onClick={() => setLevelFilter("3")}
+          className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
+            levelFilter === "3"
+              ? "bg-white text-green-700 shadow-sm font-black border border-green-100"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Lvl 3
+          <Badge variant="secondary" className="bg-green-50 text-green-700 px-1.5 py-0 h-4 text-[9px] font-black shrink-0">
+            {escrowPayments.filter(p => p.worker_level === 3).length}
+          </Badge>
+        </button>
+      </div>
+
       {/* Summary Cards */}
-      {!loading && escrowPayments.length > 0 && (
+      {!loading && filteredPayments.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="p-4">
@@ -72,13 +130,13 @@ const AdminEscrow = () => {
           </Card>
           <Card className="bg-amber-50 border-amber-200">
             <CardContent className="p-4">
-              <p className="text-xs text-amber-600 font-bold uppercase tracking-wide mb-1">Platform Fee (30%)</p>
+              <p className="text-xs text-amber-600 font-bold uppercase tracking-wide mb-1">Platform Fees (Summed)</p>
               <p className="text-2xl font-black text-amber-700">₹{totalPlatformFee.toLocaleString('en-IN')}</p>
             </CardContent>
           </Card>
           <Card className="bg-green-50 border-green-200">
             <CardContent className="p-4">
-              <p className="text-xs text-green-600 font-bold uppercase tracking-wide mb-1">Worker Payout (70%)</p>
+              <p className="text-xs text-green-600 font-bold uppercase tracking-wide mb-1">Worker Payouts (Summed)</p>
               <p className="text-2xl font-black text-green-700">₹{totalWorkerPayout.toLocaleString('en-IN')}</p>
             </CardContent>
           </Card>
@@ -92,15 +150,17 @@ const AdminEscrow = () => {
             <div className="h-[160px] flex items-center justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-          ) : escrowPayments.length === 0 ? (
-            <div className="h-[160px] flex items-center justify-center text-sm text-muted-foreground">
-              No escrow payments waiting. Accept a bid on a job to create one.
+          ) : filteredPayments.length === 0 ? (
+            <div className="h-[160px] flex items-center justify-center text-sm text-muted-foreground italic">
+              No pending escrow payments found under this level filter.
             </div>
           ) : (
-            escrowPayments.map((p, i) => {
+            filteredPayments.map((p, i) => {
               const total = p.total_amount || 0;
-              const fee = getPlatformFee(total);
-              const payout = getWorkerPayout(total);
+              const fee = p.platform_fee ?? Math.round(total * 0.30);
+              const payout = p.worker_amount ?? (total - fee);
+              const payoutPercent = p.worker_payout_percent || 70;
+              const feePercent = 100 - payoutPercent;
               const isLoading = actionLoading === p.job_id;
 
               return (
@@ -138,9 +198,17 @@ const AdminEscrow = () => {
                     </div>
                     <div className="flex items-center gap-2 bg-muted/40 rounded-lg p-2">
                       <User className="h-3.5 w-3.5 text-green-600 shrink-0" />
-                      <div>
-                        <p className="text-[9px] text-muted-foreground uppercase font-bold">Worker</p>
-                        <p className="text-xs font-semibold text-foreground">{p.worker_name || '—'}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[9px] text-muted-foreground uppercase font-bold">Worker</p>
+                          <Badge variant="outline" className={`text-[8px] font-black h-4 px-1 py-0 uppercase border-none scale-90 origin-right shrink-0
+                            ${p.worker_level === 3 ? 'bg-green-50 text-green-700 border-green-200 animate-pulse' :
+                              p.worker_level === 2 ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                              'bg-blue-50 text-blue-700 border-blue-200'}`}>
+                            Lvl {p.worker_level || 1}
+                          </Badge>
+                        </div>
+                        <p className="text-xs font-semibold text-foreground truncate">{p.worker_name || '—'}</p>
                       </div>
                     </div>
                   </div>
@@ -154,14 +222,14 @@ const AdminEscrow = () => {
                       <span className="text-sm font-black text-foreground">₹{total.toLocaleString('en-IN')}</span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-2">
-                      <span className="text-xs text-amber-600 flex items-center gap-1.5">
-                        <Percent className="h-3 w-3" /> Platform Fee (30%)
+                      <span className="text-xs text-amber-600 flex items-center gap-1.5 font-bold">
+                        <Percent className="h-3 w-3" /> Platform Fee ({feePercent}%)
                       </span>
                       <span className="text-sm font-bold text-amber-600">− ₹{fee.toLocaleString('en-IN')}</span>
                     </div>
                     <div className="flex items-center justify-between px-4 py-2 bg-green-50 rounded-b-lg">
                       <span className="text-xs text-green-700 font-bold flex items-center gap-1.5">
-                        <ArrowDownLeft className="h-3 w-3" /> Worker Receives (70%)
+                        <ArrowDownLeft className="h-3 w-3" /> Worker Receives ({payoutPercent}%)
                       </span>
                       <span className="text-sm font-black text-green-700">₹{payout.toLocaleString('en-IN')}</span>
                     </div>
