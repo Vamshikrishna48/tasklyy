@@ -5,17 +5,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, User, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, ArrowLeft, Sparkles, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-type AuthView = "signin" | "signup" | "otp_verify";
+type AuthView = "signin" | "signup" | "otp_verify" | "forgot" | "reset";
 
 const Auth = () => {
   const [view, setView] = useState<AuthView>("signin");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
@@ -24,14 +28,23 @@ const Auth = () => {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const navigate = useNavigate();
 
-  // Redirect if already logged in
+  // Redirect if already logged in, OR detect recovery/reset mode
   useEffect(() => {
+    // Parse recovery mode from URL query or hash params
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    
+    if (searchParams.get("type") === "reset" || hashParams.get("type") === "recovery" || window.location.hash.includes("access_token")) {
+      setView("reset");
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      if (session && view !== "reset") {
         navigate("/dashboard", { replace: true });
       }
     });
-  }, [navigate]);
+  }, [navigate, view]);
 
   const handleResendCode = async () => {
     if (!email) {
@@ -40,20 +53,22 @@ const Auth = () => {
     }
     setLoading(true);
     try {
-      const isSignup = !!localStorage.getItem("pending_signup_upi");
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          shouldCreateUser: isSignup,
-          data: isSignup ? {
-            full_name: localStorage.getItem("pending_signup_name") || "",
-            upi_id: localStorage.getItem("pending_signup_upi") || ""
-          } : undefined
-        }
-      });
-      if (error) throw error;
-      toast.success("A new verification code has been sent! ✉️");
-      setInfoMessage(`A new 6-digit code has been sent to ${email}. Please check your inbox.`);
+      const otpType = localStorage.getItem("pending_otp_type") || "email";
+      if (otpType === "signup") {
+        const { error } = await supabase.auth.resend({
+          type: "signup",
+          email: email.trim()
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signInWithOtp({
+          email: email.trim(),
+          options: { shouldCreateUser: false }
+        });
+        if (error) throw error;
+      }
+      toast.success("A new verification code has been sent to your email! ✉️");
+      setInfoMessage("A new 6-digit verification code has been sent to your email. Please check your inbox and verify below.");
     } catch (err: any) {
       toast.error(err.message || "Failed to resend code.");
     } finally {
@@ -71,107 +86,139 @@ const Auth = () => {
 
     try {
       if (view === "signin") {
-        // 1. Send OTP Login Code (Strictly existing users)
-        if (!email.trim()) throw new Error("Please enter your email");
+        // 1. Sign In (Verify Password first, then trigger OTP code!)
+        if (!email.trim() || !password.trim()) throw new Error("Email and password are required");
 
-        // Verify if user profile exists before attempting password-less login
-        const { data: existingProfile, error: profileErr } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", email.trim())
-          .maybeSingle();
+        // Verify password validity
+        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password
+        });
 
-        if (profileErr) throw profileErr;
-        
-        if (!existingProfile) {
-          throw new Error("This email is not registered yet. Please click 'Sign Up' first to create your account! 🌱");
+        if (signInErr) {
+          // If email is not confirmed yet during password login, transition to verification code view
+          if (
+            signInErr.message.toLowerCase().includes("confirm") || 
+            signInErr.message.toLowerCase().includes("verified") || 
+            signInErr.message.toLowerCase().includes("not confirmed")
+          ) {
+            await supabase.auth.resend({ type: "signup", email: email.trim() });
+            localStorage.setItem("pending_otp_type", "signup");
+            setInfoMessage("Your email is not verified yet. We have sent a new 6-digit verification code to your email. Please enter it below to confirm your account.");
+            setView("otp_verify");
+            setLoading(false);
+            return;
+          }
+          throw signInErr;
         }
 
-        const { error } = await supabase.auth.signInWithOtp({
+        // Password matches! Sign them out immediately so they aren't fully authenticated yet
+        await supabase.auth.signOut();
+
+        // Trigger a secure 6-digit login OTP code via signInWithOtp
+        const { error: otpErr } = await supabase.auth.signInWithOtp({
           email: email.trim(),
           options: {
             shouldCreateUser: false
           }
         });
 
-        if (error) throw error;
+        if (otpErr) throw otpErr;
 
-        // Clean up any pending signup storage
-        localStorage.removeItem("pending_signup_upi");
-        localStorage.removeItem("pending_signup_name");
-
-        setInfoMessage(`We have sent a 6-digit login code to ${email}. Please enter it below.`);
+        localStorage.setItem("pending_otp_type", "email");
+        setInfoMessage("Password matches! For secure authentication, we have sent a 6-digit verification code to your email. Enter it below to complete login.");
         setView("otp_verify");
         setLoading(false);
 
       } else if (view === "signup") {
-        // 2. Send OTP Register Code (Create User)
+        // 2. Sign Up (with Password + verification OTP)
         if (!displayName.trim()) throw new Error("Please enter your display name");
         if (!upiId.trim()) throw new Error("Please enter your UPI ID");
         if (!agreeTerms) throw new Error("You must agree to the Terms & Conditions and Privacy Policy");
 
-        const { data: existingProfile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", email.trim())
-          .maybeSingle();
-
-        if (existingProfile) {
-          throw new Error("An account with this email already exists. Please select 'Sign In' instead!");
-        }
-
-        const { error } = await supabase.auth.signInWithOtp({
+        const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
-          options: {
-            shouldCreateUser: true,
-            data: {
+          password,
+          options: { 
+            data: { 
               full_name: displayName.trim(),
               upi_id: upiId.trim()
-            }
-          }
+            } 
+          },
         });
 
-        if (error) throw error;
+        if (error) {
+          if (
+            error.message.toLowerCase().includes("already") ||
+            error.message.toLowerCase().includes("registered") ||
+            error.message.toLowerCase().includes("exists")
+          ) {
+            setError("An account with this email already exists. Please sign in instead.");
+            setView("signin");
+            setLoading(false);
+            return;
+          }
+          throw error;
+        }
 
-        // Save metadata temporarily to sync on successful code verification
-        localStorage.setItem("pending_signup_upi", upiId.trim());
-        localStorage.setItem("pending_signup_name", displayName.trim());
+        if (data.user) {
+          // Sync UPI ID immediately to public profiles table
+          await supabase
+            .from("profiles")
+            .update({ upi_id: upiId.trim() })
+            .eq("id", data.user.id);
+        }
 
-        setInfoMessage(`We have sent a 6-digit activation code to ${email}. Please verify below to activate your account!`);
+        localStorage.setItem("pending_otp_type", "signup");
+        setInfoMessage("Account created successfully! We have sent a 6-digit email verification code to your email. Please verify it below to activate your account.");
         setView("otp_verify");
         setLoading(false);
 
       } else if (view === "otp_verify") {
-        // 3. Verify OTP Code
+        // 3. Confirm Email Code (Handles both Sign Up signup-verification and Sign In login-verification!)
         if (!otpCode.trim()) throw new Error("Please enter the 6-digit verification code");
         
-        const { data, error } = await supabase.auth.verifyOtp({
+        const otpType = localStorage.getItem("pending_otp_type") || "email";
+
+        const { error } = await supabase.auth.verifyOtp({
           email: email.trim(),
           token: otpCode.trim(),
-          type: "email"
+          type: otpType === "signup" ? "signup" : "email"
         });
 
         if (error) throw error;
 
-        // Post-verification profile metadata sync (in case trigger lags)
-        if (data.user) {
-          const pendingUpi = localStorage.getItem("pending_signup_upi");
-          const pendingName = localStorage.getItem("pending_signup_name");
-          if (pendingUpi || pendingName) {
-            await supabase
-              .from("profiles")
-              .update({
-                upi_id: pendingUpi || undefined,
-                full_name: pendingName || undefined
-              })
-              .eq("id", data.user.id);
-            
-            localStorage.removeItem("pending_signup_upi");
-            localStorage.removeItem("pending_signup_name");
-          }
-        }
+        // Clean up
+        localStorage.removeItem("pending_otp_type");
 
-        toast.success("Successfully authenticated! Welcome to Tasklyy 🎉");
+        toast.success("Successfully verified! Welcome to Tasklyy 🎉");
+        setShowWelcome(true);
+        setTimeout(() => {
+          setShowWelcome(false);
+          navigate("/dashboard");
+        }, 900);
+
+      } else if (view === "forgot") {
+        // 4. Send Forgot Password Email Link
+        if (!email.trim()) throw new Error("Please enter your email");
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth?type=reset`,
+        });
+        if (error) throw error;
+
+        setInfoMessage("Password reset link sent successfully! 📧 Please check your inbox (and spam folder) for the link.");
+        setLoading(false);
+
+      } else if (view === "reset") {
+        // 5. Update Password
+        if (!newPassword.trim()) throw new Error("Please enter a new password");
+        if (newPassword.length < 6) throw new Error("Password must be at least 6 characters");
+        if (newPassword !== confirmPassword) throw new Error("Passwords do not match");
+
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+
+        toast.success("Password reset successfully! ✅ Logging you in...");
         setShowWelcome(true);
         setTimeout(() => {
           setShowWelcome(false);
@@ -179,7 +226,7 @@ const Auth = () => {
         }, 900);
       }
     } catch (err: any) {
-      console.error("OTP Auth Error:", err);
+      console.error("Auth Error:", err);
       setError(err.message || "An authentication error occurred.");
       toast.error(err.message || "Authentication failed");
       setLoading(false);
@@ -237,9 +284,11 @@ const Auth = () => {
             </span>
           </motion.div>
           <p className="text-sm text-gray-500 mt-2 font-medium">
-            {view === "signup" ? "Create an account via OTP verification" : 
-             view === "otp_verify" ? "Confirm code to authenticate" :
-             "Sign in securely using Verification Codes"}
+            {view === "signup" ? "Create an account with password + OTP code" : 
+             view === "otp_verify" ? "Confirm 6-digit code to activate account" :
+             view === "forgot" ? "Reset your password credentials" :
+             view === "reset" ? "Select a secure new password" :
+             "Sign in with password + email verification code"}
           </p>
         </motion.div>
 
@@ -247,7 +296,7 @@ const Auth = () => {
           <CardContent className="p-6 space-y-6">
             
             {/* Header / Back navigation */}
-            {view === "otp_verify" && (
+            {!(view === "signin" || view === "signup") && (
               <button
                 type="button"
                 onClick={() => {
@@ -315,6 +364,56 @@ const Auth = () => {
             <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in">
               <AnimatePresence mode="wait">
                 
+                {/* ── VIEW: Forgot Password ── */}
+                {view === "forgot" && (
+                  <motion.div key="forgot-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4 text-left">
+                    <div className="space-y-1.5">
+                      <h4 className="font-bold text-slate-800 text-sm">Recover Password</h4>
+                      <p className="text-xs text-slate-500">Enter your email below. We'll send you a custom verification link to securely choose a new password.</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="email" className="block mb-1.5 text-sm font-medium text-foreground">Email</Label>
+                      <div className="relative mt-1">
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                          placeholder="name@email.com" className="pl-10" required />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* ── VIEW: Reset Password ── */}
+                {view === "reset" && (
+                  <motion.div key="reset-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4 text-left">
+                    <div className="space-y-1.5">
+                      <h4 className="font-bold text-slate-800 text-sm">Choose New Password</h4>
+                      <p className="text-xs text-slate-500">Secure your account by typing your new login password below.</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="new-password" className="block mb-1.5 text-sm font-medium text-foreground">New Password</Label>
+                      <div className="relative mt-1">
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input id="new-password" type={showPassword ? "text" : "password"} value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••"
+                          className="pl-10 pr-10" required minLength={6} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="confirm-password" className="block mb-1.5 text-sm font-medium text-foreground">Confirm New Password</Label>
+                      <div className="relative mt-1">
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input id="confirm-password" type="password" value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••"
+                          className="pl-10" required />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* ── VIEW: OTP Verify ── */}
                 {view === "otp_verify" && (
                   <motion.div key="otp-verify-view" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-4 text-left">
@@ -343,13 +442,9 @@ const Auth = () => {
                   </motion.div>
                 )}
 
-                {/* ── VIEW: Sign In (OTP-only) ── */}
+                {/* ── VIEW: Sign In ── */}
                 {view === "signin" && (
                   <motion.div key="signin-view" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-4 text-left">
-                    <div className="space-y-1.5">
-                      <h4 className="font-bold text-slate-800 text-sm">Sign In via OTP</h4>
-                      <p className="text-xs text-slate-500">No password required. Enter your email to receive a secure login code.</p>
-                    </div>
                     <div>
                       <Label htmlFor="email" className="block mb-1.5 text-sm font-medium text-foreground">Email</Label>
                       <div className="relative mt-1">
@@ -358,10 +453,32 @@ const Auth = () => {
                           placeholder="Enter your registered email" className="pl-10" required />
                       </div>
                     </div>
+                    <div>
+                      <Label htmlFor="password" className="block mb-1.5 text-sm font-medium text-foreground">Password</Label>
+                      <div className="relative mt-1">
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input id="password" type={showPassword ? "text" : "password"} value={password}
+                          onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
+                          className="pl-10 pr-10" required minLength={6} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <div className="flex justify-end pt-2">
+                        <button
+                          type="button"
+                          onClick={() => { setView("forgot"); setError(""); setInfoMessage(""); }}
+                          className="text-xs font-bold text-primary hover:underline"
+                        >
+                          Forgot Password?
+                        </button>
+                      </div>
+                    </div>
                   </motion.div>
                 )}
 
-                {/* ── VIEW: Sign Up (OTP-only) ── */}
+                {/* ── VIEW: Sign Up ── */}
                 {view === "signup" && (
                   <motion.div key="signup-view" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-4 text-left">
                     <div>
@@ -394,6 +511,20 @@ const Auth = () => {
                       </div>
                     </div>
 
+                    <div>
+                      <Label htmlFor="password" className="block mb-1.5 text-sm font-medium text-foreground">Password</Label>
+                      <div className="relative mt-1">
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input id="password" type={showPassword ? "text" : "password"} value={password}
+                          onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
+                          className="pl-10 pr-10" required minLength={6} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="flex items-start gap-2.5 pt-1 text-left">
                       <input
                         id="agreeTerms"
@@ -420,9 +551,11 @@ const Auth = () => {
                     animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
                 ) : (
                   <>
-                    {view === "signup" ? "Send Activation Code" :
-                     view === "otp_verify" ? "Verify & Enter Dashboard" :
-                     "Send Login Code"}
+                    {view === "signup" ? "Create Account & Send Code" :
+                     view === "otp_verify" ? "Confirm & Enter Dashboard" :
+                     view === "forgot" ? "Send Reset Link" :
+                     view === "reset" ? "Save & Login" :
+                     "Verify Password & Send Code"}
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
