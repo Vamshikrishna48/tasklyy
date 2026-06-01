@@ -336,9 +336,6 @@ const JobDetail = () => {
                     <Button variant="hero" className="flex-1 h-12 text-lg shadow-lg shadow-primary/20" onClick={() => handlePayment({ amount: job.budget, bidder_id: job.worker_id })}>
                       Pay ₹{job.budget} & Start Project
                     </Button>
-                    <Button variant="outline" className="h-12 border-dashed border-primary/30 hover:bg-primary/5 text-primary text-sm font-semibold whitespace-nowrap" onClick={() => handlePaymentSuccess({ amount: job.budget, bidder_id: job.worker_id })}>
-                      ⚡ Bypass & Test
-                    </Button>
                   </div>
                 </motion.div>
               )}
@@ -555,9 +552,6 @@ const JobDetail = () => {
                                   <div className="flex gap-2">
                                     <Button variant="hero" className="flex-grow gap-2 bg-amber-600 hover:bg-amber-700" onClick={() => handlePayment(bid)}>
                                       <IndianRupee className="h-4 w-4" /> Pay ₹{bid.amount} Now
-                                    </Button>
-                                    <Button variant="outline" className="border-dashed border-amber-500/40 hover:bg-amber-500/5 text-amber-700 text-xs font-semibold whitespace-nowrap" onClick={() => handlePaymentSuccess(bid)}>
-                                      ⚡ Bypass
                                     </Button>
                                   </div>
                                 </div>
