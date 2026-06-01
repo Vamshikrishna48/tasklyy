@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
+import { useJobs } from "@/hooks/useJobs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
   AlertCircle,
   Download,
   Upload,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { NoScreenshotWrapper } from "@/components/NoScreenshotWrapper";
@@ -54,24 +56,28 @@ interface SubmittedJob {
 
 const SubmittedWork = () => {
   const { user, profile } = useApp();
+  const { submitWork } = useJobs();
   const [jobs, setJobs] = useState<SubmittedJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [rejectDialogJob, setRejectDialogJob] = useState<SubmittedJob | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [uploadDialogJob, setUploadDialogJob] = useState<SubmittedJob | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const fetchJobs = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
     try {
-      // Fetch jobs where user is poster (with submitted/completed status) or worker
+      // Fetch jobs where user is poster or worker
       const { data, error } = await (supabase as any)
         .from("jobs")
         .select(
           "*, poster:profiles!jobs_poster_id_fkey(full_name), worker:profiles!jobs_worker_id_fkey(full_name), files:job_files(*)"
         )
         .or(`poster_id.eq.${user.id},worker_id.eq.${user.id}`)
-        .in("status", ["submitted", "completed", "rejected"])
+        .in("status", ["accepted", "in_progress", "submitted", "completed", "rejected"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -108,6 +114,44 @@ const SubmittedWork = () => {
   useEffect(() => {
     fetchJobs();
   }, [fetchJobs]);
+
+  const handleUploadDeliverable = async () => {
+    if (!uploadDialogJob || !selectedFile || !user?.id) return;
+    setUploading(true);
+    try {
+      const file = selectedFile;
+      const timestamp = Date.now();
+      const fileExt = file.name.split('.').pop();
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const filePath = `${uploadDialogJob.id}/submission_${timestamp}_${cleanFileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("job-files")
+        .upload(filePath, file);
+        
+      if (uploadError) throw uploadError;
+      
+      const success = await submitWork(
+        uploadDialogJob.id,
+        user.id,
+        filePath,
+        file.name,
+        file.type
+      );
+      
+      if (success) {
+        setUploadDialogJob(null);
+        setSelectedFile(null);
+        toast.success("Deliverables submitted successfully!");
+        fetchJobs();
+      }
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      toast.error(err.message || "Failed to upload files");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleAccept = async (job: SubmittedJob) => {
     setActionLoading(true);
@@ -300,10 +344,17 @@ const SubmittedWork = () => {
                         </div>
                         <Badge
                           variant={
-                            isCompleted ? "outline" : isRejected ? "destructive" : "secondary"
+                            isCompleted
+                              ? "outline"
+                              : isRejected
+                              ? "destructive"
+                              : (job.status === "accepted" || job.status === "in_progress")
+                              ? "default"
+                              : "secondary"
                           }
                           className="shrink-0"
                         >
+                          {(job.status === "accepted" || job.status === "in_progress") && "In Progress"}
                           {job.status === "submitted" && "Awaiting Review"}
                           {job.status === "completed" && "✓ Accepted"}
                           {job.status === "rejected" && "✗ Rejected"}
@@ -413,6 +464,31 @@ const SubmittedWork = () => {
                         </div>
                       )}
 
+                      {/* Poster: show banner if job is active */}
+                      {isPoster && (job.status === "accepted" || job.status === "in_progress") && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-bold">Job In Progress</p>
+                            <p className="text-xs">Worker is currently completing this job. Deliverables will appear here once uploaded.</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Worker: upload deliverables option */}
+                      {isWorker && (job.status === "accepted" || job.status === "in_progress" || job.status === "rejected") && (
+                        <div className="pt-2">
+                          <Button
+                            variant="hero"
+                            className="w-full gap-2"
+                            onClick={() => setUploadDialogJob(job)}
+                          >
+                            <Upload className="h-4 w-4" />
+                            {job.status === "rejected" ? "Re-submit / Upload New Deliverables" : "Upload Deliverables / Submit Work"}
+                          </Button>
+                        </div>
+                      )}
+
                       {/* Worker: notify about status */}
                       {isWorker && (
                         <div
@@ -421,6 +497,8 @@ const SubmittedWork = () => {
                               ? "bg-green-50 border-green-200 text-green-700"
                               : isRejected
                               ? "bg-red-50 border-red-200 text-red-700"
+                              : (job.status === "accepted" || job.status === "in_progress")
+                              ? "bg-blue-50 border-blue-200 text-blue-700"
                               : "bg-amber-50 border-amber-200 text-amber-700"
                           }`}
                         >
@@ -430,6 +508,8 @@ const SubmittedWork = () => {
                             "✗ Your work was rejected. See the reason above and contact the poster."}
                           {job.status === "submitted" &&
                             "⏳ Awaiting poster review. You'll be notified once accepted or rejected."}
+                          {(job.status === "accepted" || job.status === "in_progress") &&
+                            "ℹ️ You have taken this job. Upload your deliverables to request payment."}
                         </div>
                       )}
                     </CardContent>
@@ -466,6 +546,84 @@ const SubmittedWork = () => {
               onClick={handleReject}
             >
               {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm Rejection"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Deliverables Dialog */}
+      <Dialog open={!!uploadDialogJob} onOpenChange={() => { if (!uploading) { setUploadDialogJob(null); setSelectedFile(null); } }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Upload Deliverables</DialogTitle>
+            <DialogDescription>
+              Submit your completed work for "{uploadDialogJob?.title}". The poster will review and approve it to release your payment.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="flex flex-col gap-2">
+              {!selectedFile ? (
+                <div className="relative border-2 border-dashed border-muted rounded-xl p-8 transition-colors hover:border-primary/50 group">
+                  <input
+                    type="file"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  />
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <FileUp className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground">Click to upload or drag and drop</p>
+                    <p className="text-xs text-muted-foreground mt-1">PDF, Word, Images, or Zip (Max 10MB)</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-primary/20">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-8 w-8 rounded bg-primary/20 flex items-center justify-center text-primary">
+                      <FileUp className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate max-w-[220px]">{selectedFile.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => setSelectedFile(null)}
+                    disabled={uploading}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setUploadDialogJob(null); setSelectedFile(null); }} disabled={uploading}>
+              Cancel
+            </Button>
+            <Button
+              variant="hero"
+              disabled={uploading || !selectedFile}
+              onClick={handleUploadDeliverable}
+              className="gap-2"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Submit Work
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
