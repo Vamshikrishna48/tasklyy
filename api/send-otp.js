@@ -62,6 +62,8 @@ export default async function handler(req, res) {
     </div>
   `;
 
+  const errors = [];
+
   // 1. Try SMTP if configured
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = process.env.SMTP_PORT;
@@ -69,18 +71,34 @@ export default async function handler(req, res) {
   const smtpPassword = process.env.SMTP_PASSWORD;
   const smtpFrom = process.env.SMTP_FROM || (smtpUser ? `"Tasklyy" <${smtpUser}>` : null);
 
+  let smtpAttempted = false;
   if (smtpHost && smtpUser && smtpPassword) {
+    smtpAttempted = true;
     try {
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: parseInt(smtpPort) || 465,
-        secure: parseInt(smtpPort) === 465, // true for 465, false for other ports
-        auth: {
-          user: smtpUser,
-          pass: smtpPassword,
-        },
-      });
+      let transportConfig;
+      
+      // If Gmail, use nodemailer's built-in official 'gmail' service to bypass custom SSL/TLS port issues
+      if (smtpHost.toLowerCase().includes('gmail')) {
+        transportConfig = {
+          service: 'gmail',
+          auth: {
+            user: smtpUser,
+            pass: smtpPassword,
+          },
+        };
+      } else {
+        transportConfig = {
+          host: smtpHost,
+          port: parseInt(smtpPort) || 465,
+          secure: parseInt(smtpPort) === 465, // true for 465, false for other ports
+          auth: {
+            user: smtpUser,
+            pass: smtpPassword,
+          },
+        };
+      }
 
+      const transporter = nodemailer.createTransport(transportConfig);
       await transporter.sendMail({
         from: smtpFrom,
         to: email,
@@ -91,13 +109,15 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: 'OTP sent successfully via SMTP' });
     } catch (err) {
       console.error('SMTP error:', err);
-      // Let it fall through to Resend or return fallback
+      errors.push(`SMTP Error: ${err.message || err}`);
     }
   }
 
   // 2. Try Resend API if VITE_RESEND_API_KEY / RESEND_API_KEY is configured
   const resendApiKey = process.env.VITE_RESEND_API_KEY || process.env.RESEND_API_KEY;
+  let resendAttempted = false;
   if (resendApiKey) {
+    resendAttempted = true;
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -118,16 +138,23 @@ export default async function handler(req, res) {
       } else {
         const errText = await response.text();
         console.error('Resend API error:', errText);
+        errors.push(`Resend API Error: ${errText}`);
       }
     } catch (err) {
       console.error('Resend fetch error:', err);
+      errors.push(`Resend Error: ${err.message || err}`);
     }
   }
 
   // If we reach here, neither succeeded or were configured. Return fallback response.
+  let errorMsg = 'SMTP/Resend not fully configured on Vercel yet.';
+  if (smtpAttempted || resendAttempted) {
+    errorMsg = `Failed to send email. Details: ${errors.join(' | ')}`;
+  }
+
   return res.status(200).json({
     success: false,
-    message: 'SMTP/Resend not fully configured on Vercel yet.',
+    message: errorMsg,
     devFallback: true,
   });
 }

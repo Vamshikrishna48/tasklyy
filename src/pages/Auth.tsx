@@ -52,7 +52,7 @@ const Auth = () => {
         toast.success("A secure verification code has been sent to your email! ✉️");
       } else {
         console.error("[Tasklyy Backend Error]", resData.message);
-        toast.error("Failed to send verification email. Please verify SMTP/Resend credentials in Vercel.");
+        toast.error(`Failed to send email: ${resData.message}`);
       }
     } catch (err) {
       console.error("Could not reach backend OTP dispatch API:", err);
