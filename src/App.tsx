@@ -203,6 +203,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Live OTP verification gate
+  const isOtpVerified = localStorage.getItem("tasklyy_otp_verified") === "true";
+  if (!isOtpVerified) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
   return <>{children}</>;
 };
 

@@ -150,3 +150,30 @@
 .nav-aurora-glow {
   animation: neon-pulse 6s ease-in-out infinite;
 }
+
+/* ── Capacitor Native Mobile touch & layout optimizations ── */
+html, body {
+  /* Prevent screen bounces and scroll behaviors on native overlays */
+  overscroll-behavior-y: contain;
+  /* Smooth native-like touch gestures */
+  touch-action: manipulation;
+  /* Disable browser select overlay highlight color on mobile taps */
+  -webkit-tap-highlight-color: transparent;
+  /* Smooth native scroll deceleration */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area padding utilities for native devices with status bars/notches */
+.safe-padding-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-padding-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-margin-top {
+  margin-top: env(safe-area-inset-top, 0px);
+}
+.safe-margin-bottom {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
