@@ -40,15 +40,15 @@ const PageLoader = () => {
           <motion.div
             animate={{ scale: [1, 1.04, 1] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="flex flex-row items-center justify-center gap-4 mt-8 mb-8 z-10"
+            className="flex flex-col items-center justify-center gap-4 mt-8 mb-8 z-10"
           >
             <img
               src="/taskly-logo.png"
               alt="Tasklyy logo"
-              style={{ width: "48px", height: "48px", marginRight: "8px" }}
-              className="object-contain"
+              style={{ width: "150px", height: "150px" }}
+              className="object-contain mb-2"
             />
-            <span className="text-gray-700 font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "34px", lineHeight: "48px" }}>
+            <span className="text-gray-700 font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2" }}>
               Tasklyy
             </span>
           </motion.div>

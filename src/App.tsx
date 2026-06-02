@@ -125,17 +125,17 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           >
             {/* Brand — bigger logo + text, dark color for light bg */}
             <div className="flex flex-col items-center justify-center">
-              <div className="flex flex-row items-center justify-center" style={{ gap: 0 }}>
+               <div className="flex flex-col items-center justify-center" style={{ gap: 0 }}>
                  <img
                    src="/taskly-logo.png"
                    alt="Tasklyy Logo"
-                   style={{ width: '48px', height: '48px', marginRight: '8px', animationDuration: '4s' }}
-                   className="object-contain animate-pulse shrink-0"
+                   style={{ width: '150px', height: '150px', animationDuration: '4s' }}
+                   className="object-contain animate-pulse shrink-0 mb-2"
                  />
-                 <h1 className="text-gray-900 font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: '34px', lineHeight: '48px' }}>
+                 <h1 className="text-gray-900 font-bold tracking-tight animate-in fade-in" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: '36px', lineHeight: '1.2' }}>
                    Tasklyy
                  </h1>
-              </div>
+               </div>
               <p className="text-[9px] font-bold text-violet-600 tracking-widest uppercase mt-2">
                 India's Student Marketplace
               </p>

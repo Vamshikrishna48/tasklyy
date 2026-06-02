@@ -356,19 +356,19 @@ const Auth = () => {
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         >
           <motion.div
-            className="flex flex-row items-center justify-center animate-in fade-in"
+            className="flex flex-col items-center justify-center animate-in fade-in"
             style={{ gap: 0 }}
             whileHover={{ scale: 1.05 }}
           >
             <img
               src="/taskly-logo.png"
               alt="Tasklyy logo"
-              style={{ width: "48px", height: "48px", marginRight: "8px" }}
-              className="object-contain shrink-0"
+              style={{ width: "150px", height: "150px" }}
+              className="object-contain shrink-0 mb-2"
             />
             <span
               className="text-gray-900 font-bold tracking-tight animate-in fade-in"
-              style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "34px", lineHeight: "48px" }}
+              style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2" }}
             >
               Tasklyy
             </span>
@@ -698,13 +698,13 @@ const Auth = () => {
             <div className="relative z-10 text-center space-y-4 flex flex-col items-center">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 12, delay: 0.1 }}
-                className="mx-auto flex flex-row items-center justify-center" style={{ gap: 0 }}>
+                className="mx-auto flex flex-col items-center justify-center" style={{ gap: 0 }}>
                 <img src="/taskly-logo.png" alt="Tasklyy logo"
-                  style={{ width: "48px", height: "48px", marginRight: "8px" }}
-                  className="object-contain shrink-0" />
+                  style={{ width: "150px", height: "150px" }}
+                  className="object-contain shrink-0 mb-2" />
                 <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                  className="text-gray-900 font-bold tracking-tight"
-                  style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "34px", lineHeight: "48px" }}>Tasklyy</motion.h1>
+                  className="text-gray-900 font-bold tracking-tight animate-in fade-in"
+                  style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2" }}>Tasklyy</motion.h1>
               </motion.div>
               <div>
                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
