@@ -28,10 +28,10 @@ const Navbar = () => {
           <img
             src="/taskly-logo.png"
             alt="Tasklyy logo"
-            style={{ width: "80px", height: "80px", marginRight: "-10px" }}
+            style={{ width: "110px", height: "110px", marginRight: "-14px" }}
             className="object-contain"
           />
-          <span className="font-display font-black text-foreground" style={{ fontSize: "26px", lineHeight: 1 }}>
+          <span className="text-foreground" style={{ fontFamily: '"Outfit", sans-serif', fontSize: "28px", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1 }}>
             Tasklyy
           </span>
         </Link>
