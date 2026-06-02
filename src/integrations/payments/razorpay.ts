@@ -1,3 +1,5 @@
+import { getApiUrl } from "@/lib/api";
+
 type RazorpayHandler = (response: any) => void;
 
 interface RazorpayOptions {
@@ -50,14 +52,27 @@ export async function openRazorpayCheckout(
   // Launch Razorpay standard flow directly
   const isLoaded = await loadRazorpay();
   if (!isLoaded || !window.Razorpay) {
-    console.error("Razorpay script not available.");
+    console.error("Razorpay SDK script not available.");
     onFailure();
     return;
   }
 
-  const key = import.meta.env.VITE_RAZORPAY_KEY_ID;
+  let key = import.meta.env.VITE_RAZORPAY_KEY_ID;
   if (!key) {
-    console.error("VITE_RAZORPAY_KEY_ID is missing.");
+    console.log("VITE_RAZORPAY_KEY_ID not present in build environment. Fetching dynamically from backend...");
+    try {
+      const response = await fetch(getApiUrl("/api/get-razorpay-key"));
+      const data = await response.json();
+      if (data && data.key) {
+        key = data.key;
+      }
+    } catch (err) {
+      console.error("Failed to fetch Razorpay key dynamically:", err);
+    }
+  }
+
+  if (!key) {
+    console.error("Razorpay Key ID is completely missing from both build and backend environments.");
     onFailure();
     return;
   }
