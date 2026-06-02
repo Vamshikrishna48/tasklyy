@@ -36,23 +36,19 @@ const PageLoader = () => {
       >
         {/* Logo pill / card */}
         <div className="relative flex flex-col items-center justify-center px-6">
-          {/* Outer pill border */}
-          <div className="absolute inset-0 rounded-[4rem] border border-rose-200 w-80 h-40 -translate-x-1/2 left-1/2" />
-
           {/* White circle with logo and Brand name inline */}
           <motion.div
             animate={{ scale: [1, 1.04, 1] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="flex flex-row items-center justify-center gap-4 mt-8 mb-8 z-10"
           >
-            <div className="w-40 h-40 rounded-full bg-white shadow-lg flex items-center justify-center">
-              <img
-                src="/taskly-logo.png"
-                alt="Tasklyy logo"
-                className="w-36 h-36 object-contain"
-              />
-            </div>
-            <span className="font-display text-2xl font-black text-gray-700">
+            <img
+              src="/taskly-logo.png"
+              alt="Tasklyy logo"
+              style={{ width: "48px", height: "48px", marginRight: "8px" }}
+              className="object-contain"
+            />
+            <span className="text-gray-700 font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "34px", lineHeight: "48px" }}>
               Tasklyy
             </span>
           </motion.div>
