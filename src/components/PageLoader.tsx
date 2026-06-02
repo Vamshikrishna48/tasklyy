@@ -45,8 +45,8 @@ const PageLoader = () => {
             <img
               src="/taskly-logo.png"
               alt="Tasklyy logo"
-              style={{ width: "150px", height: "150px" }}
-              className="object-contain mb-2"
+              style={{ width: "220px", height: "220px" }}
+              className="object-contain mb-3"
             />
             <span className="text-gray-700 font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2" }}>
               Tasklyy
