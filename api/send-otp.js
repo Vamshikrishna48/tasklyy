@@ -25,13 +25,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email and OTP are required' });
   }
 
-  // Debug environment keys safely without printing values
+  // Debug environment keys safely without printing full secrets
   console.log("Loaded SMTP/Resend keys:", Object.keys(process.env).filter(k => k.startsWith("SMTP") || k.includes("RESEND")));
-  console.log("SMTP Variables present:", {
-    SMTP_HOST: !!process.env.SMTP_HOST,
-    SMTP_PORT: !!process.env.SMTP_PORT,
-    SMTP_USER: !!process.env.SMTP_USER,
-    SMTP_PASSWORD: !!process.env.SMTP_PASSWORD
+  console.log("SMTP_USER:", process.env.SMTP_USER);
+  console.log("SMTP_HOST:", process.env.SMTP_HOST);
+  console.log("SMTP_PORT:", process.env.SMTP_PORT);
+  console.log("SMTP_PASSWORD details:", {
+    exists: !!process.env.SMTP_PASSWORD,
+    length: process.env.SMTP_PASSWORD ? process.env.SMTP_PASSWORD.length : 0,
+    masked: process.env.SMTP_PASSWORD ? process.env.SMTP_PASSWORD.trim().substring(0, 3) + "..." : "none"
   });
 
   const subject = type === 'signup' ? 'Verify your Tasklyy Account' : 'Tasklyy Secure Sign In OTP';
