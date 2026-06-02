@@ -37,15 +37,9 @@ const Auth = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
-  // Helper to trigger custom OTP delivery (SMTP / Resend / Console fallback)
+  // Helper to trigger custom OTP delivery (SMTP / Resend)
   const triggerCustomOtp = async (targetEmail: string, code: string, type: 'signup' | 'login') => {
-    // 1. Core dev fallback: always log to console (F12) for 100% bypass capability on all accounts
-    console.log("%c-------------------------------------------------", "color: #6366f1; font-weight: bold;");
-    console.log(`%c[Tasklyy DEV OTP] Secure code for ${targetEmail}:`, "color: #0f172a; font-weight: bold; font-size: 14px;");
-    console.log(`%c🔑 OTP CODE: ${code}`, "color: #10b981; font-weight: bold; font-size: 18px;");
-    console.log("%c-------------------------------------------------", "color: #6366f1; font-weight: bold;");
-
-    // 2. Try to dispatch live email via our Vercel Serverless Function
+    // Attempt live delivery via our Vercel Serverless Function
     try {
       const response = await fetch("/api/send-otp", {
         method: "POST",
@@ -55,14 +49,14 @@ const Auth = () => {
       
       const resData = await response.json();
       if (resData.success) {
-        toast.success(`A secure verification code has been sent to your email! ✉️`);
+        toast.success("A secure verification code has been sent to your email! ✉️");
       } else {
-        console.log("[Tasklyy Backend Info]", resData.message);
-        toast.info("OTP code generated! (Printed to F12 Developer Console for instant testing) 🔍");
+        console.error("[Tasklyy Backend Error]", resData.message);
+        toast.error("Failed to send verification email. Please verify SMTP/Resend credentials in Vercel.");
       }
     } catch (err) {
-      console.warn("Could not reach backend OTP dispatch API, using Console fallback:", err);
-      toast.info("OTP code generated! (Printed to F12 Developer Console for instant testing) 🔍");
+      console.error("Could not reach backend OTP dispatch API:", err);
+      toast.error("Network error. Could not contact the OTP delivery service.");
     }
   };
 
