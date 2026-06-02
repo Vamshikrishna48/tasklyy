@@ -57,18 +57,23 @@ export async function openRazorpayCheckout(
     return;
   }
 
-  let key = import.meta.env.VITE_RAZORPAY_KEY_ID;
-  if (!key) {
-    console.log("VITE_RAZORPAY_KEY_ID not present in build environment. Fetching dynamically from backend...");
-    try {
-      const response = await fetch(getApiUrl("/api/get-razorpay-key"));
-      const data = await response.json();
-      if (data && data.key) {
-        key = data.key;
-      }
-    } catch (err) {
-      console.error("Failed to fetch Razorpay key dynamically:", err);
+  let key = null;
+  
+  // Try fetching dynamically from the backend first to get the most up-to-date key
+  try {
+    const response = await fetch(getApiUrl("/api/get-razorpay-key"));
+    const data = await response.json();
+    if (data && data.key) {
+      key = data.key;
+      console.log("Dynamically loaded active Razorpay key ID:", key);
     }
+  } catch (err) {
+    console.error("Failed to fetch Razorpay key dynamically, will fallback to build env:", err);
+  }
+
+  // Fallback to build-time environment variable if dynamic load failed
+  if (!key) {
+    key = import.meta.env.VITE_RAZORPAY_KEY_ID;
   }
 
   if (!key) {
