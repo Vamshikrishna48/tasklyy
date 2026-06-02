@@ -1,8 +1,8 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
@@ -115,7 +115,7 @@ module.exports = async (req, res) => {
   // If we reach here, neither succeeded or were configured. Return fallback response.
   return res.status(200).json({
     success: false,
-    message: 'SMTP/Resend not fully configured on Vercel yet. Code was printed to console for development.',
+    message: 'SMTP/Resend not fully configured on Vercel yet.',
     devFallback: true,
   });
-};
+}
