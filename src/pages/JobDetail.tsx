@@ -11,7 +11,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getWorkerLevelInfo } from "@/utils/levels";
-import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
+import { openPayUCheckout } from "@/integrations/payments/payu";
 import { sendBidNotification, sendBidRejectedNotification, sendPaymentRequiredNotification } from "@/hooks/useNotificationPermission";
 import { useJobs } from "@/hooks/useJobs";
 import { useJobFiles } from "@/hooks/useJobFiles";
@@ -61,6 +61,22 @@ const JobDetail = () => {
       .order("created_at", { ascending: false });
     setBids(data || []);
   }, [id]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const paymentStatus = searchParams.get("payment");
+    if (paymentStatus === "success") {
+      toast.success("Payment confirmed via PayU! Job is now in progress. 🎉");
+      // Clean query params so toast doesn't re-trigger on refresh
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentStatus === "failed") {
+      const errorMsg = searchParams.get("error") === "signature_failed"
+        ? "Payment verification failed (Signature mismatch)."
+        : "Payment failed or was cancelled. Please try again.";
+      toast.error(errorMsg);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -221,18 +237,18 @@ const JobDetail = () => {
   };
 
   const handlePayment = async (bid: any) => {
-    openRazorpayCheckout(
+    toast.loading("Initiating PayU secure checkout, redirecting...", { duration: 2000 });
+    openPayUCheckout(
       bid.amount,
+      id!,
       job?.title || "Job",
       user?.email || null,
-      () => handlePaymentSuccess(bid),
+      user?.user_metadata?.full_name || "Student",
+      bid.bidder_id,
+      user!.id,
       () => {
-        // onFailure — real payment error
-        toast.error("Payment failed. Please try again or contact support.");
-      },
-      () => {
-        // onCancel — user closed the modal (no error shown)
-        toast("Payment cancelled. You can try again anytime.", { icon: "ℹ️" });
+        toast.dismiss();
+        toast.error("Could not initiate PayU checkout. Please try again later.");
       }
     );
   };

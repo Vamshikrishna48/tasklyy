@@ -10,7 +10,6 @@ import { useApp } from "@/context/AppContext";
 import Navbar from "@/components/Navbar";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
