@@ -54,7 +54,11 @@ export async function openPayUCheckout(
       productinfo: resData.productinfo,
       firstname: resData.firstname,
       email: resData.email,
-      phone: '9999999999', // Placeholder phone to satisfy PayU validation
+      phone: (() => {
+        const prefix = ["7", "8", "9"][Math.floor(Math.random() * 3)];
+        const rest = Math.floor(100000000 + Math.random() * 900000000).toString().substring(0, 9);
+        return prefix + rest;
+      })(),
       surl: 'https://tasklyy-tawny.vercel.app/api/payu-success',
       furl: 'https://tasklyy-tawny.vercel.app/api/payu-failure',
       udf1: resData.udf1,
