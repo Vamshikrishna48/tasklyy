@@ -36,6 +36,7 @@ const JobDetail = () => {
   const [deliveryDays, setDeliveryDays] = useState("3");
   const [submittingBid, setSubmittingBid] = useState(false);
   const [bidSubmitted, setBidSubmitted] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const loadJob = useCallback(async () => {
     if (!id) return;
@@ -237,6 +238,8 @@ const JobDetail = () => {
   };
 
   const handlePayment = async (bid: any) => {
+    if (processingPayment) return;
+    setProcessingPayment(true);
     toast.loading("Initiating PayU secure checkout, redirecting...", { duration: 2000 });
     openPayUCheckout(
       bid.amount,
@@ -247,6 +250,7 @@ const JobDetail = () => {
       bid.bidder_id,
       user!.id,
       () => {
+        setProcessingPayment(false);
         toast.dismiss();
         toast.error("Could not initiate PayU checkout. Please try again later.");
       }
@@ -358,7 +362,11 @@ const JobDetail = () => {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
-                    <Button variant="hero" className="flex-1 h-12 text-lg shadow-lg shadow-primary/20" onClick={() => handlePayment({ amount: job.budget, bidder_id: job.worker_id })}>
+                    <Button variant="hero" className="flex-1 h-12 text-lg shadow-lg shadow-primary/20" 
+                      onClick={() => handlePayment({ amount: job.budget, bidder_id: job.worker_id })}
+                      disabled={processingPayment}
+                    >
+                      {processingPayment ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
                       Pay ₹{job.budget} & Start Project
                     </Button>
                   </div>
@@ -575,8 +583,12 @@ const JobDetail = () => {
                                     <span className="text-lg font-black text-amber-800">{timeLeft}</span>
                                   </div>
                                   <div className="flex gap-2">
-                                    <Button variant="hero" className="flex-grow gap-2 bg-amber-600 hover:bg-amber-700" onClick={() => handlePayment(bid)}>
-                                      <IndianRupee className="h-4 w-4" /> Pay ₹{bid.amount} Now
+                                    <Button variant="hero" className="flex-grow gap-2 bg-amber-600 hover:bg-amber-700" 
+                                      onClick={() => handlePayment(bid)}
+                                      disabled={processingPayment}
+                                    >
+                                      {processingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : <IndianRupee className="h-4 w-4" />}
+                                      Pay ₹{bid.amount} Now
                                     </Button>
                                   </div>
                                 </div>

@@ -46,9 +46,9 @@ const PageLoader = () => {
               src="/taskly-logo.png"
               alt="Tasklyy logo"
               style={{ width: "220px", height: "220px" }}
-              className="object-contain mb-3"
+              className="object-contain mb-0"
             />
-            <span className="text-gray-700 font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2" }}>
+            <span className="text-gray-700 font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2", marginTop: "-25px" }}>
               Tasklyy
             </span>
           </motion.div>

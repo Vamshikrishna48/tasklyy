@@ -364,11 +364,11 @@ const Auth = () => {
               src="/taskly-logo.png"
               alt="Tasklyy logo"
               style={{ width: "220px", height: "220px" }}
-              className="object-contain shrink-0 mb-3"
+              className="object-contain shrink-0 mb-0"
             />
             <span
               className="text-gray-900 font-bold tracking-tight animate-in fade-in"
-              style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2" }}
+              style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2", marginTop: "-25px" }}
             >
               Tasklyy
             </span>
@@ -701,10 +701,10 @@ const Auth = () => {
                 className="mx-auto flex flex-col items-center justify-center" style={{ gap: 0 }}>
                 <img src="/taskly-logo.png" alt="Tasklyy logo"
                   style={{ width: "220px", height: "220px" }}
-                  className="object-contain shrink-0 mb-3" />
+                  className="object-contain shrink-0 mb-0" />
                 <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                   className="text-gray-900 font-bold tracking-tight animate-in fade-in"
-                  style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2" }}>Tasklyy</motion.h1>
+                  style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2", marginTop: "-25px" }}>Tasklyy</motion.h1>
               </motion.div>
               <div>
                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
