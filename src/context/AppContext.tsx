@@ -189,7 +189,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [payments, setPayments] = useState<Payment[]>(initialPayments);
   
   // isAdmin derived from profile or email
-  const isAdmin = profile?.role === 'admin' || user?.email === 'tasklyy@admin.com' || user?.email === 'karshikalamvamshi48@gmail.com';
+  const isAdmin = profile?.role === 'admin' || 
+    user?.email === 'tasklyy@admin.com' || 
+    user?.email === 'karshikalamvamshi48@gmail.com' ||
+    user?.email === 'karthikmethuku180@gmail.com' ||
+    user?.email === 'shrikarakarapu@gmail.com';
   const [platformBalance, setPlatformBalance] = useState(0);
 
   // On auth ready, fetch real jobs from Supabase and merge with mock
