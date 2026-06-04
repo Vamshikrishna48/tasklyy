@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,12 @@ import { FileUp, X, Loader2 } from "lucide-react";
 
 const PostJob = () => {
   const navigate = useNavigate();
-  const { addJob, recordPostingFee, profile } = useApp();
+  const { addJob, recordPostingFee, profile, refreshProfile } = useApp();
+  
+  // UPI Modal States
+  const [showUpiModal, setShowUpiModal] = useState(false);
+  const [tempUpi, setTempUpi] = useState("");
+  const [savingUpi, setSavingUpi] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -64,16 +70,42 @@ const PostJob = () => {
   };
 
 
+  const handleSaveUpi = async () => {
+    if (!tempUpi.trim()) {
+      toast.error("Please enter your UPI ID");
+      return;
+    }
+    if (!tempUpi.includes("@")) {
+      toast.error("Please enter a valid UPI ID (e.g. name@bank)");
+      return;
+    }
+
+    setSavingUpi(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ upi_id: tempUpi.trim() })
+        .eq("id", profile!.id);
+
+      if (error) throw error;
+
+      toast.success("UPI ID saved successfully! ✅");
+      setShowUpiModal(false);
+      await refreshProfile(); 
+      // Re-trigger submit after saving
+      setTimeout(() => handleSubmit(), 200);
+    } catch (err: any) {
+      toast.error("Failed to save UPI ID: " + err.message);
+    } finally {
+      setSavingUpi(false);
+    }
+  };
+
   const handleSubmit = () => {
     // Check UPI ID first
     const upiId = (profile as any)?.upi_id;
     if (!upiId) {
-      toast.error("You must set your UPI ID in your Profile before posting a job.", {
-        action: {
-          label: "Go to Profile",
-          onClick: () => navigate("/dashboard/profile"),
-        },
-      });
+      setShowUpiModal(true);
       return;
     }
 
@@ -186,23 +218,7 @@ const PostJob = () => {
           <h1 className="font-display text-3xl font-bold text-foreground">Post a Job</h1>
           <p className="mt-1 mb-8 text-muted-foreground">Describe what you need done and how you want to pay.</p>
 
-          {/* UPI ID Required Warning */}
-          {!(profile as any)?.upi_id && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-              <CreditCard className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-bold text-red-800 text-sm">UPI ID Required Before Posting</p>
-                <p className="text-xs text-red-600 mt-0.5">
-                  You must add your UPI ID to your profile so the platform can process payments to you.
-                </p>
-              </div>
-              <Link to="/dashboard/profile">
-                <Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-100 shrink-0">
-                  Add UPI ID →
-                </Button>
-              </Link>
-            </div>
-          )}
+
 
           <Card className="shadow-card">
 
@@ -373,8 +389,47 @@ const PostJob = () => {
           </Card>
         </motion.div>
       </div>
+
+      {/* UPI ID Prompt Modal */}
+      <Dialog open={showUpiModal} onOpenChange={setShowUpiModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              UPI ID Required
+            </DialogTitle>
+            <DialogDescription>
+              Please provide your UPI ID to receive payouts and proceed with posting this job.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4 text-left">
+            <div className="space-y-2">
+               <Label htmlFor="temp-upi">UPI ID *</Label>
+               <Input
+                 id="temp-upi"
+                 value={tempUpi}
+                 onChange={(e) => setTempUpi(e.target.value)}
+                 placeholder="e.g. 9876543210@paytm"
+                 className="font-medium"
+               />
+               <p className="text-[10px] text-muted-foreground leading-relaxed">
+                 Enter a valid UPI ID (e.g., number@bank or name@bank). This is required to process and release assignment payments.
+               </p>
+            </div>
+          </div>
+          <DialogFooter className="flex sm:justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setShowUpiModal(false)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="hero" onClick={handleSaveUpi} disabled={savingUpi}>
+              {savingUpi ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Save & Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
+}
 
 export default PostJob;

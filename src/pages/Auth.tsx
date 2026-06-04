@@ -113,11 +113,10 @@ const Auth = () => {
 
     try {
       if (view === "signin") {
-        // 1. Sign In (Verify Password first, then trigger OTP code!)
+        // 1. Sign In directly with email & password (no OTP!)
         if (!email.trim() || !password.trim()) throw new Error("Email and password are required");
 
-        // Verify password validity
-        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+        const { data, error: signInErr } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password
         });
@@ -126,28 +125,18 @@ const Auth = () => {
           throw signInErr;
         }
 
-        // Credentials are 100% correct! Now sign out so they aren't fully authenticated until they verify the OTP code!
-        await supabase.auth.signOut();
+        // Set verified so they bypass ProtectedRoute gate
+        localStorage.setItem("tasklyy_otp_verified", "true");
 
-        // Generate custom OTP code
-        const code = generateOTP();
-        setGeneratedOtp(code);
-        setTempPassword(password); // Save correct password to log back in after OTP match
-        localStorage.setItem("pending_otp_code", code);
-        localStorage.setItem("pending_otp_email", email.trim());
-        localStorage.setItem("pending_otp_type", "email");
-
-        await triggerCustomOtp(email.trim(), code, "login");
-
-        setInfoMessage("Password correct! For secure login, we have sent a 6-digit verification code to your email. Enter it below to complete login.");
-        setView("otp_verify");
-        setLoading(false);
-
+        toast.success("Successfully logged in! Welcome to Tasklyy 🎉");
+        setShowWelcome(true);
+        setTimeout(() => {
+          setShowWelcome(false);
+          navigate("/dashboard");
+        }, 900);
       } else if (view === "signup") {
         // 2. Sign Up (with Password + verification OTP)
         if (!displayName.trim()) throw new Error("Please enter your display name");
-        if (!upiId.trim()) throw new Error("Please enter your UPI ID");
-        if (!upiId.includes("@")) throw new Error("Please enter a valid UPI ID (e.g. name@bank or number@bank)");
         if (!agreeTerms) throw new Error("You must agree to the Terms & Conditions and Privacy Policy");
         if (!email.trim() || !password.trim()) throw new Error("Email and password are required");
 
@@ -157,8 +146,7 @@ const Auth = () => {
           password,
           options: { 
             data: { 
-              full_name: displayName.trim(),
-              upi_id: upiId.trim()
+              full_name: displayName.trim()
             } 
           },
         });
@@ -177,14 +165,6 @@ const Auth = () => {
           throw signUpErr;
         }
 
-        if (data.user) {
-          // Sync UPI ID immediately to public profiles table
-          await supabase
-            .from("profiles")
-            .update({ upi_id: upiId.trim() })
-            .eq("id", data.user.id);
-        }
-
         // Immediately sign them out so they are not authenticated yet (must verify OTP)
         await supabase.auth.signOut();
 
@@ -201,7 +181,6 @@ const Auth = () => {
         setInfoMessage("Account registered successfully! To activate your account securely, we have sent a 6-digit verification code to your email. Enter it below to complete registration.");
         setView("otp_verify");
         setLoading(false);
-
       } else if (view === "otp_verify") {
         // 3. Confirm OTP code!
         if (!otpCode.trim()) throw new Error("Please enter the 6-digit verification code");
@@ -227,89 +206,15 @@ const Auth = () => {
 
         if (finalSignInErr) throw finalSignInErr;
 
-        // Check if user has a UPI ID
-        const { data: { user: authedUser } } = await supabase.auth.getUser();
-        if (!authedUser) throw new Error("Could not retrieve logged-in user profile.");
-
-        const { data: profileData, error: profileErr } = await supabase
-          .from("profiles")
-          .select("upi_id")
-          .eq("id", authedUser.id)
-          .maybeSingle();
-
-        if (profileErr) throw profileErr;
-
         // Clean up OTP session state
         localStorage.removeItem("pending_otp_type");
         localStorage.removeItem("pending_otp_code");
         localStorage.removeItem("pending_otp_email");
 
-        // If the profile does not have a UPI ID, prompt them to enter it
-        if (!profileData || !profileData.upi_id) {
-          setLoading(false);
-          setView("upi_required");
-          return;
-        }
-
         // Authorize this device's dashboard access via the OTP verification gate!
         localStorage.setItem("tasklyy_otp_verified", "true");
 
         toast.success("Successfully verified! Welcome to Tasklyy 🎉");
-        setShowWelcome(true);
-        setTimeout(() => {
-          setShowWelcome(false);
-          navigate("/dashboard");
-        }, 900);
-
-      } else if (view === "forgot") {
-        // 4. Send Forgot Password Email Link
-        if (!email.trim()) throw new Error("Please enter your email");
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth?type=reset`,
-        });
-        if (error) throw error;
-
-        setInfoMessage("Password reset link sent successfully! 📧 Please check your inbox (and spam folder) for the link.");
-        setLoading(false);
-
-      } else if (view === "reset") {
-        // 5. Update Password
-        if (!newPassword.trim()) throw new Error("Please enter a new password");
-        if (newPassword.length < 6) throw new Error("Password must be at least 6 characters");
-        if (newPassword !== confirmPassword) throw new Error("Passwords do not match");
-
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-        if (error) throw error;
-
-        // Authorize this device's dashboard access upon password reset!
-        localStorage.setItem("tasklyy_otp_verified", "true");
-
-        toast.success("Password reset successfully! ✅ Logging you in...");
-        setShowWelcome(true);
-        setTimeout(() => {
-          setShowWelcome(false);
-          navigate("/dashboard");
-        }, 900);
-      } else if (view === "upi_required") {
-        // 6. Force UPI ID setting on login if missing
-        if (!upiId.trim()) throw new Error("Please enter your UPI ID to receive payouts");
-        if (!upiId.includes("@")) throw new Error("Please enter a valid UPI ID (e.g. name@upi or number@bank)");
-
-        const { data: { user: authedUser } } = await supabase.auth.getUser();
-        if (!authedUser) throw new Error("Session expired. Please sign in again.");
-
-        // Update the profile in Supabase
-        const { error: updateErr } = await supabase
-          .from("profiles")
-          .update({ upi_id: upiId.trim() })
-          .eq("id", authedUser.id);
-
-        if (updateErr) throw updateErr;
-
-        // Authorize this device's dashboard access via the OTP verification gate!
-        localStorage.setItem("tasklyy_otp_verified", "true");
-
-        toast.success("UPI ID saved! Welcome to Tasklyy 🎉");
         setShowWelcome(true);
         setTimeout(() => {
           setShowWelcome(false);
@@ -533,26 +438,7 @@ const Auth = () => {
                   </motion.div>
                 )}
 
-                {/* ── VIEW: UPI Required ── */}
-                {view === "upi_required" && (
-                  <motion.div key="upi-required-view" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-4 text-left">
-                    <div className="space-y-1.5">
-                      <h4 className="font-bold text-slate-800 text-sm">UPI ID Required</h4>
-                      <p className="text-xs text-slate-500">To complete login and receive payouts securely on Tasklyy, please provide your UPI ID (e.g. name@upi or phone@bank).</p>
-                    </div>
-                    <div>
-                      <Label htmlFor="upi-required" className="block mb-1.5 text-sm font-medium text-foreground">UPI ID *</Label>
-                      <div className="relative mt-1">
-                        <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
-                        <Input id="upi-required" value={upiId} onChange={(e) => setUpiId(e.target.value)}
-                          placeholder="e.g. 9440637881@fam" className="pl-10 font-medium" required />
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-1.5 leading-relaxed">
-                        This UPI ID is required to securely receive assignment payouts directly to your account.
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
+
 
                 {/* ── VIEW: Sign In ── */}
                 {view === "signin" && (
@@ -600,18 +486,6 @@ const Auth = () => {
                         <Input id="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
                           placeholder="Your name" className="pl-10" required />
                       </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="upi" className="block mb-1.5 text-sm font-medium text-foreground">UPI ID (for payments) *</Label>
-                      <div className="relative mt-1">
-                        <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
-                        <Input id="upi" value={upiId} onChange={(e) => setUpiId(e.target.value)}
-                          placeholder="e.g. success@okaxis" className="pl-10" required />
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        This UPI ID is required to securely receive assignment payouts directly to your account.
-                      </p>
                     </div>
 
                     <div>
@@ -667,7 +541,6 @@ const Auth = () => {
                      view === "otp_verify" ? "Confirm & Enter Dashboard" :
                      view === "forgot" ? "Send Reset Link" :
                      view === "reset" ? "Save & Login" :
-                     view === "upi_required" ? "Save UPI & Enter Dashboard" :
                      "Verify Password & Send Code"}
                     <ArrowRight className="h-4 w-4" />
                   </>

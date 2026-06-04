@@ -1,5 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -20,8 +22,14 @@ import { NoScreenshotWrapper } from "@/components/NoScreenshotWrapper";
 const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useApp();
+  const { user, profile, refreshProfile } = useApp();
   const { releaseEscrow, declineWork, placeBid, acceptJob, cancelJobForNonPayment } = useJobs();
+
+  // UPI Modal States
+  const [showUpiModal, setShowUpiModal] = useState(false);
+  const [tempUpi, setTempUpi] = useState("");
+  const [savingUpi, setSavingUpi] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ type: 'bid' | 'accept' } | null>(null);
 
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -137,6 +145,45 @@ const JobDetail = () => {
     toast.success("You can now view full details and place a bid.");
   };
 
+  const handleSaveUpi = async () => {
+    if (!tempUpi.trim()) {
+      toast.error("Please enter your UPI ID");
+      return;
+    }
+    if (!tempUpi.includes("@")) {
+      toast.error("Please enter a valid UPI ID (e.g. name@bank)");
+      return;
+    }
+
+    setSavingUpi(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ upi_id: tempUpi.trim() })
+        .eq("id", user!.id);
+
+      if (error) throw error;
+
+      toast.success("UPI ID saved successfully! ✅");
+      setShowUpiModal(false);
+      await refreshProfile(); 
+
+      // Re-trigger the pending action
+      if (pendingAction) {
+        if (pendingAction.type === 'bid') {
+          setTimeout(() => handlePlaceBid(), 200);
+        } else if (pendingAction.type === 'accept') {
+          setTimeout(() => handleDirectAccept(), 200);
+        }
+        setPendingAction(null);
+      }
+    } catch (err: any) {
+      toast.error("Failed to save UPI ID: " + err.message);
+    } finally {
+      setSavingUpi(false);
+    }
+  };
+
   const handlePlaceBid = async () => {
     const amount = Number(bidAmount);
     if (!amount || amount <= 0) { toast.error("Enter a valid bid amount"); return; }
@@ -147,6 +194,14 @@ const JobDetail = () => {
       toast.error("Please sign in or sign up first to place a bid."); 
       navigate("/auth");
       return; 
+    }
+
+    // Check UPI ID
+    const upiId = (profile as any)?.upi_id;
+    if (!upiId) {
+      setPendingAction({ type: 'bid' });
+      setShowUpiModal(true);
+      return;
     }
 
     setSubmittingBid(true);
@@ -262,6 +317,14 @@ const JobDetail = () => {
       toast.error("Please sign in or sign up first to accept jobs."); 
       navigate("/auth");
       return; 
+    }
+
+    // Check UPI ID
+    const upiId = (profile as any)?.upi_id;
+    if (!upiId) {
+      setPendingAction({ type: 'accept' });
+      setShowUpiModal(true);
+      return;
     }
     
     setSubmittingBid(true);
@@ -675,6 +738,45 @@ const JobDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* UPI ID Prompt Modal */}
+      <Dialog open={showUpiModal} onOpenChange={setShowUpiModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              UPI ID Required
+            </DialogTitle>
+            <DialogDescription>
+              Please provide your UPI ID to receive payouts and proceed with bidding or accepting this job.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4 text-left">
+            <div className="space-y-2">
+              <Label htmlFor="temp-upi-detail">UPI ID *</Label>
+              <Input
+                id="temp-upi-detail"
+                value={tempUpi}
+                onChange={(e) => setTempUpi(e.target.value)}
+                placeholder="e.g. 9876543210@paytm"
+                className="font-medium"
+              />
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                Enter a valid UPI ID (e.g., number@bank or name@bank). This is required to process and release assignment payments.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex sm:justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setShowUpiModal(false)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="hero" onClick={handleSaveUpi} disabled={savingUpi}>
+              {savingUpi ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Save & Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
