@@ -147,6 +147,7 @@ const Auth = () => {
         // 2. Sign Up (with Password + verification OTP)
         if (!displayName.trim()) throw new Error("Please enter your display name");
         if (!upiId.trim()) throw new Error("Please enter your UPI ID");
+        if (!upiId.includes("@")) throw new Error("Please enter a valid UPI ID (e.g. name@bank or number@bank)");
         if (!agreeTerms) throw new Error("You must agree to the Terms & Conditions and Privacy Policy");
         if (!email.trim() || !password.trim()) throw new Error("Email and password are required");
 
