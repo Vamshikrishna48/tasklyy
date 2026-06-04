@@ -15,6 +15,13 @@ export const useAdmin = () => {
         (supabase as any).from("jobs").select("*", { count: "exact", head: true }).eq("status", "completed"),
       ]);
 
+    const { data: ledgerData } = await (supabase as any)
+      .from("admin_ledger")
+      .select("amount")
+      .eq("type", "fee_collected");
+
+    const platform_balance = (ledgerData || []).reduce((sum: number, l: any) => sum + (Number(l.amount) || 0), 0);
+
     const { data: escrowData } = await (supabase as any)
       .from("escrow_transactions")
       .select("total_amount")
@@ -23,7 +30,7 @@ export const useAdmin = () => {
     const total_escrow = (escrowData || []).reduce((sum: number, e: any) => sum + (e.total_amount || 0), 0);
 
     return {
-      platform_balance: 0,
+      platform_balance,
       total_escrow,
       total_jobs: total_jobs || 0,
       active_jobs: active_jobs || 0,
@@ -61,7 +68,7 @@ export const useAdmin = () => {
   const fetchEscrowQueue = useCallback(async () => {
     const { data, error } = await (supabase as any)
       .from("escrow_transactions")
-      .select("*, poster:profiles!escrow_transactions_poster_id_fkey(full_name), worker:profiles!escrow_transactions_worker_id_fkey(full_name), job:jobs!escrow_transactions_job_id_fkey(title, status, deadline)")
+      .select("*, poster:profiles!escrow_transactions_poster_id_fkey(full_name, upi_id), worker:profiles!escrow_transactions_worker_id_fkey(full_name, upi_id), job:jobs!escrow_transactions_job_id_fkey(title, status, deadline)")
       .eq("status", "held")
       .order("created_at", { ascending: false });
     if (error) { console.error(error); return []; }
@@ -102,7 +109,9 @@ export const useAdmin = () => {
       return {
         ...e,
         poster_name: e.poster?.full_name || "—",
+        poster_upi: e.poster?.upi_id || null,
         worker_name: e.worker?.full_name || "—",
+        worker_upi: e.worker?.upi_id || null,
         job_title: e.job?.title || "—",
         job_status: e.job?.status || "accepted",
         job_deadline: e.job?.deadline ? new Date(e.job.deadline).toLocaleDateString("en-IN", { month: "short", day: "numeric" }) : "—",

@@ -69,7 +69,7 @@ const AdminLedger = () => {
       <Card className="shadow-card border-none overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse">
+            <table className="w-full min-w-[800px] text-sm text-left border-collapse">
               <thead className="bg-muted/50 text-muted-foreground font-medium text-[10px] uppercase tracking-wider border-b">
                 <tr>
                   <th className="px-6 py-4">Transaction Date</th>

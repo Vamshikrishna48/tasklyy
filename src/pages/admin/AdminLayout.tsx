@@ -1,5 +1,5 @@
 import { Outlet, useNavigate } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/pages/admin/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
@@ -18,7 +18,10 @@ const AdminLayout = () => {
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between border-b bg-card/80 backdrop-blur-lg px-4 gap-3">
-            <span className="font-display font-semibold text-foreground">Tasklyy Admin Panel</span>
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="h-9 w-9 shrink-0 border" />
+              <span className="font-display font-semibold text-foreground">Tasklyy Admin Panel</span>
+            </div>
             <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
               Sign Out

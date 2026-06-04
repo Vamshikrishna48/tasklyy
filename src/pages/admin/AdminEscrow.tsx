@@ -189,14 +189,15 @@ const AdminEscrow = () => {
 
                   {/* Poster & Worker */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2 bg-muted/40 rounded-lg p-2">
+                    <div className="flex items-center gap-2 bg-muted/40 rounded-lg p-2 min-w-0">
                       <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-[9px] text-muted-foreground uppercase font-bold">Poster</p>
-                        <p className="text-xs font-semibold text-foreground">{p.poster_name || '—'}</p>
+                        <p className="text-xs font-semibold text-foreground truncate">{p.poster_name || '—'}</p>
+                        <p className="text-[9px] font-mono text-muted-foreground truncate">{p.poster_upi || 'No UPI'}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 bg-muted/40 rounded-lg p-2">
+                    <div className="flex items-center gap-2 bg-muted/40 rounded-lg p-2 min-w-0">
                       <User className="h-3.5 w-3.5 text-green-600 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
@@ -209,6 +210,7 @@ const AdminEscrow = () => {
                           </Badge>
                         </div>
                         <p className="text-xs font-semibold text-foreground truncate">{p.worker_name || '—'}</p>
+                        <p className="text-[9px] font-mono text-green-600 truncate font-semibold">{p.worker_upi || 'No UPI ID Set'}</p>
                       </div>
                     </div>
                   </div>
