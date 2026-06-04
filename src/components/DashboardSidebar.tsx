@@ -92,6 +92,7 @@ export function DashboardSidebar() {
           className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
           onClick={async () => {
             await supabase.auth.signOut();
+            localStorage.removeItem("tasklyy_otp_verified");
             window.location.href = "/auth";
           }}
         >

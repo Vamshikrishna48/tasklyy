@@ -13,6 +13,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem("tasklyy_otp_verified");
     localStorage.removeItem("demoUserEmail");
     localStorage.removeItem("demoAdminAuth");
     toast.success("Signed out");
