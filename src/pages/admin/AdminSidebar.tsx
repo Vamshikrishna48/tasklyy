@@ -1,5 +1,5 @@
 import { NavLink } from "@/components/NavLink";
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
 import { LayoutDashboard, Shield, ArrowLeft, BookOpen, Users, Bell, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -14,6 +14,8 @@ const menuItems = [
 ];
 
 export function AdminSidebar() {
+  const { isMobile, setOpenMobile } = useSidebar();
+
   return (
     <Sidebar collapsible="icon" className="border-r">
       <SidebarContent>
@@ -29,6 +31,9 @@ export function AdminSidebar() {
                       end
                       className="hover:bg-muted/50"
                       activeClassName="bg-primary/10 text-primary font-medium"
+                      onClick={() => {
+                        if (isMobile) setOpenMobile(false);
+                      }}
                     >
                       <item.icon className="mr-2 h-4 w-4" />
                       <span>{item.title}</span>
@@ -42,7 +47,7 @@ export function AdminSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t p-2">
-        <Link to="/dashboard">
+        <Link to="/dashboard" onClick={() => { if (isMobile) setOpenMobile(false); }}>
           <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Dashboard</span>

@@ -38,7 +38,7 @@ const baseMenuItems = [
 
 
 export function DashboardSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { profile, isAdmin } = useApp();
@@ -64,6 +64,9 @@ export function DashboardSidebar() {
                       end
                       className="hover:bg-muted/50"
                       activeClassName="bg-primary/10 text-primary font-medium"
+                      onClick={() => {
+                        if (isMobile) setOpenMobile(false);
+                      }}
                     >
                       <item.icon className="mr-2 h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
@@ -77,7 +80,7 @@ export function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t p-2 flex flex-col gap-2">
-        <Link to="/">
+        <Link to="/" onClick={() => { if (isMobile) setOpenMobile(false); }}>
           <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
             <ArrowLeft className="h-4 w-4" />
             {!collapsed && <span>Back to Home</span>}
