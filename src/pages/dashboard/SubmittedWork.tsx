@@ -17,6 +17,7 @@ import {
   Download,
   Upload,
   X,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { NoScreenshotWrapper } from "@/components/NoScreenshotWrapper";
@@ -72,6 +73,8 @@ const SubmittedWork = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string; jobTitle: string; budget: number } | null>(null);
+  const [acceptDialogJob, setAcceptDialogJob] = useState<SubmittedJob | null>(null);
+  const [ratingValue, setRatingValue] = useState<number>(5);
 
   const fetchJobs = useCallback(async () => {
     if (!user?.id) return;
@@ -167,7 +170,7 @@ const SubmittedWork = () => {
     }
   };
 
-  const handleAccept = async (job: SubmittedJob) => {
+  const handleAccept = async (job: SubmittedJob, ratingVal: number) => {
     setActionLoading(true);
     try {
       // Get escrow transaction
@@ -205,13 +208,14 @@ const SubmittedWork = () => {
         });
       }
 
-      // Update job status to completed
+      // Update job status to completed AND set the rating
       await (supabase as any)
         .from("jobs")
-        .update({ status: "completed" })
+        .update({ status: "completed", rating: ratingVal })
         .eq("id", job.id);
 
-      toast.success("Work accepted! Payment released to worker.");
+      toast.success(`Work accepted with a ${ratingVal}-star rating! Payment released.`);
+      setAcceptDialogJob(null);
       fetchJobs();
     } catch (err: any) {
       toast.error(err.message || "Failed to accept work.");
@@ -580,7 +584,7 @@ const SubmittedWork = () => {
                             variant="hero"
                             className="flex-1 gap-2"
                             disabled={actionLoading}
-                            onClick={() => handleAccept(job)}
+                            onClick={() => { setAcceptDialogJob(job); setRatingValue(5); }}
                           >
                             {actionLoading ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -834,6 +838,67 @@ const SubmittedWork = () => {
           budget={previewFile.budget}
         />
       )}
+
+      {/* Accept and Rate Dialog */}
+      <Dialog open={!!acceptDialogJob} onOpenChange={() => setAcceptDialogJob(null)}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Accept Work & Rate Worker
+            </DialogTitle>
+            <DialogDescription>
+              Accept the deliverables for "{acceptDialogJob?.title}". This will release the escrow payment (₹{acceptDialogJob?.budget}) directly to the worker's wallet.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6 flex flex-col items-center justify-center space-y-4">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Rate the worker's performance:</p>
+            <div className="flex gap-2.5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRatingValue(star)}
+                  className="transition-transform hover:scale-125 focus:outline-none"
+                  type="button"
+                >
+                  <Star
+                    className={`h-9 w-9 ${
+                      star <= ratingValue
+                        ? "fill-amber-500 text-amber-500"
+                        : "text-slate-300"
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+            <span className="text-sm font-bold text-slate-700">
+              {ratingValue === 5 && "⭐ 5.0 (Excellent! Perfect work)"}
+              {ratingValue === 4 && "⭐ 4.0 (Very Good)"}
+              {ratingValue === 3 && "⭐ 3.0 (Good / Average)"}
+              {ratingValue === 2 && "⭐ 2.0 (Needs Improvement)"}
+              {ratingValue === 1 && "⭐ 1.0 (Poor)"}
+            </span>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setAcceptDialogJob(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="hero"
+              disabled={actionLoading}
+              onClick={() => acceptDialogJob && handleAccept(acceptDialogJob, ratingValue)}
+            >
+              {actionLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Approve & Release Payment"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

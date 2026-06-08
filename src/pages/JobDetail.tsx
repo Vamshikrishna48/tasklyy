@@ -34,6 +34,7 @@ const JobDetail = () => {
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [bids, setBids] = useState<any[]>([]);
+  const [bidderRatings, setBidderRatings] = useState<Record<string, string>>({});
   const [hasAccepted, setHasAccepted] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [paymentDue, setPaymentDue] = useState<string | null>(null);
@@ -63,12 +64,40 @@ const JobDetail = () => {
 
   const loadBids = useCallback(async () => {
     if (!id) return;
-    const { data } = await (supabase as any)
-      .from("bids")
-      .select("*, bidder:profiles!bids_bidder_id_fkey(full_name, avatar_url)")
-      .eq("job_id", id)
-      .order("created_at", { ascending: false });
-    setBids(data || []);
+    try {
+      const { data } = await (supabase as any)
+        .from("bids")
+        .select("*, bidder:profiles!bids_bidder_id_fkey(full_name, avatar_url)")
+        .eq("job_id", id)
+        .order("created_at", { ascending: false });
+      
+      const bidsList = data || [];
+      setBids(bidsList);
+
+      const bidderIds = Array.from(new Set(bidsList.map((b: any) => b.bidder_id)));
+      if (bidderIds.length > 0) {
+        const { data: ratedJobs } = await (supabase as any)
+          .from("jobs")
+          .select("worker_id, rating")
+          .in("worker_id", bidderIds)
+          .eq("status", "completed")
+          .not("rating", "is", null);
+        
+        const ratingsMap: Record<string, string> = {};
+        bidderIds.forEach((workerId: any) => {
+          const workerJobs = (ratedJobs || []).filter((j: any) => j.worker_id === workerId);
+          if (workerJobs.length > 0) {
+            const sum = workerJobs.reduce((acc: number, curr: any) => acc + Number(curr.rating), 0);
+            ratingsMap[workerId] = (sum / workerJobs.length).toFixed(1);
+          } else {
+            ratingsMap[workerId] = "No ratings yet";
+          }
+        });
+        setBidderRatings(ratingsMap);
+      }
+    } catch (err) {
+      console.error("Error loading bids or bidder ratings:", err);
+    }
   }, [id]);
 
   useEffect(() => {
@@ -622,7 +651,20 @@ const JobDetail = () => {
                                   </div>
                                   <div>
                                     <p className="font-bold text-sm">{bid.bidder?.full_name || "Worker"}</p>
-                                    <p className="text-[10px] text-muted-foreground">Delivery: {bid.delivery_days} days</p>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <p className="text-[10px] text-muted-foreground">Delivery: {bid.delivery_days} days</p>
+                                      <span className="text-[10px] text-muted-foreground">•</span>
+                                      <div className="flex items-center gap-0.5 text-[10px] font-semibold text-slate-700">
+                                        {bidderRatings[bid.bidder_id] && bidderRatings[bid.bidder_id] !== "No ratings yet" ? (
+                                          <>
+                                            <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                                            <span>{bidderRatings[bid.bidder_id]}</span>
+                                          </>
+                                        ) : (
+                                          <span>No ratings yet</span>
+                                        )}
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                                 <div className="text-right">
@@ -710,9 +752,6 @@ const JobDetail = () => {
                       <div>
                         <p className="text-[10px] text-muted-foreground uppercase font-bold">Posted By</p>
                         <p className="font-bold text-sm">{job.poster?.full_name || "Anonymous"}</p>
-                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <Star className="h-2.5 w-2.5 fill-accent text-accent" /> 4.5 rating
-                        </div>
                       </div>
                     </div>
                   </div>

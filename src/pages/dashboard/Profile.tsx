@@ -26,12 +26,17 @@ const Profile = () => {
       try {
         const { data } = await supabase
           .from("jobs")
-          .select("created_at")
+          .select("created_at, rating")
           .eq("worker_id", profile.id)
           .eq("status", "completed");
         
         const jobsList = data || [];
         const totalCompleted = jobsList.length;
+        
+        const ratedJobs = jobsList.filter((j: any) => j.rating !== null && j.rating !== undefined);
+        const averageRating = ratedJobs.length > 0
+          ? (ratedJobs.reduce((acc: number, curr: any) => acc + Number(curr.rating), 0) / ratedJobs.length).toFixed(1)
+          : null;
 
         const now = new Date();
         const currentYear = now.getFullYear();
@@ -84,7 +89,8 @@ const Profile = () => {
           totalCompleted,
           monthlyCompleted,
           nextThresholdText,
-          progressVal
+          progressVal,
+          averageRating
         });
       } catch (err) {
         console.error("Error loading level stats:", err);
@@ -426,7 +432,9 @@ const Profile = () => {
                 <Star className="h-5 w-5 text-yellow-500" />
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Rating</p>
-                  <p className="text-sm font-semibold text-foreground">⭐ 5.0 / 5.0</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {levelInfo?.averageRating ? `⭐ ${levelInfo.averageRating} / 5.0` : "⭐ No ratings yet"}
+                  </p>
                 </div>
               </div>
 
