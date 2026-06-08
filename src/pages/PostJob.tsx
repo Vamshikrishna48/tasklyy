@@ -113,6 +113,10 @@ const PostJob = () => {
       toast.error("Please fill in all required fields (Title, Description, Category, Deadline)");
       return;
     }
+    if (skills.length === 0) {
+      toast.error("Please add at least one required skill for the worker.");
+      return;
+    }
     if (!budget) {
       toast.error("Please provide a budget.");
       return;
@@ -294,7 +298,7 @@ const PostJob = () => {
 
               {/* Skills Area */}
               <div className="pt-4 border-t">
-                <label className="mb-1.5 block text-sm font-medium text-foreground">Required Skills for Worker</label>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Required Skills for Worker *</label>
                 <div className="flex gap-2">
                   <Input
                     placeholder="Add a required skill..."
