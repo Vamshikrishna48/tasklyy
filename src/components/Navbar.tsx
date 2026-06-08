@@ -27,7 +27,7 @@ const Navbar = () => {
       <div className="container mx-auto flex h-24 items-center justify-between px-4">
         <Link to="/" className="flex items-center" style={{ gap: 0 }}>
           <img
-            src="/tasskly-logo.png"
+            src="/taskly-logo.png"
             alt="Tasskly logo"
             style={{ width: "50px", height: "50px", marginRight: "6px" }}
             className="object-contain"

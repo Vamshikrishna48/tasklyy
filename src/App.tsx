@@ -127,7 +127,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
             <div className="flex flex-col items-center justify-center">
                <div className="flex flex-col items-center justify-center" style={{ gap: 0 }}>
                  <img
-                   src="/tasskly-logo.png"
+                   src="/taskly-logo.png"
                    alt="Tasskly Logo"
                    style={{ width: '220px', height: '220px', animationDuration: '4s' }}
                    className="object-contain animate-pulse shrink-0 mb-0"

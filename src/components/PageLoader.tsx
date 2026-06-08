@@ -43,7 +43,7 @@ const PageLoader = () => {
             className="flex flex-col items-center justify-center gap-4 mt-8 mb-8 z-10"
           >
             <img
-              src="/tasskly-logo.png"
+              src="/taskly-logo.png"
               alt="Tasskly logo"
               style={{ width: "220px", height: "220px" }}
               className="object-contain mb-0"

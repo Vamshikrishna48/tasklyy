@@ -267,7 +267,7 @@ const Auth = () => {
             whileHover={{ scale: 1.05 }}
           >
             <img
-              src="/tasskly-logo.png"
+              src="/taskly-logo.png"
               alt="Tasskly logo"
               style={{ width: "220px", height: "220px" }}
               className="object-contain shrink-0 mb-0"
@@ -573,7 +573,7 @@ const Auth = () => {
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 12, delay: 0.1 }}
                 className="mx-auto flex flex-col items-center justify-center" style={{ gap: 0 }}>
-                <img src="/tasskly-logo.png" alt="Tasskly logo"
+                <img src="/taskly-logo.png" alt="Tasskly logo"
                   style={{ width: "220px", height: "220px" }}
                   className="object-contain shrink-0 mb-0" />
                 <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}

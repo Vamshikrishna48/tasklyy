@@ -91,7 +91,7 @@ export async function openRazorpayCheckout(
     currency: "INR",
     name: "Tasskly Platform",
     description: `Payment for: ${jobTitle}`,
-    image: "/tasskly-logo.png",
+    image: "/taskly-logo.png",
     handler: (response: any) => {
       if (response.razorpay_payment_id) {
         paymentDone = true;
