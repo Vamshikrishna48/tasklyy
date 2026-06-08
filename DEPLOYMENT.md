@@ -1,4 +1,4 @@
-# Taskly Deployment Guide
+# Tasskly Deployment Guide
 
 ## Vercel Environment Variables (add in Vercel Dashboard):
   VITE_SUPABASE_URL=YOUR_SUPABASE_URL

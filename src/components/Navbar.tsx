@@ -13,7 +13,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    localStorage.removeItem("tasklyy_otp_verified");
+    localStorage.removeItem("tasskly_otp_verified");
     localStorage.removeItem("demoUserEmail");
     localStorage.removeItem("demoAdminAuth");
     toast.success("Signed out");
@@ -27,13 +27,13 @@ const Navbar = () => {
       <div className="container mx-auto flex h-24 items-center justify-between px-4">
         <Link to="/" className="flex items-center" style={{ gap: 0 }}>
           <img
-            src="/taskly-logo.png"
-            alt="Tasklyy logo"
+            src="/tasskly-logo.png"
+            alt="Tasskly logo"
             style={{ width: "50px", height: "50px", marginRight: "6px" }}
             className="object-contain"
           />
           <span className="text-foreground font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "28px", lineHeight: "50px" }}>
-            Tasklyy
+            Tasskly
           </span>
         </Link>
 

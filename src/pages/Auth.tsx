@@ -52,7 +52,7 @@ const Auth = () => {
       if (resData.success) {
         toast.success("A secure verification code has been sent to your email! ✉️");
       } else {
-        console.error("[Tasklyy Backend Error]", resData.message);
+        console.error("[Tasskly Backend Error]", resData.message);
         toast.error(`Failed to send email: ${resData.message}`);
       }
     } catch (err) {
@@ -126,9 +126,9 @@ const Auth = () => {
         }
 
         // Set verified so they bypass ProtectedRoute gate
-        localStorage.setItem("tasklyy_otp_verified", "true");
+        localStorage.setItem("tasskly_otp_verified", "true");
 
-        toast.success("Successfully logged in! Welcome to Tasklyy 🎉");
+        toast.success("Successfully logged in! Welcome to Tasskly 🎉");
         setShowWelcome(true);
         setTimeout(() => {
           setShowWelcome(false);
@@ -212,9 +212,9 @@ const Auth = () => {
         localStorage.removeItem("pending_otp_email");
 
         // Authorize this device's dashboard access via the OTP verification gate!
-        localStorage.setItem("tasklyy_otp_verified", "true");
+        localStorage.setItem("tasskly_otp_verified", "true");
 
-        toast.success("Successfully verified! Welcome to Tasklyy 🎉");
+        toast.success("Successfully verified! Welcome to Tasskly 🎉");
         setShowWelcome(true);
         setTimeout(() => {
           setShowWelcome(false);
@@ -267,8 +267,8 @@ const Auth = () => {
             whileHover={{ scale: 1.05 }}
           >
             <img
-              src="/taskly-logo.png"
-              alt="Tasklyy logo"
+              src="/tasskly-logo.png"
+              alt="Tasskly logo"
               style={{ width: "220px", height: "220px" }}
               className="object-contain shrink-0 mb-0"
             />
@@ -276,7 +276,7 @@ const Auth = () => {
               className="text-gray-900 font-bold tracking-tight animate-in fade-in"
               style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2", marginTop: "-25px" }}
             >
-              Tasklyy
+              Tasskly
             </span>
           </motion.div>
           <p className="text-sm text-gray-500 mt-2 font-medium">
@@ -573,12 +573,12 @@ const Auth = () => {
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 12, delay: 0.1 }}
                 className="mx-auto flex flex-col items-center justify-center" style={{ gap: 0 }}>
-                <img src="/taskly-logo.png" alt="Tasklyy logo"
+                <img src="/tasskly-logo.png" alt="Tasskly logo"
                   style={{ width: "220px", height: "220px" }}
                   className="object-contain shrink-0 mb-0" />
                 <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                   className="text-gray-900 font-bold tracking-tight animate-in fade-in"
-                  style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2", marginTop: "-25px" }}>Tasklyy</motion.h1>
+                  style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2", marginTop: "-25px" }}>Tasskly</motion.h1>
               </motion.div>
               <div>
                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}

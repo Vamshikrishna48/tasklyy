@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Tasklyy</string>
-    <string name="title_activity_main">Tasklyy</string>
-    <string name="package_name">com.tasklyy.app</string>
-    <string name="custom_url_scheme">com.tasklyy.app</string>
+    <string name="app_name">Tasskly</string>
+    <string name="title_activity_main">Tasskly</string>
+    <string name="package_name">com.tasskly.app</string>
+    <string name="custom_url_scheme">com.tasskly.app</string>
 </resources>

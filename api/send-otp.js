@@ -36,11 +36,11 @@ export default async function handler(req, res) {
     masked: process.env.SMTP_PASSWORD ? process.env.SMTP_PASSWORD.trim().substring(0, 3) + "..." : "none"
   });
 
-  const subject = type === 'signup' ? 'Verify your Tasklyy Account' : 'Tasklyy Secure Sign In OTP';
+  const subject = type === 'signup' ? 'Verify your Tasskly Account' : 'Tasskly Secure Sign In OTP';
   const htmlContent = `
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; border-radius: 16px; background-color: #ffffff; border: 1px solid #eef2f6; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
       <div style="text-align: center; margin-bottom: 24px;">
-        <h2 style="color: #0f172a; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em;">Tasklyy</h2>
+        <h2 style="color: #0f172a; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em;">Tasskly</h2>
         <p style="color: #64748b; font-size: 14px; margin: 6px 0 0 0; font-weight: 500;">India's Student Marketplace</p>
       </div>
       
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
       </p>
       
       <div style="border-top: 1px solid #f1f5f9; margin-top: 30px; padding-top: 20px; text-align: center;">
-        <p style="color: #94a3b8; font-size: 11px; margin: 0;">&copy; 2026 Tasklyy. All rights reserved.</p>
+        <p style="color: #94a3b8; font-size: 11px; margin: 0;">&copy; 2026 Tasskly. All rights reserved.</p>
       </div>
     </div>
   `;
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
   const smtpPort = process.env.SMTP_PORT;
   const smtpUser = process.env.SMTP_USER;
   const smtpPassword = process.env.SMTP_PASSWORD;
-  const smtpFrom = process.env.SMTP_FROM || (smtpUser ? `"Tasklyy" <${smtpUser}>` : null);
+  const smtpFrom = process.env.SMTP_FROM || (smtpUser ? `"Tasskly" <${smtpUser}>` : null);
 
   let smtpAttempted = false;
   if (smtpHost && smtpUser && smtpPassword) {
@@ -126,7 +126,7 @@ export default async function handler(req, res) {
           Authorization: `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify({
-          from: 'Tasklyy <onboarding@resend.dev>', // Resend sandbox requires onboarding@resend.dev
+          from: 'Tasskly <onboarding@resend.dev>', // Resend sandbox requires onboarding@resend.dev
           to: email,
           subject: subject,
           html: htmlContent,

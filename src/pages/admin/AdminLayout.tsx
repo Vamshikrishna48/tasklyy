@@ -20,7 +20,7 @@ const AdminLayout = () => {
           <header className="h-14 flex items-center justify-between border-b bg-card/80 backdrop-blur-lg px-4 gap-3">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 shrink-0 border" />
-              <span className="font-display font-semibold text-foreground text-sm sm:text-base">Tasklyy Admin</span>
+              <span className="font-display font-semibold text-foreground text-sm sm:text-base">Tasskly Admin</span>
             </div>
             <div className="flex items-center gap-2">
               <Button 

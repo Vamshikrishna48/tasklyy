@@ -66,7 +66,7 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="mx-auto mt-6 max-w-2xl text-lg md:text-xl text-muted-foreground font-medium"
             >
-              Tasklyy is the immersive freelance marketplace built for students. Building truly memorable experiences within your campus community.
+              Tasskly is the immersive freelance marketplace built for students. Building truly memorable experiences within your campus community.
             </motion.p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-6">
@@ -129,14 +129,14 @@ const Index = () => {
                 Frequently Asked<br/>Questions
               </h2>
               <p className="text-lg text-muted-foreground">
-                We blend strategic thinking with bold creativity. Tasklyy is more than a marketplace—it's a partner in your career journey.
+                We blend strategic thinking with bold creativity. Tasskly is more than a marketplace—it's a partner in your career journey.
               </p>
             </div>
             <div className="space-y-4">
               {[
                 { q: "How fast can I start?", a: "Instantly. Sign up with your student email and you can post or find work in minutes. Our onboarding is streamlined for maximum speed." },
                 { q: "Is it secure?", a: "Absolutely. We use a secure enterprise-grade escrow system for all payments, ensuring money only moves when work is verified and complete." },
-                { q: "What projects can I post?", a: "Anything from simple assignments and design tasks to complex coding projects and long-term mentoring. If it can be done by a student, it belongs on Tasklyy." }
+                { q: "What projects can I post?", a: "Anything from simple assignments and design tasks to complex coding projects and long-term mentoring. If it can be done by a student, it belongs on Tasskly." }
               ].map((item, i) => (
                 <motion.div 
                   key={i} 
@@ -212,7 +212,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16 text-left">
             <div className="col-span-2">
-              <span className="font-display text-3xl font-black text-foreground block mb-4">Tasklyy</span>
+              <span className="font-display text-3xl font-black text-foreground block mb-4">Tasskly</span>
               <p className="text-muted-foreground max-w-xs mb-6">
                 The immersive freelance marketplace built for students, by students. Worldwide campus reach.
               </p>
@@ -243,12 +243,12 @@ const Index = () => {
             </div>
             <div>
               <h4 className="font-bold mb-4 uppercase text-xs tracking-widest text-primary">Contact</h4>
-              <p className="text-sm text-muted-foreground mb-2">hello@tasklyy.edu</p>
+              <p className="text-sm text-muted-foreground mb-2">hello@tasskly.edu</p>
               <p className="text-sm text-muted-foreground font-bold underline">Start New Project</p>
             </div>
           </div>
           <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground uppercase tracking-widest">
-            <p>© 2026 Tasklyy Studio - All rights reserved</p>
+            <p>© 2026 Tasskly Studio - All rights reserved</p>
             <p>Created with passion for students</p>
           </div>
         </div>

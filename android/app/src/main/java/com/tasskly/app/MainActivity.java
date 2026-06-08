@@ -1,4 +1,4 @@
-package com.tasklyy.app;
+package com.tasskly.app;
 
 import com.getcapacitor.BridgeActivity;
 

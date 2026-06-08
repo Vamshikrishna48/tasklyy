@@ -11,7 +11,7 @@ BEGIN
     NEW.email,
     NEW.raw_user_meta_data->>'avatar_url',
     CASE 
-      WHEN NEW.email IN ('karshikalamvamshi48@gmail.com', 'karthikmethuku180@gmail.com', 'tasklyy@admin.com') THEN 'admin'::user_role
+      WHEN NEW.email IN ('karshikalamvamshi48@gmail.com', 'karthikmethuku180@gmail.com', 'tasskly@admin.com') THEN 'admin'::user_role
       ELSE 'worker'::user_role
     END
   );

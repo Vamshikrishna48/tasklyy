@@ -55,7 +55,7 @@ const AdminAuth = () => {
 
         if (!profile || (
           profile.role !== "admin" && 
-          data.user.email !== "tasklyy@admin.com" && 
+          data.user.email !== "tasskly@admin.com" && 
           data.user.email !== "karshikalamvamshi48@gmail.com" &&
           data.user.email !== "karthikmethuku180@gmail.com" &&
           data.user.email !== "shrikarakarapu@gmail.com"
@@ -125,7 +125,7 @@ const AdminAuth = () => {
                   <Input
                     id="admin-email"
                     type="email"
-                    placeholder="tasklyy@admin.com"
+                    placeholder="tasskly@admin.com"
                     className="pl-10 h-11 bg-background/50 border-primary/10 focus:border-primary/40"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}

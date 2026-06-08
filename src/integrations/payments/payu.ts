@@ -15,10 +15,10 @@ export async function openPayUCheckout(
   onFailure: () => void
 ) {
   const sanitizedAmount = Math.max(1, Math.round(Number(amountInRupees) || 1));
-  const sanitizedEmail = (userEmail && userEmail.trim()) ? userEmail.trim() : "customer@tasklyy.com";
+  const sanitizedEmail = (userEmail && userEmail.trim()) ? userEmail.trim() : "customer@tasskly.com";
   const sanitizedName = (firstName && firstName.trim()) ? firstName.trim() : "Student";
   const sanitizedProductInfo = jobTitle.replace(/[^a-zA-Z0-9\s]/g, "").substring(0, 100) || "JobPayment";
-
+ 
   try {
     // 1. Fetch PayU Hash & Post URL from backend
     const response = await fetch(getApiUrl("/api/payu-hash"), {
@@ -59,8 +59,8 @@ export async function openPayUCheckout(
         const rest = Math.floor(100000000 + Math.random() * 900000000).toString().substring(0, 9);
         return prefix + rest;
       })(),
-      surl: 'https://tasklyy-tawny.vercel.app/api/payu-success',
-      furl: 'https://tasklyy-tawny.vercel.app/api/payu-failure',
+      surl: 'https://tasskly-tawny.vercel.app/api/payu-success',
+      furl: 'https://tasskly-tawny.vercel.app/api/payu-failure',
       udf1: resData.udf1,
       udf2: resData.udf2,
       udf3: resData.udf3,

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Assignment Marketplace is a core feature of the Taskly platform that enables users (clients) to upload assignments and have a platform-curated team accept and complete the work. Unlike the existing peer-to-peer bidding model, this feature introduces a **platform-managed team formation** model: the platform assembles a team of verified workers suited to the assignment, and the team only begins work after the client completes payment. The feature covers the full lifecycle — assignment submission, team formation, payment, work delivery, and escrow release — with admin oversight at every stage.
+The Assignment Marketplace is a core feature of the Tasskly platform that enables users (clients) to upload assignments and have a platform-curated team accept and complete the work. Unlike the existing peer-to-peer bidding model, this feature introduces a **platform-managed team formation** model: the platform assembles a team of verified workers suited to the assignment, and the team only begins work after the client completes payment. The feature covers the full lifecycle — assignment submission, team formation, payment, work delivery, and escrow release — with admin oversight at every stage.
 
 ---
 
@@ -10,7 +10,7 @@ The Assignment Marketplace is a core feature of the Taskly platform that enables
 
 - **Client**: A registered user who uploads an assignment and pays for it to be completed.
 - **Assignment**: A task uploaded by a Client, containing a description, files, deadline, and budget.
-- **Platform**: The Taskly system and its administrators.
+- **Platform**: The Tasskly system and its administrators.
 - **Team**: A group of one or more verified Workers assembled by the Platform to complete an Assignment.
 - **Worker**: A verified user selected by the Platform to be part of a Team.
 - **Team_Lead**: The primary Worker responsible for coordinating the Team and submitting final deliverables.

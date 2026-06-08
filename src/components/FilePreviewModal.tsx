@@ -92,7 +92,7 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === "PrintScreen" || e.keyCode === 44) {
         setIsBlurred(true);
-        toast.error("⚠️ Screenshots are disabled on Tasklyy to protect the worker's intellectual property!");
+        toast.error("⚠️ Screenshots are disabled on Tasskly to protect the worker's intellectual property!");
         setTimeout(() => setIsBlurred(false), 3000);
       }
     };
@@ -120,8 +120,8 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
   const svgWatermark = `
     <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
       <g fill="rgba(124, 58, 237, 0.09)" font-size="10" font-family="'Inter', sans-serif" font-weight="900" letter-spacing="1">
-        <text x="10" y="40" transform="rotate(-30, 10, 40)">Tasklyy Security</text>
-        <text x="90" y="120" transform="rotate(-30, 90, 120)">Tasklyy Security</text>
+        <text x="10" y="40" transform="rotate(-30, 10, 40)">Tasskly Security</text>
+        <text x="90" y="120" transform="rotate(-30, 90, 120)">Tasskly Security</text>
       </g>
       <g fill="rgba(16, 185, 129, 0.06)" font-size="7" font-family="'Inter', sans-serif" font-weight="700">
         <text x="20" y="60" transform="rotate(-30, 20, 60)">LOCKED PREVIEW</text>
@@ -284,7 +284,7 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
                             </p>
                           </div>
                           <div className="pt-2 border-t text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                            Tasklyy Security Shield v1.4
+                            Tasskly Security Shield v1.4
                           </div>
                         </div>
                       </div>

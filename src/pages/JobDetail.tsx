@@ -13,7 +13,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getWorkerLevelInfo } from "@/utils/levels";
-import { openPayUCheckout } from "@/integrations/payments/payu";
+import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
 import { sendBidNotification, sendBidRejectedNotification, sendPaymentRequiredNotification } from "@/hooks/useNotificationPermission";
 import { useJobs } from "@/hooks/useJobs";
 import { useJobFiles } from "@/hooks/useJobFiles";
@@ -75,7 +75,7 @@ const JobDetail = () => {
     const searchParams = new URLSearchParams(window.location.search);
     const paymentStatus = searchParams.get("payment");
     if (paymentStatus === "success") {
-      toast.success("Payment confirmed via PayU! Job is now in progress. 🎉");
+      toast.success("Payment confirmed! Job is now in progress. 🎉");
       // Clean query params so toast doesn't re-trigger on refresh
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (paymentStatus === "failed") {
@@ -295,19 +295,25 @@ const JobDetail = () => {
   const handlePayment = async (bid: any) => {
     if (processingPayment) return;
     setProcessingPayment(true);
-    toast.loading("Initiating PayU secure checkout, redirecting...", { duration: 2000 });
-    openPayUCheckout(
+    toast.loading("Opening secure checkout modal...", { duration: 2000 });
+    openRazorpayCheckout(
       bid.amount,
-      id!,
-      job?.title || "Job",
+      job?.title || "Job Deliverable",
       user?.email || null,
-      user?.user_metadata?.full_name || "Student",
-      bid.bidder_id,
-      user!.id,
       () => {
         setProcessingPayment(false);
         toast.dismiss();
-        toast.error("Could not initiate PayU checkout. Please try again later.");
+        handlePaymentSuccess(bid);
+      },
+      () => {
+        setProcessingPayment(false);
+        toast.dismiss();
+        toast.error("Payment transaction failed. Please try again.");
+      },
+      () => {
+        setProcessingPayment(false);
+        toast.dismiss();
+        toast.info("Payment cancelled.");
       }
     );
   };

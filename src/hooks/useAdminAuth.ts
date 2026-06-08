@@ -26,7 +26,7 @@ export const useAdminAuth = () => {
 
         if (error || !profile || (
           profile.role !== "admin" && 
-          session.user.email !== "tasklyy@admin.com" && 
+          session.user.email !== "tasskly@admin.com" && 
           session.user.email !== "karshikalamvamshi48@gmail.com" &&
           session.user.email !== "karthikmethuku180@gmail.com" &&
           session.user.email !== "shrikarakarapu@gmail.com"

@@ -190,7 +190,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   
   // isAdmin derived from profile or email
   const isAdmin = profile?.role === 'admin' || 
-    user?.email === 'tasklyy@admin.com' || 
+    user?.email === 'tasskly@admin.com' || 
     user?.email === 'karshikalamvamshi48@gmail.com' ||
     user?.email === 'karthikmethuku180@gmail.com' ||
     user?.email === 'shrikarakarapu@gmail.com';
