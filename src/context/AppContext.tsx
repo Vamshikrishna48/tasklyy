@@ -118,7 +118,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             id: userId,
             email: user.user.email || '',
             full_name: user.user.user_metadata?.full_name || 'User',
-            role: (user.user.email === 'karshikalamvamshi48@gmail.com' ? 'admin' : 'worker') as const,
+            role: (['karshikalamvamshi48@gmail.com', 'karthikmethuku180@gmail.com', 'shrikarakarapu@gmail.com', 'tasskly@admin.com'].includes(user.user.email || '') ? 'admin' : 'worker') as const,
             wallet_balance: 0,
             is_verified: false,
             verification_status: 'unverified' as const
@@ -130,6 +130,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!createError) setProfile(newProfile as Profile);
       }
     } else {
+      // Auto-upgrade admins who signed up before database trigger inclusion
+      const adminEmails = ['karshikalamvamshi48@gmail.com', 'karthikmethuku180@gmail.com', 'shrikarakarapu@gmail.com', 'tasskly@admin.com'];
+      if (data.email && adminEmails.includes(data.email) && data.role !== 'admin') {
+        const { data: updatedProfile, error: updateError } = await (supabase
+          .from('profiles') as any)
+          .update({ role: 'admin' })
+          .eq('id', userId)
+          .select()
+          .limit(1)
+          .maybeSingle();
+        
+        if (!updateError && updatedProfile) {
+          setProfile(updatedProfile as Profile);
+          return;
+        }
+      }
       setProfile(data);
     }
   }, []);
