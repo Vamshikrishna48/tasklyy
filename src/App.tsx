@@ -187,6 +187,8 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
 const queryClient = new QueryClient();
 
 
+import { safeLocalStorage } from "@/utils/safeStorage";
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, authLoading } = useApp();
   const location = useLocation();
@@ -204,7 +206,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   // Live OTP verification gate
-  const isOtpVerified = localStorage.getItem("tasskly_otp_verified") === "true";
+  const isOtpVerified = safeLocalStorage.getItem("tasskly_otp_verified") === "true";
   if (!isOtpVerified) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }

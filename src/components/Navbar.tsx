@@ -5,6 +5,8 @@ import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
+import { safeLocalStorage } from "@/utils/safeStorage";
+
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -13,9 +15,9 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    localStorage.removeItem("tasskly_otp_verified");
-    localStorage.removeItem("demoUserEmail");
-    localStorage.removeItem("demoAdminAuth");
+    safeLocalStorage.removeItem("tasskly_otp_verified");
+    safeLocalStorage.removeItem("demoUserEmail");
+    safeLocalStorage.removeItem("demoAdminAuth");
     toast.success("Signed out");
     navigate("/auth");
   };

@@ -4,11 +4,13 @@ import { AdminSidebar } from "@/pages/admin/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut, ArrowLeft } from "lucide-react";
 
+import { safeLocalStorage } from "@/utils/safeStorage";
+
 const AdminLayout = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("demoAdminAuth");
+    safeLocalStorage.removeItem("demoAdminAuth");
     navigate("/admin/auth");
   };
 

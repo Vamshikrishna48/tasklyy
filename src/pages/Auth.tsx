@@ -9,6 +9,7 @@ import { Mail, Lock, User, ArrowRight, ArrowLeft, Sparkles, Eye, EyeOff } from "
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getApiUrl } from "@/lib/api";
+import { safeLocalStorage } from "@/utils/safeStorage";
 
 type AuthView = "signin" | "signup" | "otp_verify" | "forgot" | "reset" | "upi_required";
 
@@ -88,9 +89,9 @@ const Auth = () => {
     try {
       const code = generateOTP();
       setGeneratedOtp(code);
-      localStorage.setItem("pending_otp_code", code);
-      localStorage.setItem("pending_otp_email", email.trim());
-      const otpType = localStorage.getItem("pending_otp_type") || "email";
+      safeLocalStorage.setItem("pending_otp_code", code);
+      safeLocalStorage.setItem("pending_otp_email", email.trim());
+      const otpType = safeLocalStorage.getItem("pending_otp_type") || "email";
 
       await triggerCustomOtp(email.trim(), code, otpType === "signup" ? "signup" : "login");
 
@@ -126,7 +127,7 @@ const Auth = () => {
         }
 
         // Set verified so they bypass ProtectedRoute gate
-        localStorage.setItem("tasskly_otp_verified", "true");
+        safeLocalStorage.setItem("tasskly_otp_verified", "true");
 
         toast.success("Successfully logged in! Welcome to Tasskly 🎉");
         setShowWelcome(true);
@@ -172,9 +173,9 @@ const Auth = () => {
         const code = generateOTP();
         setGeneratedOtp(code);
         setTempPassword(password); // Save correct password to log back in after OTP match
-        localStorage.setItem("pending_otp_code", code);
-        localStorage.setItem("pending_otp_email", email.trim());
-        localStorage.setItem("pending_otp_type", "signup");
+        safeLocalStorage.setItem("pending_otp_code", code);
+        safeLocalStorage.setItem("pending_otp_email", email.trim());
+        safeLocalStorage.setItem("pending_otp_type", "signup");
 
         await triggerCustomOtp(email.trim(), code, "signup");
 
@@ -185,9 +186,9 @@ const Auth = () => {
         // 3. Confirm OTP code!
         if (!otpCode.trim()) throw new Error("Please enter the 6-digit verification code");
         
-        const storedCode = localStorage.getItem("pending_otp_code");
-        const storedEmail = localStorage.getItem("pending_otp_email") || email.trim();
-        const otpType = localStorage.getItem("pending_otp_type") || "email";
+        const storedCode = safeLocalStorage.getItem("pending_otp_code");
+        const storedEmail = safeLocalStorage.getItem("pending_otp_email") || email.trim();
+        const otpType = safeLocalStorage.getItem("pending_otp_type") || "email";
 
         if (otpCode.trim() !== storedCode) {
           throw new Error("Invalid verification code. Please check your inbox or developer console (F12) and try again.");
@@ -207,12 +208,12 @@ const Auth = () => {
         if (finalSignInErr) throw finalSignInErr;
 
         // Clean up OTP session state
-        localStorage.removeItem("pending_otp_type");
-        localStorage.removeItem("pending_otp_code");
-        localStorage.removeItem("pending_otp_email");
+        safeLocalStorage.removeItem("pending_otp_type");
+        safeLocalStorage.removeItem("pending_otp_code");
+        safeLocalStorage.removeItem("pending_otp_email");
 
         // Authorize this device's dashboard access via the OTP verification gate!
-        localStorage.setItem("tasskly_otp_verified", "true");
+        safeLocalStorage.setItem("tasskly_otp_verified", "true");
 
         toast.success("Successfully verified! Welcome to Tasskly 🎉");
         setShowWelcome(true);

@@ -1,3 +1,5 @@
+import { safeLocalStorage } from "@/utils/safeStorage";
+
 import { NavLink } from "@/components/NavLink";
 import { useLocation, Link } from "react-router-dom";
 import {
@@ -92,7 +94,7 @@ export function DashboardSidebar() {
           className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
           onClick={async () => {
             await supabase.auth.signOut();
-            localStorage.removeItem("tasskly_otp_verified");
+            safeLocalStorage.removeItem("tasskly_otp_verified");
             window.location.href = "/auth";
           }}
         >
