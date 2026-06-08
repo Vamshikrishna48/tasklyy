@@ -59,8 +59,8 @@ export async function openPayUCheckout(
         const rest = Math.floor(100000000 + Math.random() * 900000000).toString().substring(0, 9);
         return prefix + rest;
       })(),
-      surl: 'https://tasskly-tawny.vercel.app/api/payu-success',
-      furl: 'https://tasskly-tawny.vercel.app/api/payu-failure',
+      surl: 'https://tasklyy-tawny.vercel.app/api/payu-success',
+      furl: 'https://tasklyy-tawny.vercel.app/api/payu-failure',
       udf1: resData.udf1,
       udf2: resData.udf2,
       udf3: resData.udf3,
