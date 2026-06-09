@@ -118,7 +118,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             id: userId,
             email: user.user.email || '',
             full_name: user.user.user_metadata?.full_name || 'User',
-            role: (['karshikalamvamshi48@gmail.com', 'karthikmethuku180@gmail.com', 'shrikarakarapu@gmail.com', 'tasskly@admin.com'].includes(user.user.email || '') ? 'admin' : 'worker') as const,
+            role: (['karthikmethuku180@gmail.com', 'shrikarakarapu@gmail.com', 'tasskly@admin.com'].includes(user.user.email || '') ? 'admin' : 'worker') as const,
             wallet_balance: 0,
             is_verified: false,
             verification_status: 'unverified' as const
@@ -131,7 +131,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     } else {
       // Auto-upgrade admins who signed up before database trigger inclusion
-      const adminEmails = ['karshikalamvamshi48@gmail.com', 'karthikmethuku180@gmail.com', 'shrikarakarapu@gmail.com', 'tasskly@admin.com'];
+      const adminEmails = ['karthikmethuku180@gmail.com', 'shrikarakarapu@gmail.com', 'tasskly@admin.com'];
       if (data.email && adminEmails.includes(data.email) && data.role !== 'admin') {
         const { data: updatedProfile, error: updateError } = await (supabase
           .from('profiles') as any)
@@ -207,7 +207,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // isAdmin derived from profile or email
   const isAdmin = profile?.role === 'admin' || 
     user?.email === 'tasskly@admin.com' || 
-    user?.email === 'karshikalamvamshi48@gmail.com' ||
     user?.email === 'karthikmethuku180@gmail.com' ||
     user?.email === 'shrikarakarapu@gmail.com';
   const [platformBalance, setPlatformBalance] = useState(0);

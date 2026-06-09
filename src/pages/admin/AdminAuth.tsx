@@ -56,7 +56,6 @@ const AdminAuth = () => {
         if (!profile || (
           profile.role !== "admin" && 
           data.user.email !== "tasskly@admin.com" && 
-          data.user.email !== "karshikalamvamshi48@gmail.com" &&
           data.user.email !== "karthikmethuku180@gmail.com" &&
           data.user.email !== "shrikarakarapu@gmail.com"
         )) {
