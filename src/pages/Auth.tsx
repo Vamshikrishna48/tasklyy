@@ -54,7 +54,7 @@ const Auth = () => {
         toast.success("A secure verification code has been sent to your email! ✉️");
       } else {
         console.error("[Tasskly Backend Error]", resData.message);
-        toast.warning(`[Developer Fallback] Email failed to send. Use verification code: ${code}`, { duration: 15000 });
+        toast.warning(`[Developer Fallback] Email failed to send (${resData.message}). Use verification code: ${code}`, { duration: 15000 });
       }
     } catch (err) {
       console.error("Could not reach backend OTP dispatch API:", err);
