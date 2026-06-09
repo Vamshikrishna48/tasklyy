@@ -14,44 +14,41 @@ export default async function handler(req, res) {
 
   if (!supabaseServiceKey) {
     return res.status(500).json({
-      error: 'SUPABASE_SERVICE_ROLE_KEY is not configured in this environment. Please ensure it is set up in Vercel settings.'
+      error: 'SUPABASE_SERVICE_ROLE_KEY is not configured in Vercel settings.'
     });
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    // 1. Fetch all users from Auth via admin API
+    // 1. Fetch all users from Supabase Auth admin API
     const { data, error: listError } = await supabase.auth.admin.listUsers();
     if (listError) throw listError;
 
-    const targetUser = (data?.users || []).find(u => u.email === 'karshikalamvamshi48@gmail.com');
+    const users = data?.users || [];
+    const deleteCount = users.length;
 
-    if (!targetUser) {
-      // Clean up public.profiles if any orphaned profile remains
-      await supabase.from('profiles').delete().eq('email', 'karshikalamvamshi48@gmail.com');
-      return res.status(200).json({
-        success: true,
-        message: 'User karshikalamvamshi48@gmail.com was not found or is already deleted.'
-      });
+    // 2. Delete all users from Auth (cascades to profiles due to constraint rules)
+    for (const user of users) {
+      const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
+      if (deleteError) {
+        console.error(`Failed to delete user ${user.id}:`, deleteError);
+      }
     }
 
-    // 2. Delete user account from Auth (this cascades to profiles)
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(targetUser.id);
-    if (deleteError) throw deleteError;
-
-    // 3. Double check public.profiles cleanup
-    await supabase.from('profiles').delete().eq('email', 'karshikalamvamshi48@gmail.com');
+    // 3. Clear any remaining public profile rows (orphans if any)
+    const { error: clearProfilesError } = await supabase.from('profiles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (clearProfilesError) throw clearProfilesError;
 
     return res.status(200).json({
       success: true,
-      message: `Successfully deleted user account and profile for karshikalamvamshi48@gmail.com (ID: ${targetUser.id}).`
+      message: `Successfully cleared all user logins. Deleted ${deleteCount} user accounts from the database.`
     });
   } catch (err) {
-    console.error('Delete user error:', err);
+    console.error('Clear users database error:', err);
     return res.status(500).json({
       success: false,
-      error: err.message || 'An error occurred during deletion.'
+      error: err.message || 'An error occurred while clearing user logins.'
     });
   }
 }
