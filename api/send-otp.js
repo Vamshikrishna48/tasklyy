@@ -126,7 +126,7 @@ export default async function handler(req, res) {
           Authorization: `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify({
-          from: 'Tasskly <tasskly.india@gmail.com>',
+          from: process.env.RESEND_FROM || 'Tasskly <onboarding@resend.dev>',
           to: email,
           subject: subject,
           html: htmlContent,
