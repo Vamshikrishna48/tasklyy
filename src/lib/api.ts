@@ -12,7 +12,7 @@ export const getApiUrl = (path: string): string => {
       window.location.hostname === "";
       
     if (isMobileContainer) {
-      return `https://tasklyy-tawny.vercel.app${path}`;
+      return `https://tasskly.com${path}`;
     }
   }
   return path;
