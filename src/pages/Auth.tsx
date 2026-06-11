@@ -233,7 +233,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4"
       style={{
-        background: "linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #dcfce7 100%)",
+        background: "linear-gradient(135deg, #bae6fd 0%, #f0fdf4 50%, #a7f3d0 100%)",
       }}
     >
       {/* Soft brand-matching blob backgrounds */}
@@ -568,7 +568,7 @@ const Auth = () => {
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.1 }} transition={{ duration: 0.3 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #dcfce7 100%)" }}
+            style={{ background: "linear-gradient(135deg, #bae6fd 0%, #f0fdf4 50%, #a7f3d0 100%)" }}
           >
             <div className="relative z-10 text-center space-y-4 flex flex-col items-center">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}

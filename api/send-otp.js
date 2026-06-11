@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         <p style="color: #64748b; font-size: 14px; margin: 6px 0 0 0; font-weight: 500;">India's Student Marketplace</p>
       </div>
       
-      <div style="padding: 24px; border-radius: 12px; background: linear-gradient(135deg, #e0f2fe 0%, #ecfdf5 100%); border: 1px solid #f1f5f9; text-align: center; margin-bottom: 24px;">
+      <div style="padding: 24px; border-radius: 12px; background: linear-gradient(135deg, #bae6fd 0%, #a7f3d0 100%); border: 1px solid #f1f5f9; text-align: center; margin-bottom: 24px;">
         <p style="color: #475569; font-size: 14px; margin: 0 0 16px 0; font-weight: 600;">Here is your secure 6-digit verification code:</p>
         <div style="font-size: 36px; font-weight: 800; letter-spacing: 0.25em; color: #6366f1; font-family: monospace; margin: 12px 0;">
           ${otp}
