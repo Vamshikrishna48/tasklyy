@@ -87,7 +87,7 @@
   }
 
   body {
-    background: linear-gradient(135deg, #bae6fd 0%, #f0fdf4 50%, #a7f3d0 100%) no-repeat fixed;
+    background: linear-gradient(135deg, #bae6fd 0%, #f0fdf4 75%, #d1fae5 100%) no-repeat fixed;
     @apply text-foreground font-sans;
   }
 
