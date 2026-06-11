@@ -243,8 +243,10 @@ const Index = () => {
             </div>
             <div>
               <h4 className="font-bold mb-4 uppercase text-xs tracking-widest text-primary">Contact</h4>
-              <p className="text-sm text-muted-foreground mb-2">support@tasskly.com</p>
-              <p className="text-sm text-muted-foreground font-bold underline">Start New Project</p>
+              <a href="mailto:support@tasskly.com" className="text-sm text-muted-foreground mb-2 block hover:text-primary transition-colors">
+                support@tasskly.com
+              </a>
+              <p className="text-sm text-muted-foreground font-bold underline cursor-pointer">Start New Project</p>
             </div>
           </div>
           <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground uppercase tracking-widest">

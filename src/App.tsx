@@ -28,6 +28,7 @@ import Earnings from "./pages/dashboard/Earnings.tsx";
 import Portfolio from "./pages/dashboard/Portfolio.tsx";
 import Profile from "./pages/dashboard/Profile.tsx";
 import SubmittedWork from "./pages/dashboard/SubmittedWork.tsx";
+import CustomerService from "./pages/dashboard/CustomerService.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { useNotificationPermission } from "./hooks/useNotificationPermission";
 import NotificationBanner from "./components/NotificationBanner";
@@ -243,6 +244,7 @@ const App = () => {
                     <Route path="portfolio" element={<Portfolio />} />
                     <Route path="profile" element={<Profile />} />
                     <Route path="submitted" element={<SubmittedWork />} />
+                    <Route path="support" element={<CustomerService />} />
                   </Route>
                   <Route path="/admin/auth" element={<AdminAuth />} />
                   <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
