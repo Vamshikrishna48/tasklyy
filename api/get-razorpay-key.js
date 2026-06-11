@@ -17,25 +17,24 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Load from .env file directly if it exists in the deploy bundle
-  let key = null;
-  try {
-    const envPath = path.join(process.cwd(), '.env');
-    if (fs.existsSync(envPath)) {
-      const envContent = fs.readFileSync(envPath, 'utf8');
-      const match = envContent.match(/VITE_RAZORPAY_KEY_ID\s*=\s*(["']?)(.*?)\1(\s|$)/);
-      if (match && match[2]) {
-        key = match[2].trim();
-        console.log("Loaded Razorpay key from .env file: " + key);
-      }
-    }
-  } catch (err) {
-    console.error("Failed to parse .env file dynamically:", err);
-  }
+  // Prioritize Vercel environment variables first
+  let key = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
 
-  // Fallback to process.env if .env parse failed
+  // Fallback to local .env file only if not configured in system variables
   if (!key) {
-    key = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
+    try {
+      const envPath = path.join(process.cwd(), '.env');
+      if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        const match = envContent.match(/VITE_RAZORPAY_KEY_ID\s*=\s*(["']?)(.*?)\1(\s|$)/);
+        if (match && match[2]) {
+          key = match[2].trim();
+          console.log("Loaded Razorpay key from .env file: " + key);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to parse .env file dynamically:", err);
+    }
   }
 
   return res.status(200).json({ key: key || null });
