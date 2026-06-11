@@ -67,9 +67,9 @@ export default async function handler(req, res) {
   // 1. Try SMTP if configured
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
   const smtpPort = process.env.SMTP_PORT || '465';
-  const smtpUser = process.env.SMTP_USER || 'tasskly.india@gmail.com';
+  const smtpUser = process.env.SMTP_USER || 'info@tasskly.com';
   const smtpPassword = process.env.SMTP_PASSWORD;
-  const smtpFrom = process.env.SMTP_FROM || `"Tasskly" <tasskly.india@gmail.com>`;
+  const smtpFrom = process.env.SMTP_FROM || `"Tasskly" <info@tasskly.com>`;
 
   let smtpAttempted = false;
   if (smtpHost && smtpUser && smtpPassword) {
