@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Star, Clock, ArrowLeft, CheckCircle, Info, Loader2, IndianRupee, MessageSquare, AlertTriangle, XCircle, Send, FileUp, Lock, Download } from "lucide-react";
+import { Star, Clock, ArrowLeft, CheckCircle, Info, Loader2, IndianRupee, MessageSquare, AlertTriangle, XCircle, Send, FileUp, Lock, Download, Sparkles } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import Navbar from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
