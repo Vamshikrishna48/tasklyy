@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-transparent">
       <Navbar />
 
       {/* Hero Section - Sticky Fixed */}
