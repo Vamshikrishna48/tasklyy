@@ -91,10 +91,17 @@ const JobCard = ({ job, index = 0 }: JobCardProps) => {
               </div>
 
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {new Date(job.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                </span>
+                {job.deadline && !isNaN(Date.parse(job.deadline)) ? (
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {new Date(job.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    No deadline
+                  </span>
+                )}
               </div>
             </div>
           </CardContent>

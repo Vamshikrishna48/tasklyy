@@ -427,7 +427,7 @@ const SubmittedWork = () => {
                               ? `👤 Worker: ${job.worker?.full_name || "—"}`
                               : `👤 Poster: ${job.poster?.full_name || "—"}`}
                           </span>
-                          {job.deadline && (
+                          {job.deadline && !isNaN(Date.parse(job.deadline)) && (
                             <span className="flex items-center gap-1 font-medium">
                               📅 Deadline: {new Date(job.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                             </span>

@@ -421,7 +421,7 @@ const JobDetail = () => {
               <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">{job.title}</h1>
               <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Clock className="h-4 w-4" />
-                  Due {job.deadline ? new Date(job.deadline).toLocaleDateString("en-IN", { month: "long", day: "numeric", year: "numeric" }) : "—"}
+                  Due {job.deadline && !isNaN(Date.parse(job.deadline)) ? new Date(job.deadline).toLocaleDateString("en-IN", { month: "long", day: "numeric", year: "numeric" }) : "—"}
                 </span>
                 <span className="flex items-center gap-1"><IndianRupee className="h-4 w-4" />Budget: ₹{job.budget}</span>
               </div>

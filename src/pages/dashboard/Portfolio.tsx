@@ -66,7 +66,7 @@ const Portfolio = () => {
                     </div>
                     <CardTitle className="text-lg leading-tight line-clamp-2">{job.title}</CardTitle>
                     <CardDescription className="flex items-center gap-1 mt-1 text-xs">
-                      <Calendar className="w-3 h-3"/> {new Date(job.deadline).toLocaleDateString()}
+                      <Calendar className="w-3 h-3"/> {job.deadline && !isNaN(Date.parse(job.deadline)) ? new Date(job.deadline).toLocaleDateString() : "No deadline"}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-5 pt-0 mt-auto">

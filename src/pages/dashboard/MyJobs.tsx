@@ -186,7 +186,7 @@ const MyJobs = () => {
                         </Link>
                         <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                           <span className="font-display font-bold text-primary text-sm">₹{job.budget}</span>
-                          <span>Due {new Date(job.deadline).toLocaleDateString()}</span>
+                          <span>Due {job.deadline && !isNaN(Date.parse(job.deadline)) ? new Date(job.deadline).toLocaleDateString() : "No deadline"}</span>
                           {unreadCounts[job.id] > 0 && (
                             <div className="flex items-center gap-1.5 bg-red-50 px-2 py-0.5 rounded border border-red-100 animate-pulse">
                                 <span className="h-2 w-2 rounded-full bg-red-500" />
