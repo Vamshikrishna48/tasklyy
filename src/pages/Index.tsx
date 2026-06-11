@@ -243,7 +243,7 @@ const Index = () => {
             </div>
             <div>
               <h4 className="font-bold mb-4 uppercase text-xs tracking-widest text-primary">Contact</h4>
-              <a href="mailto:support@tasskly.com" className="text-sm text-muted-foreground mb-2 block hover:text-primary transition-colors">
+              <a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@tasskly.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground mb-2 block hover:text-primary transition-colors">
                 support@tasskly.com
               </a>
               <p className="text-sm text-muted-foreground font-bold underline cursor-pointer">Start New Project</p>

@@ -61,7 +61,9 @@ const CustomerService = () => {
             </CardHeader>
             <CardContent className="p-5 pt-0">
               <a
-                href="mailto:support@tasskly.com"
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=support@tasskly.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold text-sm transition-colors mt-2"
               >
                 support@tasskly.com &rarr;
