@@ -243,7 +243,7 @@ const Index = () => {
             </div>
             <div>
               <h4 className="font-bold mb-4 uppercase text-xs tracking-widest text-primary">Contact</h4>
-              <p className="text-sm text-muted-foreground mb-2">hello@tasskly.edu</p>
+              <p className="text-sm text-muted-foreground mb-2">support@tasskly.com</p>
               <p className="text-sm text-muted-foreground font-bold underline">Start New Project</p>
             </div>
           </div>
