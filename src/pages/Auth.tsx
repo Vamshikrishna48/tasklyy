@@ -126,6 +126,30 @@ const Auth = () => {
           throw signInErr;
         }
 
+        // Check if user has registered but skipped the OTP step (metadata otp_verified is explicitly false)
+        const isOtpPending = data.user?.user_metadata?.otp_verified === false;
+        
+        if (isOtpPending) {
+          // Immediately sign them out so they cannot access the dashboard
+          await supabase.auth.signOut();
+          
+          // Generate a new OTP code for them
+          const code = generateOTP();
+          setGeneratedOtp(code);
+          setTempPassword(password); // Save correct password to log back in after OTP match
+          safeLocalStorage.setItem("pending_otp_code", code);
+          safeLocalStorage.setItem("pending_otp_email", email.trim());
+          safeLocalStorage.setItem("pending_otp_type", "signup");
+          
+          // Trigger the OTP email
+          await triggerCustomOtp(email.trim(), code, "signup");
+          
+          setInfoMessage("Your account activation is pending. We have sent a 6-digit verification code to your email. Enter it below to complete activation.");
+          setView("otp_verify");
+          setLoading(false);
+          return;
+        }
+
         // Set verified so they bypass ProtectedRoute gate
         safeLocalStorage.setItem("tasskly_otp_verified", "true");
 
@@ -147,7 +171,8 @@ const Auth = () => {
           password,
           options: { 
             data: { 
-              full_name: displayName.trim()
+              full_name: displayName.trim(),
+              otp_verified: false
             } 
           },
         });
@@ -206,6 +231,12 @@ const Auth = () => {
         });
 
         if (finalSignInErr) throw finalSignInErr;
+
+        // Set metadata otp_verified to true upon successful OTP match
+        const { error: updateMetaErr } = await supabase.auth.updateUser({
+          data: { otp_verified: true }
+        });
+        if (updateMetaErr) throw updateMetaErr;
 
         // Clean up OTP session state
         safeLocalStorage.removeItem("pending_otp_type");
