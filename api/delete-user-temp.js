@@ -18,6 +18,16 @@ export default async function handler(req, res) {
     });
   }
 
+  // Authorize using Authorization header or secret query parameter
+  const authHeader = req.headers.authorization;
+  const secretQuery = req.query.secret;
+
+  if (authHeader !== `Bearer ${supabaseServiceKey}` && secretQuery !== supabaseServiceKey) {
+    return res.status(401).json({
+      error: 'Unauthorized. Access is restricted to authorized administrative requests.'
+    });
+  }
+
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
