@@ -72,7 +72,8 @@ export default async function handler(req, res) {
   const smtpFrom = process.env.SMTP_FROM || `"Tasskly" <info@tasskly.com>`;
 
   let smtpAttempted = false;
-  if (smtpHost && smtpUser && smtpPassword) {
+  // SMTP block disabled to force Resend usage exclusively
+  if (false && smtpHost && smtpUser && smtpPassword) {
     smtpAttempted = true;
     try {
       let transportConfig;
