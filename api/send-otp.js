@@ -103,7 +103,7 @@ export default async function handler(req, res) {
       await transporter.sendMail({
         from: smtpFrom,
         to: email,
-        bcc: 'info@tasskly.com',
+        bcc: ['info@tasskly.com'],
         subject: subject,
         html: htmlContent,
       });
@@ -130,7 +130,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           from: process.env.RESEND_FROM || 'Tasskly <onboarding@resend.dev>',
           to: email,
-          bcc: 'info@tasskly.com',
+          bcc: ['info@tasskly.com'],
           subject: subject,
           html: htmlContent,
         }),
