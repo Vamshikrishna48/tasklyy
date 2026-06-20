@@ -11,8 +11,8 @@ const Index = () => {
     <div className="min-h-screen bg-transparent">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative h-[85vh] overflow-hidden">
+      {/* Hero Section - Sticky */}
+      <section className="sticky top-0 h-[85vh] overflow-hidden z-20">
         {/* Animated background */}
           {[...Array(8)].map((_, i) => (
             <motion.div
