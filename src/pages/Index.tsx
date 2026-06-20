@@ -11,8 +11,8 @@ const Index = () => {
     <div className="min-h-screen bg-transparent">
       <Navbar />
 
-      {/* Hero Section - Sticky Fixed */}
-      <section className="sticky top-0 h-[85vh] overflow-hidden z-0">
+      {/* Hero Section */}
+      <section className="relative h-[85vh] overflow-hidden">
         {/* Animated background */}
           {[...Array(8)].map((_, i) => (
             <motion.div
@@ -87,7 +87,7 @@ const Index = () => {
       </section>
 
       {/* Categories - Scrolls over Hero */}
-      <section className="relative z-10 border-t py-16 overflow-hidden">
+      <section className="relative border-t py-16 overflow-hidden">
 
         {/* Large vivid blobs that sit BEHIND the glass cards so blur shows them */}
         <div className="absolute inset-0 pointer-events-none">
