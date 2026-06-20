@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,12 @@ const PostJob = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  useEffect(() => {
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
 
   const addSkill = () => {
     if (skillInput.trim() && !skills.includes(skillInput.trim())) {
@@ -102,6 +108,14 @@ const PostJob = () => {
   };
 
   const handleSubmit = () => {
+    if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
+      toast.error("🔔 Notification Permission Required", {
+        description: "You must enable browser notifications to post a job. Please enable notifications and try again.",
+      });
+      Notification.requestPermission();
+      return;
+    }
+
     // Check UPI ID first
     const upiId = (profile as any)?.upi_id;
     if (!upiId) {

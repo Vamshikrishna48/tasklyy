@@ -51,7 +51,7 @@ const JobDetail = () => {
     if (!id) return;
     const { data } = await (supabase as any)
       .from("jobs")
-      .select("*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url), worker:profiles!jobs_worker_id_fkey(full_name), files:job_files(*)")
+      .select("*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url), worker:profiles!jobs_worker_id_fkey(full_name, email, upi_id), files:job_files(*)")
       .eq("id", id)
       .limit(1)
       .maybeSingle();
@@ -170,6 +170,14 @@ const JobDetail = () => {
   );
 
   const handleAcceptToView = () => {
+    if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
+      toast.error("🔔 Notification Permission Required", {
+        description: "You must enable browser notifications to accept jobs. Please enable notifications and try again.",
+      });
+      Notification.requestPermission();
+      return;
+    }
+
     setHasAccepted(true);
     toast.success("You can now view full details and place a bid.");
   };
@@ -214,6 +222,14 @@ const JobDetail = () => {
   };
 
   const handlePlaceBid = async () => {
+    if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
+      toast.error("🔔 Notification Permission Required", {
+        description: "You must enable browser notifications to place a bid. Please enable notifications and try again.",
+      });
+      Notification.requestPermission();
+      return;
+    }
+
     const amount = Number(bidAmount);
     if (!amount || amount <= 0) { toast.error("Enter a valid bid amount"); return; }
     if (amount > maxBidAmount) { toast.error(`Max bid is ₹${maxBidAmount}`); return; }
@@ -264,6 +280,14 @@ const JobDetail = () => {
   };
 
   const handleAcceptBid = async (bid: any) => {
+    if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
+      toast.error("🔔 Notification Permission Required", {
+        description: "You must enable browser notifications to accept this bid. Please enable notifications and try again.",
+      });
+      Notification.requestPermission();
+      return;
+    }
+
     const paymentDueAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     // Update bid status
     await (supabase as any).from("bids").update({ status: "accepted" }).eq("id", bid.id);
@@ -348,6 +372,14 @@ const JobDetail = () => {
   };
 
   const handleDirectAccept = async () => {
+    if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
+      toast.error("🔔 Notification Permission Required", {
+        description: "You must enable browser notifications to accept this job. Please enable notifications and try again.",
+      });
+      Notification.requestPermission();
+      return;
+    }
+
     if (!user?.id) { 
       toast.error("Please sign in or sign up first to accept jobs."); 
       navigate("/auth");
@@ -435,6 +467,41 @@ const JobDetail = () => {
                 <div className="mt-4 flex flex-wrap gap-2">
                   {job.skills.map((s: string) => <Badge key={s} variant="secondary">{s}</Badge>)}
                 </div>
+              )}
+
+              {/* Accepted Worker Details (visible only to the poster after payment is completed) */}
+              {isMyJob && ["accepted", "in_progress", "submitted", "completed"].includes(job.status) && job.worker && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 15 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  className="mt-8 p-6 bg-green-50 border border-green-200 rounded-3xl space-y-4"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="h-12 w-12 bg-green-600 rounded-2xl flex items-center justify-center text-white shrink-0">
+                      <CheckCircle className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="font-display font-bold text-lg text-foreground">Hired Worker Contact Details</h3>
+                      <p className="text-sm text-muted-foreground font-medium">Payment successfully verified! You can now get in touch with the hired expert to coordinate deliverables.</p>
+                    </div>
+                  </div>
+                  <div className="border-t border-green-200/60 pt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="p-3 bg-white/60 rounded-xl border border-green-100">
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Full Name</p>
+                      <p className="font-semibold text-foreground mt-0.5">{job.worker.full_name || "N/A"}</p>
+                    </div>
+                    <div className="p-3 bg-white/60 rounded-xl border border-green-100">
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Email Address</p>
+                      <a href={`mailto:${job.worker.email}`} className="font-semibold text-primary hover:underline mt-0.5 block truncate">
+                        {job.worker.email || "N/A"}
+                      </a>
+                    </div>
+                    <div className="p-3 bg-white/60 rounded-xl border border-green-100">
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">UPI ID (For Payout)</p>
+                      <p className="font-semibold text-foreground font-mono mt-0.5">{job.worker.upi_id || "N/A"}</p>
+                    </div>
+                  </div>
+                </motion.div>
               )}
 
               {/* Accept to view (worker) */}
