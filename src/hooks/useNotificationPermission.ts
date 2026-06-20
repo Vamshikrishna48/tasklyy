@@ -88,7 +88,7 @@ export function sendBidNotification(jobTitle: string, bidAmount: number, bidderN
     try {
       new Notification("🔔 New Bid on Your Job!", {
         body: `${bidderName} bid ₹${bidAmount} on "${jobTitle}"`,
-        icon: "/favicon.ico",
+        icon: "/taskly-logo.png",
         tag: notification.id,
         requireInteraction: true,
       });
