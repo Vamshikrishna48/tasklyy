@@ -45,10 +45,10 @@ const PageLoader = () => {
             <img
               src="/taskly-logo.png"
               alt="Tasskly logo"
-              style={{ width: "220px", height: "220px" }}
+              style={{ width: "200px", height: "200px" }}
               className="object-contain mb-0"
             />
-            <span className="text-gray-700 font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2", marginTop: "-25px" }}>
+            <span className="text-gray-700 font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2", marginTop: "-65px" }}>
               Tasskly
             </span>
           </motion.div>
