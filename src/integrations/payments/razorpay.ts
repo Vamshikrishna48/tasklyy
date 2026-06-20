@@ -42,7 +42,7 @@ export async function openRazorpayCheckout(
   amountInRupees: number,
   jobTitle: string,
   userEmail: string | null,
-  onSuccess: () => void,
+  onSuccess: (response: any) => void,
   onFailure: () => void,
   onCancel?: () => void
 ) {
@@ -95,7 +95,7 @@ export async function openRazorpayCheckout(
     handler: (response: any) => {
       if (response.razorpay_payment_id) {
         paymentDone = true;
-        onSuccess();
+        onSuccess(response);
       } else {
         console.error("Payment response missing payment ID");
         onFailure();

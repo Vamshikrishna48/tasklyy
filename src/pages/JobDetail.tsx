@@ -18,6 +18,7 @@ import { sendBidNotification, sendBidRejectedNotification, sendPaymentRequiredNo
 import { useJobs } from "@/hooks/useJobs";
 import { useJobFiles } from "@/hooks/useJobFiles";
 import { NoScreenshotWrapper } from "@/components/NoScreenshotWrapper";
+import { getApiUrl } from "@/lib/api";
  
 const JobDetail = () => {
   const { id } = useParams();
@@ -353,10 +354,36 @@ const JobDetail = () => {
       bid.amount,
       job?.title || "Job Deliverable",
       user?.email || null,
-      () => {
-        setProcessingPayment(false);
+      async (paymentResponse: any) => {
         toast.dismiss();
-        handlePaymentSuccess(bid);
+        toast.loading("Verifying payment on backend... ⌛");
+        try {
+          const verificationResponse = await fetch(getApiUrl("/api/verify-payment"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              payment_id: paymentResponse.razorpay_payment_id,
+              expected_amount: bid.amount,
+            }),
+          });
+          
+          const result = await verificationResponse.json();
+          if (result && result.success) {
+            setProcessingPayment(false);
+            toast.dismiss();
+            handlePaymentSuccess(bid);
+          } else {
+            setProcessingPayment(false);
+            toast.dismiss();
+            toast.error(result.error || "Payment verification failed. Please contact support.");
+          }
+        } catch (err: any) {
+          setProcessingPayment(false);
+          toast.dismiss();
+          toast.error("Failed to verify payment with backend: " + err.message);
+        }
       },
       () => {
         setProcessingPayment(false);
