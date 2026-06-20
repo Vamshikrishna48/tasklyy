@@ -87,12 +87,7 @@ const Index = () => {
       </section>
 
       {/* Categories - Scrolls over Hero */}
-      <section
-        className="relative z-10 border-t py-16 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.05)]"
-        style={{
-          background: "linear-gradient(135deg, #bae6fd 0%, #f0fdf4 75%, #d1fae5 100%)",
-        }}
-      >
+      <section className="relative z-10 border-t py-16 overflow-hidden">
         {/* Animated blobs inside section */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
