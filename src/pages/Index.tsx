@@ -5,6 +5,7 @@ import { ArrowRight, Sparkles, TrendingUp, Shield } from "lucide-react";
 import { categories } from "@/data/mockData";
 import Navbar from "@/components/Navbar";
 import { motion } from "framer-motion";
+import MagicBento from "@/components/MagicBento";
 
 const Index = () => {
   return (
@@ -98,30 +99,7 @@ const Index = () => {
             <p className="mt-4 text-lg text-gray-600">We blend strategic thinking with bold creativity across categories.</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {categories.map((cat, i) => (
-              <motion.div
-                key={cat.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.08 }}
-                whileHover={{ scale: 1.04, y: -6 }}
-              >
-                <Link to={`/jobs?category=${encodeURIComponent(cat.name)}`}>
-                  <div
-                    className="group flex cursor-pointer flex-col p-7 rounded-3xl border border-gray-100 bg-white transition-all duration-300 shadow-sm hover:shadow-xl hover:border-primary/20 hover:-translate-y-1">
-
-                    <span className="text-4xl mb-4 transition-all">{cat.icon}</span>
-                    <span className="font-display text-lg font-bold text-gray-800 mb-2">
-                      {cat.name}
-                    </span>
-                    <p className="text-sm text-gray-600 leading-relaxed">Exceptional results in {cat.name.toLowerCase()} for student projects.</p>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+          <MagicBento />
         </div>
       </section>
 
