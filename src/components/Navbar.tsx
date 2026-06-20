@@ -1,9 +1,17 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Briefcase } from "lucide-react";
+import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Briefcase, Menu } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
 
 import { safeLocalStorage } from "@/utils/safeStorage";
 
@@ -60,18 +68,8 @@ const Navbar = () => {
           </Link>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link to="/post-job" className="md:hidden">
-            <Button size="icon" variant="ghost">
-              <PlusCircle className="h-5 w-5" />
-            </Button>
-          </Link>
-          <Link to="/internships" className="md:hidden">
-            <Button size="icon" variant="ghost">
-              <Briefcase className="h-5 w-5" />
-            </Button>
-          </Link>
-          
+        {/* Desktop Navigation Actions */}
+        <div className="hidden md:flex items-center gap-2">
           {isAuthenticated ? (
             <>
               {profile && (
@@ -82,22 +80,126 @@ const Navbar = () => {
               <Link to="/dashboard">
                 <Button variant="hero" size="sm" className="gap-2">
                   <LayoutDashboard className="h-4 w-4" />
-                  <span className="hidden sm:inline">Dashboard</span>
+                  Dashboard
                 </Button>
               </Link>
               <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
                 <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Sign Out</span>
+                Sign Out
               </Button>
             </>
           ) : (
             <Link to="/auth">
               <Button variant="hero" size="sm" className="gap-2">
                 <LogIn className="h-4 w-4" />
-                <span className="hidden sm:inline">Sign In</span>
+                Sign In
               </Button>
             </Link>
           )}
+        </div>
+
+        {/* Mobile Navigation Actions */}
+        <div className="flex items-center gap-2 md:hidden">
+          {isAuthenticated ? (
+            <Link to="/dashboard">
+              <Button variant="hero" size="sm" className="h-9 px-3 gap-1">
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Dashboard</span>
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/auth">
+              <Button variant="hero" size="sm" className="h-9 px-3 gap-1">
+                <LogIn className="h-4 w-4" />
+                <span>Sign In</span>
+              </Button>
+            </Link>
+          )}
+
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px]">
+              <SheetHeader className="mb-4">
+                <SheetTitle className="text-left font-bold text-xl flex items-center gap-2 border-b pb-3">
+                  <img
+                    src="/favicon-cropped.png"
+                    alt="Tasskly logo"
+                    className="w-6 h-6 object-contain"
+                  />
+                  Tasskly Menu
+                </SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-2 py-2">
+                <SheetClose asChild>
+                  <Link to="/jobs" className="w-full">
+                    <Button variant={isActive("/jobs") ? "secondary" : "ghost"} className="w-full justify-start gap-3 h-11 text-base">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      Browse Jobs
+                    </Button>
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link to="/post-job" className="w-full">
+                    <Button variant={isActive("/post-job") ? "secondary" : "ghost"} className="w-full justify-start gap-3 h-11 text-base">
+                      <PlusCircle className="h-4 w-4 text-muted-foreground" />
+                      Post a Job
+                    </Button>
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link to="/internships" className="w-full">
+                    <Button variant={isActive("/internships") ? "secondary" : "ghost"} className="w-full justify-start gap-3 h-11 text-base">
+                      <Briefcase className="h-4 w-4 text-muted-foreground" />
+                      Internships
+                    </Button>
+                  </Link>
+                </SheetClose>
+
+                <div className="border-t my-2" />
+
+                {isAuthenticated ? (
+                  <>
+                    {profile && (
+                      <div className="px-3 py-1 text-xs font-semibold text-muted-foreground truncate">
+                        Signed in as: {profile.full_name || profile.email}
+                      </div>
+                    )}
+                    <SheetClose asChild>
+                      <Link to="/dashboard" className="w-full">
+                        <Button variant="ghost" className="w-full justify-start gap-3 h-11 text-base">
+                          <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                          Dashboard Overview
+                        </Button>
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 h-11 text-base text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </Button>
+                    </SheetClose>
+                  </>
+                ) : (
+                  <SheetClose asChild>
+                    <Link to="/auth" className="w-full">
+                      <Button variant="hero" className="w-full justify-start gap-3 h-11 text-base">
+                        <LogIn className="h-4 w-4" />
+                        Sign In
+                      </Button>
+                    </Link>
+                  </SheetClose>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>
