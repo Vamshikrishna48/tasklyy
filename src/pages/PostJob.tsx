@@ -152,8 +152,8 @@ const PostJob = () => {
     }
     
     const numericBudget = Number(budget);
-    if (isNaN(numericBudget) || numericBudget <= 0) {
-      toast.error("Please enter a valid budget greater than ₹0");
+    if (isNaN(numericBudget) || numericBudget < 150) {
+      toast.error("Please enter a valid budget of at least ₹150");
       return;
     }
 

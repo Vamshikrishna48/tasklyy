@@ -232,7 +232,6 @@ const JobDetail = () => {
 
     const amount = Number(bidAmount);
     if (!amount || amount <= 0) { toast.error("Enter a valid bid amount"); return; }
-    if (amount > maxBidAmount) { toast.error(`Max bid is ₹${maxBidAmount}`); return; }
     if (!bidMessage.trim()) { toast.error("Add a message with your bid"); return; }
     
     if (!user?.id) { 
@@ -643,17 +642,13 @@ const JobDetail = () => {
                         <Send className="h-5 w-5 text-primary" /> Place Your Bid
                       </h2>
                       <p className="text-xs text-muted-foreground">
-                        Budget: <span className="font-bold text-foreground">₹{job.budget}</span> · Max bid: <span className="font-bold text-foreground">₹{maxBidAmount}</span>
+                        Budget: <span className="font-bold text-foreground">₹{job.budget}</span>
                       </p>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="text-xs font-medium mb-1 block">Your Bid (₹) *</label>
-                          <Input type="number" placeholder={`Up to ₹${maxBidAmount}`} value={bidAmount} min={1} max={maxBidAmount}
-                            onChange={(e) => {
-                              const v = Number(e.target.value);
-                              if (v > maxBidAmount) { toast.error(`Max bid is ₹${maxBidAmount}`); setBidAmount(String(maxBidAmount)); }
-                              else setBidAmount(e.target.value);
-                            }} />
+                          <Input type="number" placeholder="Enter your bid amount" value={bidAmount} min={1}
+                            onChange={(e) => setBidAmount(e.target.value)} />
                         </div>
                         <div>
                           <label className="text-xs font-medium mb-1 block">Delivery Days *</label>
@@ -804,7 +799,6 @@ const JobDetail = () => {
                 <div className="p-8 text-center text-white bg-gradient-to-br from-primary to-primary/80">
                   <p className="text-xs uppercase font-black tracking-widest opacity-60 mb-1">Project Budget</p>
                   <div className="font-display text-4xl font-black">₹{job.budget}</div>
-                  <p className="text-xs opacity-70 mt-1">Max bid: ₹100</p>
                 </div>
                 <div className="p-6 space-y-4">
                   {isMyJob && paymentDue && acceptedBid && (
@@ -841,7 +835,6 @@ const JobDetail = () => {
                     <AlertTriangle className="h-4 w-4" /> Bidding Rules
                   </div>
                   <ul className="text-xs text-amber-700 space-y-1 list-disc list-inside">
-                    <li>Max bid: ₹100 only</li>
                     <li>One bid per job</li>
                     <li>Poster must pay within 10 mins of accepting</li>
                     <li>You'll be notified if bid is rejected</li>
