@@ -87,31 +87,78 @@ const Index = () => {
       </section>
 
       {/* Categories - Scrolls over Hero */}
-      <section className="relative z-10 border-t bg-gray-50 py-16 shadow-[0_-20px_50px_rgba(0,0,0,0.05)]">
-        <div className="container mx-auto px-4">
+      <section
+        className="relative z-10 border-t py-16 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.08)]"
+        style={{
+          background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #4f46e5 50%, #7c3aed 75%, #6d28d9 100%)",
+        }}
+      >
+        {/* Animated blobs inside section */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <motion.div
+            animate={{ scale: [1, 1.3, 1], x: [0, 30, 0] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-20 -left-20 w-80 h-80 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(139,92,246,0.4) 0%, transparent 70%)" }}
+          />
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], x: [0, -20, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+            className="absolute -bottom-20 -right-20 w-96 h-96 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%)" }}
+          />
+          <motion.div
+            animate={{ scale: [1, 1.15, 1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(167,139,250,0.15) 0%, transparent 70%)" }}
+          />
+        </div>
+
+        <div className="container relative z-10 mx-auto px-4">
           <div className="mb-10 text-center">
-            <h2 className="font-display text-3xl font-black text-foreground md:text-5xl tracking-tight">
+            <h2 className="font-display text-3xl font-black text-white md:text-5xl tracking-tight">
               Services We Offer
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground">We blend strategic thinking with bold creativity across categories.</p>
+            <p className="mt-4 text-lg text-violet-200">We blend strategic thinking with bold creativity across categories.</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {categories.map((cat, i) => (
               <motion.div
                 key={cat.name}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                whileHover={{ scale: 1.04, y: -6 }}
               >
                 <Link to={`/jobs?category=${encodeURIComponent(cat.name)}`}>
-                  <div className="group flex cursor-pointer flex-col p-8 rounded-3xl border bg-white/80 backdrop-blur-sm transition-all hover:border-primary hover:shadow-2xl hover:-translate-y-2">
-                    <span className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">{cat.icon}</span>
-                    <span className="font-display text-xl font-bold text-foreground mb-2">
+                  <div
+                    className="group flex cursor-pointer flex-col p-7 rounded-3xl transition-all"
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      backdropFilter: "blur(16px)",
+                      WebkitBackdropFilter: "blur(16px)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.15)";
+                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.35)";
+                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 48px rgba(0,0,0,0.3)";
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.08)";
+                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.15)";
+                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.2)";
+                    }}
+                  >
+                    <span className="text-4xl mb-4 transition-all">{cat.icon}</span>
+                    <span className="font-display text-lg font-bold text-white mb-2">
                       {cat.name}
                     </span>
-                    <p className="text-sm text-muted-foreground">Exceptional results in {cat.name.toLowerCase()} for student projects.</p>
+                    <p className="text-sm text-violet-200/80 leading-relaxed">Exceptional results in {cat.name.toLowerCase()} for student projects.</p>
                   </div>
                 </Link>
               </motion.div>
