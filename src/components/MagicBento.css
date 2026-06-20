@@ -37,7 +37,7 @@
 
 .magic-bento-card:hover {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  border-color: rgba(132, 0, 255, 0.2);
+  border-color: rgba(16, 185, 129, 0.2);
 }
 
 /* Border glow effect */
@@ -49,7 +49,7 @@
   padding: 1px;
   background: radial-gradient(
     var(--glow-radius, 200px) circle at var(--glow-x, 50%) var(--glow-y, 50%),
-    rgba(var(--glow-color, 132, 0, 255), calc(var(--glow-intensity, 0) * 0.8)),
+    rgba(var(--glow-color, 16, 185, 129), calc(var(--glow-intensity, 0) * 0.8)),
     transparent 60%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -68,7 +68,7 @@
   border-radius: inherit;
   background: radial-gradient(
     calc(var(--glow-radius, 200px) * 0.8) circle at var(--glow-x, 50%) var(--glow-y, 50%),
-    rgba(var(--glow-color, 132, 0, 255), calc(var(--glow-intensity, 0) * 0.12)),
+    rgba(var(--glow-color, 16, 185, 129), calc(var(--glow-intensity, 0) * 0.12)),
     transparent 60%
   );
   pointer-events: none;
@@ -89,11 +89,11 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(132, 0, 255, 0.8);
-  background: rgba(132, 0, 255, 0.12);
+  color: rgba(16, 185, 129, 0.8);
+  background: rgba(16, 185, 129, 0.12);
   padding: 4px 10px;
   border-radius: 20px;
-  border: 1px solid rgba(132, 0, 255, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .magic-bento-card__content {

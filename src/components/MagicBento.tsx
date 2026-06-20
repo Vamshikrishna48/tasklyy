@@ -6,7 +6,7 @@ import './MagicBento.css';
 
 const DEFAULT_PARTICLE_COUNT = 12;
 const DEFAULT_SPOTLIGHT_RADIUS = 300;
-const DEFAULT_GLOW_COLOR = '132, 0, 255'; // Purple glow matching primary theme
+const DEFAULT_GLOW_COLOR = '16, 185, 129'; // Green glow matching primary theme
 const MOBILE_BREAKPOINT = 768;
 
 export interface BentoCard {
