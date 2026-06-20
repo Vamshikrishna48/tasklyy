@@ -41,11 +41,7 @@ export const getWorkerLevelInfo = async (workerId: string): Promise<LevelInfo> =
       return date.getFullYear() === currentYear && date.getMonth() === currentMonth;
     }).length;
 
-    // Level 4: Legend tier with >= 50 jobs historically
-    if (totalCompleted >= 50) {
-      return { level: 4, payoutPercent: 95, feePercent: 5, totalCompleted, monthlyCompleted };
-    }
-    // Level 3: Elite tier with >= 25 jobs historically (10 jobs Lvl 1 + 15 jobs Lvl 2)
+    // Level 3: Elite tier with >= 25 jobs historically
     if (totalCompleted >= 25) {
       return { level: 3, payoutPercent: 90, feePercent: 10, totalCompleted, monthlyCompleted };
     }

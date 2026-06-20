@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/api";
 
 export const useAdmin = () => {
   const [loading, setLoading] = useState(false);
@@ -237,21 +238,24 @@ export const useAdmin = () => {
   const releaseEscrow = async (jobId: string) => {
     setLoading(true);
     try {
-      const { data: escrow } = await (supabase as any)
-        .from("escrow_transactions")
-        .select("*")
-        .eq("job_id", jobId)
-        .eq("status", "held")
-        .maybeSingle();
-      if (!escrow) { toast.error("Escrow record not found"); return false; }
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Please sign in to proceed.");
 
-      await (supabase as any).from("escrow_transactions").update({ status: "released", released_at: new Date().toISOString() }).eq("id", escrow.id);
-      await (supabase as any).from("jobs").update({ status: "completed" }).eq("id", jobId);
+      const response = await fetch(getApiUrl("/api/release-escrow"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ job_id: jobId })
+      });
 
-      if (escrow.worker_id) {
-        const { data: worker } = await (supabase as any).from("profiles").select("wallet_balance").eq("id", escrow.worker_id).maybeSingle();
-        await (supabase as any).from("profiles").update({ wallet_balance: ((worker as any)?.wallet_balance || 0) + escrow.worker_amount }).eq("id", escrow.worker_id);
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to release escrow on backend");
       }
+
       toast.success("Escrow released successfully ✅");
       return true;
     } catch (e: any) {

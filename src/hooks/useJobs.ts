@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
 import { getWorkerLevelInfo } from "@/utils/levels";
+import { getApiUrl } from "@/lib/api";
 
 export const useJobs = () => {
   const [loading, setLoading] = useState(false);
@@ -213,24 +214,23 @@ export const useJobs = () => {
 
   const releaseEscrow = async (jobId: string, userId: string) => {
     try {
-      const { data: jobData } = await (supabase as any).from('jobs').select('*').eq('id', jobId).limit(1).maybeSingle();
-      if (!jobData || jobData.poster_id !== userId) throw new Error("Unauthorized");
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Please sign in to proceed.");
 
-      await (supabase as any).from('jobs').update({ status: 'completed' }).eq('id', jobId);
-      await (supabase as any).from('escrow_transactions').update({ 
-        status: 'released', 
-        released_at: new Date().toISOString() 
-      }).eq('job_id', jobId);
-      
-      await (supabase as any).from('job_files').update({ is_watermarked: false }).eq('job_id', jobId);
+      const response = await fetch(getApiUrl("/api/release-escrow"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ job_id: jobId })
+      });
 
-      const { data: escrowData } = await (supabase as any).from('escrow_transactions').select('*').eq('job_id', jobId).limit(1).maybeSingle();
-      if (!escrowData) throw new Error("Escrow record missing");
-      
-      const { data: worker } = await (supabase as any).from('profiles').select('wallet_balance').eq('id', jobData.worker_id).limit(1).maybeSingle();
-      await (supabase as any).from('profiles').update({ 
-        wallet_balance: ((worker as any)?.wallet_balance || 0) + escrowData.worker_amount 
-      }).eq('id', jobData.worker_id);
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to release escrow on backend");
+      }
 
       toast.success("Work approved and funds released!");
       return true;

@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Clock, CheckCircle } from "lucide-react";
+import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Briefcase } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -52,12 +52,23 @@ const Navbar = () => {
               Post a Job
             </Button>
           </Link>
+          <Link to="/internships">
+            <Button variant={isActive("/internships") ? "secondary" : "ghost"} size="sm" className="gap-2">
+              <Briefcase className="h-4 w-4" />
+              Internships
+            </Button>
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">
           <Link to="/post-job" className="md:hidden">
             <Button size="icon" variant="ghost">
               <PlusCircle className="h-5 w-5" />
+            </Button>
+          </Link>
+          <Link to="/internships" className="md:hidden">
+            <Button size="icon" variant="ghost">
+              <Briefcase className="h-5 w-5" />
             </Button>
           </Link>
           

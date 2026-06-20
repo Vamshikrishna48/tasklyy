@@ -12,7 +12,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { getWorkerLevelInfo } from "@/utils/levels";
 import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
 import { sendBidNotification, sendBidRejectedNotification, sendPaymentRequiredNotification } from "@/hooks/useNotificationPermission";
 import { useJobs } from "@/hooks/useJobs";
@@ -313,37 +312,11 @@ const JobDetail = () => {
     loadBids();
   };
 
-  const handlePaymentSuccess = async (bid: any) => {
-    try {
-      // Calculate split dynamically based on worker's level!
-      const levelInfo = await getWorkerLevelInfo(bid.bidder_id);
-      const platformFee = Math.round(bid.amount * (levelInfo.feePercent / 100));
-      const workerAmount = bid.amount - platformFee;
-
-      await (supabase as any).from("escrow_transactions").insert({
-        job_id: id!,
-        poster_id: user!.id,
-        worker_id: bid.bidder_id,
-        total_amount: bid.amount,
-        platform_fee: platformFee,
-        worker_amount: workerAmount,
-        status: "held",
-      });
-      await (supabase as any).from("jobs").update({ status: "accepted", instructions_locked: false } as any).eq("id", id!);
-      await (supabase as any).from("admin_ledger").insert({
-        job_id: id!,
-        type: "fee_collected",
-        amount: platformFee,
-        from_user_id: user!.id,
-        note: `Platform fee for: ${job?.title} (Worker Level ${levelInfo.level}, ${levelInfo.feePercent}% fee)`,
-      });
-      toast.success(`Payment confirmed! Job is now in progress.`);
-      setPaymentDue(null);
-      loadJob();
-    } catch (err) {
-      console.error("Error processing payment:", err);
-      toast.error("Payment processed but failed to confirm. Please contact support.");
-    }
+  const handlePaymentSuccess = () => {
+    toast.success(`Payment confirmed! Job is now in progress.`);
+    setPaymentDue(null);
+    loadJob();
+    loadBids();
   };
 
   const handlePayment = async (bid: any) => {
@@ -366,6 +339,8 @@ const JobDetail = () => {
             body: JSON.stringify({
               payment_id: paymentResponse.razorpay_payment_id,
               expected_amount: bid.amount,
+              job_id: id!,
+              bid_id: bid.id,
             }),
           });
           
@@ -373,7 +348,7 @@ const JobDetail = () => {
           if (result && result.success) {
             setProcessingPayment(false);
             toast.dismiss();
-            handlePaymentSuccess(bid);
+            handlePaymentSuccess();
           } else {
             setProcessingPayment(false);
             toast.dismiss();
