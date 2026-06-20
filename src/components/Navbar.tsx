@@ -34,7 +34,7 @@ const Navbar = () => {
             style={{ width: "36px", height: "36px", marginRight: "4px" }}
             className="object-contain"
           />
-          <span className="text-foreground font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "22px", lineHeight: "36px" }}>
+          <span className="text-foreground font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "28px", lineHeight: "36px" }}>
             Tasskly
           </span>
         </Link>
