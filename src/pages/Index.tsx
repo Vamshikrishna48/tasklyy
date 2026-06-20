@@ -90,7 +90,7 @@ const Index = () => {
       <section
         className="relative z-10 border-t py-16 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.05)]"
         style={{
-          background: "linear-gradient(135deg, #ede9fe 0%, #fce7f3 35%, #dbeafe 70%, #d1fae5 100%)",
+          background: "linear-gradient(135deg, #fef3c7 0%, #fed7aa 30%, #fecaca 65%, #fce7f3 100%)",
         }}
       >
         {/* Animated blobs inside section */}
@@ -99,19 +99,19 @@ const Index = () => {
             animate={{ scale: [1, 1.3, 1], x: [0, 30, 0] }}
             transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
             className="absolute -top-20 -left-20 w-80 h-80 rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(167,139,250,0.35) 0%, transparent 70%)" }}
+            style={{ background: "radial-gradient(circle, rgba(251,146,60,0.35) 0%, transparent 70%)" }}
           />
           <motion.div
             animate={{ scale: [1, 1.2, 1], x: [0, -20, 0] }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
             className="absolute -bottom-20 -right-20 w-96 h-96 rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(56,189,248,0.3) 0%, transparent 70%)" }}
+            style={{ background: "radial-gradient(circle, rgba(252,165,165,0.35) 0%, transparent 70%)" }}
           />
           <motion.div
             animate={{ scale: [1, 1.15, 1] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(244,114,182,0.15) 0%, transparent 70%)" }}
+            style={{ background: "radial-gradient(circle, rgba(253,186,116,0.2) 0%, transparent 70%)" }}
           />
         </div>
 
@@ -145,8 +145,8 @@ const Index = () => {
                     }}
                     onMouseEnter={e => {
                       (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.75)";
-                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(139,92,246,0.4)";
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 48px rgba(139,92,246,0.15)";
+                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(251,146,60,0.4)";
+                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 48px rgba(251,146,60,0.15)";
                     }}
                     onMouseLeave={e => {
                       (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.45)";
