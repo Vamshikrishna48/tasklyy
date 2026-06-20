@@ -89,33 +89,6 @@ const Index = () => {
       {/* Categories - Scrolls over Hero */}
       <section className="relative z-10 border-t py-16 overflow-hidden bg-white">
 
-        {/* Large vivid blobs that sit BEHIND the glass cards so blur shows them */}
-        <div className="absolute inset-0 pointer-events-none">
-          <motion.div
-            animate={{ scale: [1, 1.4, 1], x: [0, 40, 0], y: [0, -20, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-10 -left-10 w-72 h-72 rounded-full"
-            style={{ background: "rgba(56,189,248,0.55)", filter: "blur(60px)" }}
-          />
-          <motion.div
-            animate={{ scale: [1, 1.3, 1], x: [0, -30, 0], y: [0, 30, 0] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-            className="absolute top-0 right-0 w-80 h-80 rounded-full"
-            style={{ background: "rgba(16,185,129,0.45)", filter: "blur(70px)" }}
-          />
-          <motion.div
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="absolute bottom-0 left-1/3 w-96 h-64 rounded-full"
-            style={{ background: "rgba(99,102,241,0.35)", filter: "blur(80px)" }}
-          />
-          <motion.div
-            animate={{ scale: [1, 1.25, 1], x: [0, 20, 0] }}
-            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-            className="absolute bottom-10 right-10 w-64 h-64 rounded-full"
-            style={{ background: "rgba(251,191,36,0.4)", filter: "blur(60px)" }}
-          />
-        </div>
 
         <div className="container relative z-10 mx-auto px-4">
           <div className="mb-10 text-center">
@@ -137,25 +110,8 @@ const Index = () => {
               >
                 <Link to={`/jobs?category=${encodeURIComponent(cat.name)}`}>
                   <div
-                    className="group flex cursor-pointer flex-col p-7 rounded-3xl transition-all duration-300"
-                    style={{
-                      background: "rgba(255,255,255,0.25)",
-                      border: "1px solid rgba(255,255,255,0.5)",
-                      backdropFilter: "blur(24px)",
-                      WebkitBackdropFilter: "blur(24px)",
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.45)";
-                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.8)";
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8)";
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.25)";
-                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.5)";
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)";
-                    }}
-                  >
+                    className="group flex cursor-pointer flex-col p-7 rounded-3xl border border-gray-100 bg-white transition-all duration-300 shadow-sm hover:shadow-xl hover:border-primary/20 hover:-translate-y-1">
+
                     <span className="text-4xl mb-4 transition-all">{cat.icon}</span>
                     <span className="font-display text-lg font-bold text-gray-800 mb-2">
                       {cat.name}
