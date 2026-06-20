@@ -88,25 +88,32 @@ const Index = () => {
 
       {/* Categories - Scrolls over Hero */}
       <section className="relative z-10 border-t py-16 overflow-hidden">
-        {/* Animated blobs inside section */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+
+        {/* Large vivid blobs that sit BEHIND the glass cards so blur shows them */}
+        <div className="absolute inset-0 pointer-events-none">
           <motion.div
-            animate={{ scale: [1, 1.3, 1], x: [0, 30, 0] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-20 -left-20 w-80 h-80 rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(56,189,248,0.3) 0%, transparent 70%)" }}
+            animate={{ scale: [1, 1.4, 1], x: [0, 40, 0], y: [0, -20, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-10 -left-10 w-72 h-72 rounded-full"
+            style={{ background: "rgba(56,189,248,0.55)", filter: "blur(60px)" }}
           />
           <motion.div
-            animate={{ scale: [1, 1.2, 1], x: [0, -20, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-            className="absolute -bottom-20 -right-20 w-96 h-96 rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(16,185,129,0.25) 0%, transparent 70%)" }}
+            animate={{ scale: [1, 1.3, 1], x: [0, -30, 0], y: [0, 30, 0] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+            className="absolute top-0 right-0 w-80 h-80 rounded-full"
+            style={{ background: "rgba(16,185,129,0.45)", filter: "blur(70px)" }}
           />
           <motion.div
-            animate={{ scale: [1, 1.15, 1] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(125,211,252,0.2) 0%, transparent 70%)" }}
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            className="absolute bottom-0 left-1/3 w-96 h-64 rounded-full"
+            style={{ background: "rgba(99,102,241,0.35)", filter: "blur(80px)" }}
+          />
+          <motion.div
+            animate={{ scale: [1, 1.25, 1], x: [0, 20, 0] }}
+            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+            className="absolute bottom-10 right-10 w-64 h-64 rounded-full"
+            style={{ background: "rgba(251,191,36,0.4)", filter: "blur(60px)" }}
           />
         </div>
 
@@ -115,7 +122,7 @@ const Index = () => {
             <h2 className="font-display text-3xl font-black text-gray-800 md:text-5xl tracking-tight">
               Services We Offer
             </h2>
-            <p className="mt-4 text-lg text-gray-500">We blend strategic thinking with bold creativity across categories.</p>
+            <p className="mt-4 text-lg text-gray-600">We blend strategic thinking with bold creativity across categories.</p>
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -130,30 +137,30 @@ const Index = () => {
               >
                 <Link to={`/jobs?category=${encodeURIComponent(cat.name)}`}>
                   <div
-                    className="group flex cursor-pointer flex-col p-7 rounded-3xl transition-all"
+                    className="group flex cursor-pointer flex-col p-7 rounded-3xl transition-all duration-300"
                     style={{
-                      background: "rgba(255,255,255,0.45)",
-                      border: "1px solid rgba(255,255,255,0.6)",
-                      backdropFilter: "blur(16px)",
-                      WebkitBackdropFilter: "blur(16px)",
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
+                      background: "rgba(255,255,255,0.25)",
+                      border: "1px solid rgba(255,255,255,0.5)",
+                      backdropFilter: "blur(24px)",
+                      WebkitBackdropFilter: "blur(24px)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
                     }}
                     onMouseEnter={e => {
-                      (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.75)";
-                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(16,185,129,0.4)";
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 16px 48px rgba(16,185,129,0.12)";
+                      (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.45)";
+                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.8)";
+                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8)";
                     }}
                     onMouseLeave={e => {
-                      (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.45)";
-                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.6)";
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.06)";
+                      (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.25)";
+                      (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.5)";
+                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)";
                     }}
                   >
                     <span className="text-4xl mb-4 transition-all">{cat.icon}</span>
                     <span className="font-display text-lg font-bold text-gray-800 mb-2">
                       {cat.name}
                     </span>
-                    <p className="text-sm text-gray-500 leading-relaxed">Exceptional results in {cat.name.toLowerCase()} for student projects.</p>
+                    <p className="text-sm text-gray-600 leading-relaxed">Exceptional results in {cat.name.toLowerCase()} for student projects.</p>
                   </div>
                 </Link>
               </motion.div>
@@ -161,6 +168,7 @@ const Index = () => {
           </div>
         </div>
       </section>
+
 
       {/* FAQ Section (Pulsewave style) */}
       <section className="relative z-10 bg-white py-24 border-t">
