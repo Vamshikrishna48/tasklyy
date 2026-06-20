@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, User, ArrowRight, ArrowLeft, Sparkles, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, ArrowLeft, Sparkles, Eye, EyeOff, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getApiUrl } from "@/lib/api";
@@ -21,6 +21,7 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -162,6 +163,15 @@ const Auth = () => {
       } else if (view === "signup") {
         // 2. Sign Up (with Password + verification OTP)
         if (!displayName.trim()) throw new Error("Please enter your display name");
+        if (!phone.trim()) throw new Error("Please enter your phone number");
+        
+        // Basic phone number validation (10 to 15 digits)
+        const cleanPhone = phone.trim().replace(/[\s-]/g, "");
+        const phoneRegex = /^[+]?[0-9]{10,15}$/;
+        if (!phoneRegex.test(cleanPhone)) {
+          throw new Error("Please enter a valid phone number (10 to 15 digits)");
+        }
+
         if (!agreeTerms) throw new Error("You must agree to the Terms & Conditions and Privacy Policy");
         if (!email.trim() || !password.trim()) throw new Error("Email and password are required");
 
@@ -172,6 +182,7 @@ const Auth = () => {
           options: { 
             data: { 
               full_name: displayName.trim(),
+              phone: cleanPhone,
               otp_verified: false
             } 
           },
@@ -517,6 +528,15 @@ const Auth = () => {
                         <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input id="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
                           placeholder="Your name" className="pl-10" required />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="phone" className="block mb-1.5 text-sm font-medium text-foreground">Phone Number</Label>
+                      <div className="relative mt-1">
+                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+                          placeholder="+91 98765 43210" className="pl-10" required />
                       </div>
                     </div>
 
