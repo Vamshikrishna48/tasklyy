@@ -403,7 +403,7 @@ const Profile = () => {
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Rating</p>
                   <p className="text-sm font-semibold text-foreground">
-                    {levelInfo?.averageRating ? `⭐ ${levelInfo.averageRating} / 5.0` : "⭐ No ratings yet"}
+                    ⭐ No ratings yet
                   </p>
                 </div>
               </div>

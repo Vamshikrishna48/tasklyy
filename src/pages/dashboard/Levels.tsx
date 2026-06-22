@@ -2,7 +2,7 @@ import { useApp } from "@/context/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { TrendingUp, Star, Trophy, Zap, Lock, CheckCircle2, ChevronRight } from "lucide-react";
+import { TrendingUp, Star, CheckCircle2, ChevronRight, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -13,7 +13,6 @@ const TIERS = [
     emoji: "🌱",
     payout: 70,
     fee: 30,
-    color: "blue",
     gradient: "from-blue-500 to-indigo-500",
     lightBg: "bg-blue-50",
     border: "border-blue-200",
@@ -34,7 +33,6 @@ const TIERS = [
     emoji: "⭐️",
     payout: 80,
     fee: 20,
-    color: "amber",
     gradient: "from-amber-500 to-yellow-400",
     lightBg: "bg-amber-50",
     border: "border-amber-200",
@@ -52,43 +50,21 @@ const TIERS = [
   {
     level: 3,
     name: "Elite",
-    emoji: "👑",
+    emoji: "💎",
     payout: 90,
     fee: 10,
-    color: "green",
-    gradient: "from-emerald-500 to-green-400",
-    lightBg: "bg-emerald-50",
-    border: "border-emerald-200",
-    text: "text-emerald-700",
-    badgeBg: "bg-emerald-600",
-    required: 25,
-    nextAt: 50,
-    perks: [
-      "90% payout — only 10% platform fee",
-      "Elite badge & verified checkmark",
-      "Top placement in job search",
-      "Early access to premium jobs",
-    ],
-  },
-  {
-    level: 4,
-    name: "Legend",
-    emoji: "💎",
-    payout: 95,
-    fee: 5,
-    color: "purple",
     gradient: "from-purple-600 to-pink-500",
     lightBg: "bg-purple-50",
     border: "border-purple-200",
     text: "text-purple-700",
     badgeBg: "bg-purple-600",
-    required: 50,
+    required: 25,
     nextAt: null,
     perks: [
-      "95% payout — maximum tier (only 5% fee)",
-      "💎 Legend badge — permanent status",
+      "90% payout — only 10% platform fee",
+      "💎 Elite badge — permanent status",
       "Highest visibility in all searches",
-      "Exclusive Legend-only bonuses",
+      "Exclusive Elite-only bonuses",
     ],
   },
 ];
@@ -123,12 +99,10 @@ const Levels = () => {
             : null;
 
         const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
         const monthlyCompleted = jobsList.filter((j: any) => {
           if (!j.created_at) return false;
           const date = new Date(j.created_at);
-          return date.getFullYear() === currentYear && date.getMonth() === currentMonth;
+          return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
         }).length;
 
         let level = 1;
@@ -137,23 +111,18 @@ const Levels = () => {
         let nextThresholdText = "";
         let progressVal = 0;
 
-        if (totalCompleted >= 50) {
-          level = 4; payoutPercent = 95; feePercent = 5;
-          nextThresholdText = "👑 Max Tier Unlocked! Permanent 95% payout.";
-          progressVal = 100;
-        } else if (totalCompleted >= 25) {
+        if (totalCompleted >= 25) {
           level = 3; payoutPercent = 90; feePercent = 10;
-          const lp = totalCompleted - 25;
-          nextThresholdText = `${25 - lp} more jobs to reach Level 4 (95% payout)`;
-          progressVal = (lp / 25) * 100;
+          nextThresholdText = "💎 Max Tier Reached! You keep 90% of every payment.";
+          progressVal = 100;
         } else if (totalCompleted >= 10) {
           level = 2; payoutPercent = 80; feePercent = 20;
           const lp = totalCompleted - 10;
-          nextThresholdText = `${15 - lp} more jobs to reach Level 3 (90% payout)`;
+          nextThresholdText = `${15 - lp} more jobs to reach Level 3 — Elite (90% payout)`;
           progressVal = (lp / 15) * 100;
         } else {
           level = 1; payoutPercent = 70; feePercent = 30;
-          nextThresholdText = `${10 - totalCompleted} more jobs to reach Level 2 (80% payout)`;
+          nextThresholdText = `${10 - totalCompleted} more jobs to reach Level 2 — Expert (80% payout)`;
           progressVal = (totalCompleted / 10) * 100;
         }
 
@@ -179,7 +148,7 @@ const Levels = () => {
   if (!profile || profile.role !== "worker") {
     return (
       <div className="p-12 text-center">
-        <Trophy className="mx-auto h-12 w-12 text-muted-foreground opacity-20 mb-4" />
+        <TrendingUp className="mx-auto h-12 w-12 text-muted-foreground opacity-20 mb-4" />
         <h3 className="text-lg font-semibold text-foreground">Levels are for Workers</h3>
         <p className="text-muted-foreground mt-1">Only worker accounts have tier progression.</p>
       </div>
@@ -202,9 +171,7 @@ const Levels = () => {
 
       {/* Current Status Card */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-        <div
-          className={`rounded-2xl p-6 bg-gradient-to-br ${currentTier.gradient} text-white shadow-xl`}
-        >
+        <div className={`rounded-2xl p-6 bg-gradient-to-br ${currentTier.gradient} text-white shadow-xl`}>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Your Current Tier</p>
@@ -225,7 +192,7 @@ const Levels = () => {
           </div>
 
           {/* Progress bar */}
-          {levelInfo?.level < 4 && (
+          {levelInfo?.level < 3 && (
             <div className="mt-5">
               <div className="flex justify-between text-xs text-white/70 font-semibold mb-1.5">
                 <span>{levelInfo?.nextThresholdText}</span>
@@ -242,10 +209,10 @@ const Levels = () => {
             </div>
           )}
 
-          {levelInfo?.level === 4 && (
+          {levelInfo?.level === 3 && (
             <div className="mt-4 flex items-center gap-2 bg-white/20 rounded-xl px-4 py-2">
               <CheckCircle2 className="h-5 w-5 text-white" />
-              <span className="text-white font-bold text-sm">Maximum Tier Reached — Permanent 95% Payout Active! 🎉</span>
+              <span className="text-white font-bold text-sm">Maximum Tier Reached — Permanent 90% Payout Active! 🎉</span>
             </div>
           )}
 
@@ -258,84 +225,64 @@ const Levels = () => {
         </div>
       </motion.div>
 
-      {/* All Tiers */}
+      {/* All 3 Tiers */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <h2 className="font-display font-bold text-lg text-foreground mb-4 flex items-center gap-2">
-          <Zap className="h-5 w-5 text-primary" />
-          All Tier Levels
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h2 className="font-display font-bold text-lg text-foreground mb-4">All Tier Levels</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {TIERS.map((tier) => {
             const isUnlocked = (levelInfo?.totalCompleted || 0) >= tier.required;
             const isCurrent = tier.level === levelInfo?.level;
             const isActive = activeTab === tier.level;
 
             return (
-              <motion.div
-                key={tier.level}
-                whileHover={{ scale: 1.01 }}
-                transition={{ duration: 0.15 }}
-              >
+              <motion.div key={tier.level} whileHover={{ scale: 1.02 }} transition={{ duration: 0.15 }}>
                 <Card
                   onClick={() => setActiveTab(isActive ? null : tier.level)}
-                  className={`cursor-pointer transition-all border-2 ${
+                  className={`cursor-pointer transition-all border-2 h-full ${
                     isCurrent
-                      ? `${tier.border} shadow-lg ring-2 ring-offset-1 ring-${tier.color}-300`
+                      ? `${tier.border} shadow-lg`
                       : isActive
                       ? `${tier.border}`
                       : "border-border hover:border-muted-foreground/30"
                   }`}
                 >
                   <CardContent className="p-5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${
-                            isUnlocked ? `bg-gradient-to-br ${tier.gradient}` : "bg-muted"
-                          }`}
-                        >
-                          {isUnlocked ? tier.emoji : <Lock className="h-4 w-4 text-muted-foreground" />}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-sm text-foreground">
-                              Level {tier.level} — {tier.name}
-                            </p>
-                            {isCurrent && (
-                              <Badge className={`${tier.badgeBg} text-white text-[9px] px-1.5 py-0 font-black uppercase tracking-wider`}>
-                                Current
-                              </Badge>
-                            )}
-                          </div>
-                          <p className={`text-xs font-semibold mt-0.5 ${isUnlocked ? tier.text : "text-muted-foreground"}`}>
-                            {tier.payout}% payout · {tier.fee}% fee
-                          </p>
-                        </div>
+                    <div className="flex items-start justify-between mb-3">
+                      <div
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+                          isUnlocked ? `bg-gradient-to-br ${tier.gradient}` : "bg-muted"
+                        }`}
+                      >
+                        {isUnlocked ? tier.emoji : <Lock className="h-5 w-5 text-muted-foreground" />}
                       </div>
-                      <div className="text-right">
-                        {isUnlocked ? (
-                          <CheckCircle2 className={`h-5 w-5 ${tier.text}`} />
-                        ) : (
-                          <div className="text-right">
-                            <p className="text-[10px] text-muted-foreground font-semibold">Unlocks at</p>
-                            <p className="text-xs font-black text-foreground">{tier.required} jobs</p>
-                          </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {isCurrent && (
+                          <Badge className={`${tier.badgeBg} text-white text-[9px] px-1.5 py-0 font-black uppercase`}>
+                            Current
+                          </Badge>
                         )}
-                        <ChevronRight className={`h-4 w-4 text-muted-foreground mt-1 ml-auto transition-transform ${isActive ? "rotate-90" : ""}`} />
+                        <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isActive ? "rotate-90" : ""}`} />
                       </div>
                     </div>
 
-                    {/* Expanded perks */}
+                    <p className="font-black text-base text-foreground">Level {tier.level} — {tier.name}</p>
+                    <p className={`text-sm font-bold mt-0.5 ${isUnlocked ? tier.text : "text-muted-foreground"}`}>
+                      {tier.payout}% payout · {tier.fee}% fee
+                    </p>
+
+                    {!isUnlocked && (
+                      <p className="text-[11px] text-muted-foreground mt-2 font-semibold">
+                        🔒 Unlocks at {tier.required} total jobs
+                      </p>
+                    )}
+
                     {isActive && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mt-4 border-t pt-4 space-y-1.5"
+                        className="mt-4 border-t pt-3 space-y-1.5"
                       >
-                        <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-2">
-                          Tier Perks
-                        </p>
+                        <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-2">Perks</p>
                         {tier.perks.map((perk, i) => (
                           <div key={i} className="flex items-start gap-2">
                             <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${tier.text}`} />
@@ -345,7 +292,7 @@ const Levels = () => {
                         {!isUnlocked && (
                           <div className={`mt-3 p-2.5 rounded-lg ${tier.lightBg} ${tier.border} border`}>
                             <p className={`text-xs font-bold ${tier.text}`}>
-                              🔒 Complete {tier.required - (levelInfo?.totalCompleted || 0)} more jobs to unlock this tier
+                              Complete {tier.required - (levelInfo?.totalCompleted || 0)} more jobs to unlock
                             </p>
                           </div>
                         )}
@@ -359,25 +306,31 @@ const Levels = () => {
         </div>
       </motion.div>
 
-      {/* How it works */}
+      {/* Level Thresholds Summary */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
         <Card className="border-none shadow-sm bg-gradient-to-br from-slate-50 to-slate-100/50">
           <CardContent className="p-5">
-            <p className="font-bold text-sm text-foreground mb-3">📖 How Tier Progression Works</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-muted-foreground">
-              <div>
-                <p className="font-bold text-foreground mb-1">Cumulative Jobs</p>
-                <p>Your tier is based on total historical jobs completed — not reset monthly. Every job counts.</p>
+            <p className="font-bold text-sm text-foreground mb-4">📊 Tier Thresholds</p>
+            <div className="grid grid-cols-3 gap-3 text-center text-xs">
+              <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
+                <p className="text-2xl mb-1">🌱</p>
+                <p className="font-black text-blue-700">Level 1 — Starter</p>
+                <p className="text-blue-600 font-semibold mt-1">0 jobs · 70% payout</p>
               </div>
-              <div>
-                <p className="font-bold text-foreground mb-1">Automatic Upgrade</p>
-                <p>When you cross the threshold for the next tier, your payout rate increases automatically on the next job.</p>
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-100">
+                <p className="text-2xl mb-1">⭐️</p>
+                <p className="font-black text-amber-700">Level 2 — Expert</p>
+                <p className="text-amber-600 font-semibold mt-1">10+ jobs · 80% payout</p>
               </div>
-              <div>
-                <p className="font-bold text-foreground mb-1">Permanent Lock-in</p>
-                <p>Tiers never go down. Once you hit Level 4 (Legend), you stay there forever with 95% payouts.</p>
+              <div className="p-3 rounded-xl bg-purple-50 border border-purple-100">
+                <p className="text-2xl mb-1">💎</p>
+                <p className="font-black text-purple-700">Level 3 — Elite</p>
+                <p className="text-purple-600 font-semibold mt-1">25+ jobs · 90% payout</p>
               </div>
             </div>
+            <p className="text-xs text-muted-foreground mt-4 text-center">
+              Tiers upgrade automatically and are permanent — they never reset or go down.
+            </p>
           </CardContent>
         </Card>
       </motion.div>
