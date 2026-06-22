@@ -65,6 +65,14 @@ const Profile = () => {
   const [showBankSuggestions, setShowBankSuggestions] = useState(false);
   const [branchPlace, setBranchPlace] = useState("");
   const [branchLoading, setBranchLoading] = useState(false);
+  const [branchInfo, setBranchInfo] = useState<{
+    branchName?: string;
+    city?: string;
+    state?: string;
+    address?: string;
+    contact?: string;
+    bankName?: string;
+  } | null>(null);
 
   const lookupIfsc = async (ifsc: string) => {
     const cleanIfsc = ifsc.trim().toUpperCase();
@@ -76,17 +84,28 @@ const Profile = () => {
           const data = await res.json();
           const place = `${data.BRANCH || ""}, ${data.CENTRE || data.CITY || ""}, ${data.STATE || ""}`.trim().replace(/^,\s*|,\s*$/, "");
           setBranchPlace(place);
+          setBranchInfo({
+            branchName: data.BRANCH,
+            city: data.CENTRE || data.CITY,
+            state: data.STATE,
+            address: data.ADDRESS,
+            contact: data.CONTACT && data.CONTACT !== "N/A" && data.CONTACT !== "0" ? data.CONTACT : undefined,
+            bankName: data.BANK
+          });
         } else {
           setBranchPlace("");
+          setBranchInfo(null);
         }
       } catch (e) {
         console.error("IFSC lookup failed:", e);
         setBranchPlace("");
+        setBranchInfo(null);
       } finally {
         setBranchLoading(false);
       }
     } else {
       setBranchPlace("");
+      setBranchInfo(null);
     }
   };
 
@@ -775,15 +794,6 @@ const Profile = () => {
                     Locating bank branch...
                   </div>
                 )}
-                {!branchLoading && branchPlace && (
-                  <div className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl flex items-start gap-2.5">
-                    <MapPin className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Detected Branch Location</p>
-                      <p className="text-xs text-slate-700 font-semibold">{branchPlace}</p>
-                    </div>
-                  </div>
-                )}
 
                 <div className="flex items-center gap-2 justify-end pt-2">
                   <Button 
@@ -839,15 +849,6 @@ const Profile = () => {
                       <p className="text-xs text-muted-foreground font-medium">IFSC Code</p>
                       <p className="text-sm font-semibold text-foreground font-mono">{(profile as any).bank_ifsc_code}</p>
                     </div>
-                    {branchPlace && (
-                      <div className="col-span-1 md:col-span-2 p-4 rounded-lg bg-emerald-50/40 border border-emerald-100 flex items-start gap-2.5">
-                        <MapPin className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-xs text-muted-foreground font-medium">Branch Location</p>
-                          <p className="text-sm font-semibold text-slate-800">{branchPlace}</p>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div className="text-center py-6 border border-dashed rounded-xl bg-muted/20">
@@ -871,6 +872,66 @@ const Profile = () => {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Verified Bank Branch Information Card (Separate Section) */}
+      {branchInfo && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <Card className="shadow-card mt-6">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <MapPin className="h-6 w-6 text-primary" />
+                <div>
+                  <h3 className="font-display text-lg font-bold text-foreground">Verified Bank Branch Information</h3>
+                  <p className="text-xs text-muted-foreground">Automatically resolved from your IFSC code</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {branchInfo.bankName && (
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground font-medium">Official Bank Name</p>
+                    <p className="text-sm font-semibold text-foreground">{branchInfo.bankName}</p>
+                  </div>
+                )}
+                {branchInfo.branchName && (
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground font-medium">Branch Name</p>
+                    <p className="text-sm font-semibold text-foreground">{branchInfo.branchName}</p>
+                  </div>
+                )}
+                {branchInfo.city && (
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground font-medium">City / Centre</p>
+                    <p className="text-sm font-semibold text-foreground">{branchInfo.city}</p>
+                  </div>
+                )}
+                {branchInfo.state && (
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground font-medium">State</p>
+                    <p className="text-sm font-semibold text-foreground">{branchInfo.state}</p>
+                  </div>
+                )}
+                {branchInfo.contact && (
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground font-medium">Branch Contact</p>
+                    <p className="text-sm font-semibold text-foreground">{branchInfo.contact}</p>
+                  </div>
+                )}
+                {branchInfo.address && (
+                  <div className="col-span-1 md:col-span-2 p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground font-medium">Full Branch Address</p>
+                    <p className="text-sm font-semibold text-foreground leading-relaxed">{branchInfo.address}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
     </div>
   );
 };
