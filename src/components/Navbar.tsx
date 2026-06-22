@@ -37,7 +37,7 @@ const Navbar = () => {
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <Link to="/" className="flex items-center" style={{ gap: 0 }}>
           <img
-            src="/favicon-cropped.png"
+            src="/taskly-logo.png"
             alt="Tasskly logo"
             style={{ width: "36px", height: "36px", marginRight: "8px" }}
             className="object-contain"
@@ -126,7 +126,7 @@ const Navbar = () => {
               <SheetHeader className="mb-4">
                 <SheetTitle className="text-left font-bold text-xl flex items-center gap-2 border-b pb-3">
                   <img
-                    src="/favicon-cropped.png"
+                    src="/taskly-logo.png"
                     alt="Tasskly logo"
                     className="w-6 h-6 object-contain"
                   />
