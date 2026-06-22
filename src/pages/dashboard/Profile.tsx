@@ -755,7 +755,8 @@ const Profile = () => {
                             key={idx}
                             type="button"
                             className="w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-slate-50 transition-colors text-slate-700"
-                            onClick={() => {
+                            onMouseDown={(e) => {
+                              e.preventDefault();
                               setBankNameValue(bank);
                               setBankSuggestions([]);
                               setShowBankSuggestions(false);
