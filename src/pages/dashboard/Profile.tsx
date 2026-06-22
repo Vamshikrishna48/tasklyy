@@ -163,8 +163,9 @@ const Profile = () => {
   };
 
   const handleSaveBank = async () => {
-    if (!bankHolderValue.trim()) {
-      toast.error("Please enter Account Holder Name");
+    const holderName = (profile?.full_name || "").trim();
+    if (!holderName) {
+      toast.error("Please ensure your profile full name is set before verifying bank details.");
       return;
     }
     if (!bankNameValue.trim()) {
@@ -203,7 +204,7 @@ const Profile = () => {
           bank_name: bankNameValue.trim(),
           bank_account_number: bankAccNumValue.trim(),
           bank_ifsc_code: bankIfscValue.trim().toUpperCase(),
-          bank_account_holder_name: bankHolderValue.trim()
+          bank_account_holder_name: holderName
         })
       });
 
@@ -734,12 +735,11 @@ const Profile = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground">Account Holder Name</label>
+                    <label className="text-xs font-semibold text-muted-foreground font-medium">Account Holder Name (Auto-detected)</label>
                     <Input 
-                      value={bankHolderValue} 
-                      onChange={(e) => setBankHolderValue(e.target.value)} 
-                      placeholder="" 
-                      className="text-sm"
+                      value={profile?.full_name || ""} 
+                      disabled
+                      className="text-sm bg-slate-50 cursor-not-allowed opacity-75 font-semibold text-slate-700"
                     />
                   </div>
                   <div className="space-y-1.5 relative" ref={bankInputRef}>

@@ -110,7 +110,7 @@ export default async function handler(req, res) {
 
     if (updateErr) {
       console.error("Failed to save verified bank details:", updateErr);
-      return res.status(500).json({ error: 'Failed to save bank verification status in database.' });
+      return res.status(500).json({ error: 'Failed to save bank verification status in database: ' + updateErr.message });
     }
 
     return res.status(200).json({
