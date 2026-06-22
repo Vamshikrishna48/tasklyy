@@ -223,92 +223,6 @@ const Profile = () => {
     }
   };
 
-  const [levelInfo, setLevelInfo] = useState<any>(null);
-  const [levelLoading, setLevelLoading] = useState(true);
-  const [viewLevelDetails, setViewLevelDetails] = useState<number>(1);
-
-  useEffect(() => {
-    if (!profile?.id) return;
-    const fetchLevel = async () => {
-      setLevelLoading(true);
-      try {
-        const { data } = await supabase
-          .from("jobs")
-          .select("created_at, rating")
-          .eq("worker_id", profile.id)
-          .eq("status", "completed");
-        
-        const jobsList = data || [];
-        const totalCompleted = jobsList.length;
-        
-        const ratedJobs = jobsList.filter((j: any) => j.rating !== null && j.rating !== undefined);
-        const averageRating = ratedJobs.length > 0
-          ? (ratedJobs.reduce((acc: number, curr: any) => acc + Number(curr.rating), 0) / ratedJobs.length).toFixed(1)
-          : null;
-
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-
-        const monthlyCompleted = jobsList.filter((j: any) => {
-          if (!j.created_at) return false;
-          const date = new Date(j.created_at);
-          return date.getFullYear() === currentYear && date.getMonth() === currentMonth;
-        }).length;
-
-        let level = 1;
-        let payoutPercent = 70;
-        let feePercent = 30;
-        let nextThresholdText = "";
-        let progressVal = 0;
-
-        if (totalCompleted >= 50) {
-          level = 4;
-          payoutPercent = 95;
-          feePercent = 5;
-          nextThresholdText = "👑 Max Tier Unlocked! Permanent 95% payout.";
-          progressVal = 100;
-        } else if (totalCompleted >= 25) {
-          level = 3;
-          payoutPercent = 90;
-          feePercent = 10;
-          const level3Completed = totalCompleted - 25;
-          nextThresholdText = `Complete ${25 - level3Completed} more jobs in Level 3 (Level 3 progress: ${level3Completed}/25) to reach Level 4 (95% payout)`;
-          progressVal = (level3Completed / 25) * 100;
-        } else if (totalCompleted >= 10) {
-          level = 2;
-          payoutPercent = 80;
-          feePercent = 20;
-          const level2Completed = totalCompleted - 10;
-          nextThresholdText = `Complete ${15 - level2Completed} more jobs in Level 2 (Level 2 progress: ${level2Completed}/15) to reach Level 3 (90% payout)`;
-          progressVal = (level2Completed / 15) * 100;
-        } else {
-          level = 1;
-          payoutPercent = 70;
-          feePercent = 30;
-          nextThresholdText = `Complete ${10 - totalCompleted} more jobs to reach Level 2 (80% payout) — Progress: ${totalCompleted}/10`;
-          progressVal = (totalCompleted / 10) * 100;
-        }
-
-        setLevelInfo({
-          level,
-          payoutPercent,
-          feePercent,
-          totalCompleted,
-          monthlyCompleted,
-          nextThresholdText,
-          progressVal,
-          averageRating
-        });
-      } catch (err) {
-        console.error("Error loading level stats:", err);
-      } finally {
-        setLevelLoading(false);
-      }
-    };
-
-    fetchLevel();
-  }, [profile?.id]);
 
   const handleSaveUpi = async () => {
     if (!upiValue.trim()) {
@@ -379,188 +293,28 @@ const Profile = () => {
         </motion.div>
       )}
 
-      {/* Worker Level / Tier Card */}
-      {profile.role === "worker" && !levelLoading && levelInfo && (
+
+      {/* My Level Teaser — links to dedicated Levels page */}
+      {profile.role === "worker" && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
         >
-          <Card className="overflow-hidden border-none shadow-xl bg-gradient-to-r from-indigo-50/50 via-purple-50/50 to-pink-50/50">
-            <CardContent className="p-6 space-y-4">
-              <div className="flex justify-between items-start gap-4 flex-wrap">
+          <a href="/dashboard/levels" className="block group">
+            <div className="rounded-2xl p-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.01]">
+              <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                    Worker Progression
-                  </span>
-                  <h3 className="font-display font-black text-2xl text-slate-800 mt-1.5 flex items-center gap-2">
-                    Level {levelInfo.level} Tier
-                    <span className="text-sm font-normal text-slate-500">
-                      ({levelInfo.payoutPercent}% Payment Payout)
-                    </span>
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Your platform fee is currently <span className="font-bold text-primary">{levelInfo.feePercent}%</span>.
-                  </p>
+                  <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">Worker Progression</p>
+                  <p className="text-xl font-black">🏆 View My Level & Tier Benefits</p>
+                  <p className="text-white/80 text-xs mt-1 font-medium">Check your payout tier, progress, and unlock higher earnings</p>
                 </div>
-                <Badge className={`text-xs px-3 py-1 font-black uppercase tracking-wider border-none
-                  ${levelInfo.level === 4 ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white animate-pulse' :
-                    levelInfo.level === 3 ? 'bg-green-600 text-white' :
-                    levelInfo.level === 2 ? 'bg-amber-500 text-white' : 'bg-primary text-white'}`}>
-                  {levelInfo.level === 4 ? "💎 TIER 4 (LEGEND)" : levelInfo.level === 3 ? "👑 TIER 3 (ELITE)" : levelInfo.level === 2 ? "⭐️ TIER 2 (EXPERT)" : "🌱 TIER 1 (START)"}
-                </Badge>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="space-y-1.5 pt-2">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-600">
-                  <span>{levelInfo.nextThresholdText}</span>
-                  <span>{Math.round(levelInfo.progressVal)}%</span>
-                </div>
-                <div className="h-2 w-full bg-slate-200/60 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full bg-gradient-to-r transition-all duration-500
-                      ${levelInfo.level === 4 ? 'from-purple-600 to-pink-500' :
-                        levelInfo.level === 3 ? 'from-green-500 to-emerald-400' :
-                        levelInfo.level === 2 ? 'from-amber-500 to-yellow-400' :
-                        'from-violet-500 to-indigo-400'}`}
-                    style={{ width: `${levelInfo.progressVal}%` }}
-                  />
+                <div className="text-3xl opacity-80 group-hover:translate-x-1 transition-transform">
+                  →
                 </div>
               </div>
-
-              {/* Statistics Grid */}
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="p-3 bg-white/70 backdrop-blur-sm border rounded-xl">
-                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-wide">Jobs Completed (Month)</p>
-                  <p className="text-lg font-black text-slate-800">{levelInfo.monthlyCompleted} jobs</p>
-                </div>
-                <div className="p-3 bg-white/70 backdrop-blur-sm border rounded-xl">
-                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-wide">Total Historical Jobs</p>
-                  <p className="text-lg font-black text-slate-800">{levelInfo.totalCompleted} jobs</p>
-                </div>
-              </div>
-
-              {/* Level Details Tabs */}
-              <div className="border-t pt-4">
-                <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Explore Tier Benefits & Options:</p>
-                <div className="grid grid-cols-4 gap-1.5">
-                  <button
-                    onClick={() => setViewLevelDetails(1)}
-                    className={`py-2 px-1 text-center text-[10px] sm:text-xs font-bold rounded-lg border transition-all ${
-                      viewLevelDetails === 1
-                        ? "bg-blue-50 text-blue-700 border-blue-200 shadow-sm"
-                        : "bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    Lvl 1 (70%)
-                  </button>
-                  <button
-                    onClick={() => setViewLevelDetails(2)}
-                    className={`py-2 px-1 text-center text-[10px] sm:text-xs font-bold rounded-lg border transition-all ${
-                      viewLevelDetails === 2
-                        ? "bg-amber-50 text-amber-700 border-amber-200 shadow-sm"
-                        : "bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    Lvl 2 (80%)
-                  </button>
-                  <button
-                    onClick={() => setViewLevelDetails(3)}
-                    className={`py-2 px-1 text-center text-[10px] sm:text-xs font-bold rounded-lg border transition-all ${
-                      viewLevelDetails === 3
-                        ? "bg-green-50 text-green-700 border-green-200 shadow-sm"
-                        : "bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    Lvl 3 (90%)
-                  </button>
-                  <button
-                    onClick={() => setViewLevelDetails(4)}
-                    className={`py-2 px-1 text-center text-[10px] sm:text-xs font-bold rounded-lg border transition-all ${
-                      viewLevelDetails === 4
-                        ? "bg-purple-50 text-purple-700 border-purple-200 shadow-sm"
-                        : "bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    Lvl 4 (95%)
-                  </button>
-                </div>
-
-                {/* Tab content */}
-                <div className="mt-4 p-4 rounded-xl border bg-white/50 backdrop-blur-sm text-left">
-                  {viewLevelDetails === 1 && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-sm text-slate-800">Tier 1: Starter</span>
-                        <Badge className="bg-blue-600 text-white">70% Payout</Badge>
-                      </div>
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        Default starting tier for all registered workers. Payout starts at <strong>70%</strong>. Once you complete <strong>10 assignments historically</strong>, you enter Level 2 and your payout automatically increases to 80%!
-                      </p>
-                      <div className="text-[11px] font-bold text-slate-500 pt-1 flex items-center justify-between">
-                        <span>Total Jobs Completed: {levelInfo.totalCompleted}/10</span>
-                        <span className={levelInfo.totalCompleted >= 10 ? "text-green-600 font-extrabold" : "text-blue-600"}>
-                          {levelInfo.totalCompleted >= 10 ? "Level 2 Reached! 🎉" : `${10 - levelInfo.totalCompleted} jobs remaining to reach Level 2`}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  {viewLevelDetails === 2 && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-sm text-slate-800">Tier 2: Expert</span>
-                        <Badge className="bg-amber-500 text-white">80% Payout</Badge>
-                      </div>
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        Unlock <strong>80% payout</strong> (only 20% platform fee) by completing 10 jobs historically. Once you are in Level 2, you must complete <strong>15 assignments</strong> (progressing from 0 to 15 within this tier, reaching a total of 25 completed jobs) to enter Level 3.
-                      </p>
-                      <div className="text-[11px] font-bold text-slate-500 pt-1 flex items-center justify-between">
-                        <span>Level 2 Progress: {Math.max(0, Math.min(15, levelInfo.totalCompleted - 10))}/15</span>
-                        <span className={levelInfo.totalCompleted >= 25 ? "text-green-600 font-extrabold" : "text-amber-600"}>
-                          {levelInfo.totalCompleted >= 25 ? "Level 3 Reached! 🚀" : `${15 - Math.max(0, levelInfo.totalCompleted - 10)} jobs remaining for Level 3`}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  {viewLevelDetails === 3 && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-sm text-slate-800">Tier 3: Elite</span>
-                        <Badge className="bg-green-600 text-white">90% Payout</Badge>
-                      </div>
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        Get <strong>90% payout</strong> (only 10% platform fee) by completing 25 assignments historically (10 jobs from Level 1 + 15 jobs from Level 2). In Level 3, you must complete <strong>25 assignments</strong> (progressing from 0 to 25 within this tier, reaching a total of 50 completed jobs) to unlock the ultimate Level 4.
-                      </p>
-                      <div className="text-[11px] font-bold text-slate-500 pt-1 flex items-center justify-between">
-                        <span>Level 3 Progress: {Math.max(0, Math.min(25, levelInfo.totalCompleted - 25))}/25</span>
-                        <span className={levelInfo.totalCompleted >= 50 ? "text-green-600 font-extrabold" : "text-green-600"}>
-                          {levelInfo.totalCompleted >= 50 ? "Level 4 Reached! 💎" : `${25 - Math.max(0, levelInfo.totalCompleted - 25)} jobs remaining for Level 4`}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  {viewLevelDetails === 4 && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-sm text-slate-800">Tier 4: Legend</span>
-                        <Badge className="bg-purple-600 text-white">95% Payout</Badge>
-                      </div>
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        The ultimate <strong>95% payout</strong> tier (only 5% platform fee) unlocked after completing <strong>50 assignments historically</strong> (10 jobs from Level 1 + 15 jobs from Level 2 + 25 jobs from Level 3). You are permanently locked at this elite master tier!
-                      </p>
-                      <div className="text-[11px] font-bold text-slate-500 pt-1 flex items-center justify-between">
-                        <span>Historical Total Jobs: {levelInfo.totalCompleted}/50</span>
-                        <span className={levelInfo.totalCompleted >= 50 ? "text-purple-600 font-extrabold animate-pulse" : "text-purple-600"}>
-                          {levelInfo.totalCompleted >= 50 ? "Legendary Payout Active! 💎" : `${50 - levelInfo.totalCompleted} jobs remaining for Legend Lock`}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </a>
         </motion.div>
       )}
 
@@ -733,14 +487,17 @@ const Profile = () => {
 
             {editingBank ? (
               <div className="space-y-4">
-                {/* Row 1: Account Holder (auto-detected) */}
+                {/* Row 1: Account Holder (auto-detected from bank after verification) */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground font-medium">Account Holder Name <span className="text-green-600">(Auto-detected from your profile)</span></label>
-                  <Input 
-                    value={profile?.full_name || ""} 
-                    disabled
-                    className="text-sm bg-green-50 border-green-200 cursor-not-allowed font-semibold text-green-800"
-                  />
+                  <label className="text-xs font-semibold text-muted-foreground font-medium">
+                    Account Holder Name
+                    <span className="text-emerald-600 font-bold ml-1">(Auto-detected after bank verification)</span>
+                  </label>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <p className="text-sm font-bold text-emerald-800">{profile?.full_name || "—"}</p>
+                    <span className="text-[10px] text-emerald-600 ml-auto">From your profile · verified by backend</span>
+                  </div>
                 </div>
 
                 {/* Row 2: Bank Name with autocomplete — full width to avoid overflow clipping */}

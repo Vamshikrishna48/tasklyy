@@ -13,6 +13,7 @@ import {
   UserCircle,
   Upload,
   Headphones,
+  TrendingUp,
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,6 +37,7 @@ const baseMenuItems = [
   { title: "Submitted Work", url: "/dashboard/submitted", icon: Upload },
   { title: "Portfolio", url: "/dashboard/portfolio", icon: FolderOutput },
   { title: "Earnings", url: "/dashboard/earnings", icon: DollarSign },
+  { title: "My Level", url: "/dashboard/levels", icon: TrendingUp },
   { title: "Your Information", url: "/dashboard/profile", icon: UserCircle },
   { title: "Customer Service", url: "/dashboard/support", icon: Headphones },
 ];
