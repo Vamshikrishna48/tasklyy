@@ -24,8 +24,8 @@ export default async function handler(req, res) {
 
   const { payment_id, expected_amount, job_id, bid_id } = req.body;
 
-  if (!payment_id || !expected_amount || !job_id || !bid_id) {
-    return res.status(400).json({ error: 'Missing required parameters (payment_id, expected_amount, job_id, bid_id)' });
+  if (!payment_id || !expected_amount || !job_id) {
+    return res.status(400).json({ error: 'Missing required parameters (payment_id, expected_amount, job_id)' });
   }
 
   // Load Razorpay credentials
@@ -36,31 +36,36 @@ export default async function handler(req, res) {
   let supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  // Fallback to local .env parsing for local development
+  // Fallback to local .env/.env.local parsing for local development
   if (!key_id || !key_secret || !supabaseUrl || !supabaseServiceKey) {
     try {
-      const envPath = path.join(process.cwd(), '.env');
-      if (fs.existsSync(envPath)) {
-        const envContent = fs.readFileSync(envPath, 'utf8');
-        if (!key_id) {
-          const matchKey = envContent.match(/VITE_RAZORPAY_KEY_ID\s*=\s*(["']?)(.*?)\1(\s|$)/);
-          if (matchKey && matchKey[2]) key_id = matchKey[2].trim();
-        }
-        if (!key_secret) {
-          const matchSecret = envContent.match(/(VITE_)?RAZORPAY_KEY_SECRET\s*=\s*(["']?)(.*?)\1(\s|$)/);
-          if (matchSecret && matchSecret[3]) key_secret = matchSecret[3].trim();
-        }
-        if (!supabaseUrl) {
-          const matchUrl = envContent.match(/VITE_SUPABASE_URL\s*=\s*(["']?)(.*?)\1(\s|$)/);
-          if (matchUrl && matchUrl[2]) supabaseUrl = matchUrl[2].trim();
-        }
-        if (!supabaseServiceKey) {
-          const matchServKey = envContent.match(/SUPABASE_SERVICE_ROLE_KEY\s*=\s*(["']?)(.*?)\1(\s|$)/);
-          if (matchServKey && matchServKey[2]) supabaseServiceKey = matchServKey[2].trim();
+      const paths = [
+        path.join(process.cwd(), '.env.local'),
+        path.join(process.cwd(), '.env')
+      ];
+      for (const envPath of paths) {
+        if (fs.existsSync(envPath)) {
+          const envContent = fs.readFileSync(envPath, 'utf8');
+          if (!key_id) {
+            const matchKey = envContent.match(/VITE_RAZORPAY_KEY_ID\s*=\s*(["']?)(.*?)\1(\s|$)/);
+            if (matchKey && matchKey[2]) key_id = matchKey[2].trim();
+          }
+          if (!key_secret) {
+            const matchSecret = envContent.match(/(VITE_)?RAZORPAY_KEY_SECRET\s*=\s*(["']?)(.*?)\1(\s|$)/);
+            if (matchSecret && matchSecret[3]) key_secret = matchSecret[3].trim();
+          }
+          if (!supabaseUrl) {
+            const matchUrl = envContent.match(/VITE_SUPABASE_URL\s*=\s*(["']?)(.*?)\1(\s|$)/);
+            if (matchUrl && matchUrl[2]) supabaseUrl = matchUrl[2].trim();
+          }
+          if (!supabaseServiceKey) {
+            const matchServKey = envContent.match(/SUPABASE_SERVICE_ROLE_KEY\s*=\s*(["']?)(.*?)\1(\s|$)/);
+            if (matchServKey && matchServKey[2]) supabaseServiceKey = matchServKey[2].trim();
+          }
         }
       }
     } catch (err) {
-      console.error("Failed to parse .env file dynamically:", err);
+      console.error("Failed to parse env files dynamically:", err);
     }
   }
 
@@ -90,15 +95,28 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: `Job with ID ${job_id} not found.` });
     }
 
-    const { data: bid, error: bidErr } = await supabase
-      .from('bids')
-      .select('*')
-      .eq('id', bid_id)
-      .single();
+    let bid;
+    if (!bid_id || bid_id === 'direct' || bid_id === 'none') {
+      if (!job.worker_id) {
+        return res.status(400).json({ error: 'Job does not have an assigned worker.' });
+      }
+      bid = {
+        bidder_id: job.worker_id,
+        amount: job.budget,
+        status: 'accepted'
+      };
+    } else {
+      const { data: dbBid, error: bidErr } = await supabase
+        .from('bids')
+        .select('*')
+        .eq('id', bid_id)
+        .single();
 
-    if (bidErr || !bid) {
-      console.error("Bid load error:", bidErr);
-      return res.status(404).json({ error: `Bid with ID ${bid_id} not found.` });
+      if (bidErr || !dbBid) {
+        console.error("Bid load error:", bidErr);
+        return res.status(404).json({ error: `Bid with ID ${bid_id} not found.` });
+      }
+      bid = dbBid;
     }
 
     // Fetch profiles of both poster and worker
@@ -115,7 +133,7 @@ export default async function handler(req, res) {
 
     const { data: workerProfile, error: workerProfileErr } = await supabase
       .from('profiles')
-      .select('full_name, email, upi_id')
+      .select('full_name, email, phone')
       .eq('id', bid.bidder_id)
       .single();
 
@@ -203,8 +221,9 @@ export default async function handler(req, res) {
       feePercent = 20;
     }
 
-    const platformFee = Math.round(bid.amount * (feePercent / 100));
-    const workerAmount = bid.amount - platformFee;
+    const paidAmount = Number(expected_amount);
+    const platformFee = Math.round(paidAmount * (feePercent / 100));
+    const workerAmount = paidAmount - platformFee;
 
     // 4. Update Database rows sequentially
     // A. Insert Escrow Transaction
@@ -214,7 +233,7 @@ export default async function handler(req, res) {
         job_id: job_id,
         poster_id: job.poster_id,
         worker_id: bid.bidder_id,
-        total_amount: bid.amount,
+        total_amount: paidAmount,
         platform_fee: platformFee,
         worker_amount: workerAmount,
         status: 'held',
@@ -232,8 +251,9 @@ export default async function handler(req, res) {
         worker_id: bid.bidder_id,
         status: 'accepted',
         instructions_locked: false,
-        accepted_bid_id: bid_id,
-        payment_due_at: null
+        accepted_bid_id: (bid_id && bid_id !== 'direct' && bid_id !== 'none') ? bid_id : null,
+        payment_due_at: null,
+        budget: paidAmount
       })
       .eq('id', job_id);
 
@@ -243,14 +263,19 @@ export default async function handler(req, res) {
     }
 
     // C. Update accepted Bid status
-    const { error: bidUpdateErr } = await supabase
-      .from('bids')
-      .update({ status: 'accepted' })
-      .eq('id', bid_id);
+    if (bid_id && bid_id !== 'direct' && bid_id !== 'none') {
+      const { error: bidUpdateErr } = await supabase
+        .from('bids')
+        .update({ 
+          status: 'accepted',
+          amount: paidAmount
+        })
+        .eq('id', bid_id);
 
-    if (bidUpdateErr) {
-      console.error("Accepted bid update error:", bidUpdateErr);
-      throw bidUpdateErr;
+      if (bidUpdateErr) {
+        console.error("Accepted bid update error:", bidUpdateErr);
+        throw bidUpdateErr;
+      }
     }
 
     // D. Reject all other bids on this job
@@ -314,21 +339,26 @@ async function sendPaymentNotificationEmails(job, bid, poster, worker, level, fe
   let resendApiKey = process.env.VITE_RESEND_API_KEY || process.env.RESEND_API_KEY;
   let resendFrom = process.env.RESEND_FROM || 'Tasskly <onboarding@resend.dev>';
 
-  // Fallback to local .env file check
+  // Fallback to local env files check
   if (!smtpPassword || !resendApiKey) {
     try {
       const fs = await import('fs');
       const path = await import('path');
-      const envPath = path.join(process.cwd(), '.env');
-      if (fs.existsSync(envPath)) {
-        const envContent = fs.readFileSync(envPath, 'utf8');
-        if (!smtpPassword) {
-          const matchPassword = envContent.match(/SMTP_PASSWORD\s*=\s*(["']?)(.*?)\1(\s|$)/);
-          if (matchPassword && matchPassword[2]) smtpPassword = matchPassword[2].trim();
-        }
-        if (!resendApiKey) {
-          const matchResend = envContent.match(/(VITE_)?RESEND_API_KEY\s*=\s*(["']?)(.*?)\1(\s|$)/);
-          if (matchResend && matchResend[3]) resendApiKey = matchResend[3].trim();
+      const paths = [
+        path.join(process.cwd(), '.env.local'),
+        path.join(process.cwd(), '.env')
+      ];
+      for (const envPath of paths) {
+        if (fs.existsSync(envPath)) {
+          const envContent = fs.readFileSync(envPath, 'utf8');
+          if (!smtpPassword) {
+            const matchPassword = envContent.match(/SMTP_PASSWORD\s*=\s*(["']?)(.*?)\1(\s|$)/);
+            if (matchPassword && matchPassword[2]) smtpPassword = matchPassword[2].trim();
+          }
+          if (!resendApiKey) {
+            const matchResend = envContent.match(/(VITE_)?RESEND_API_KEY\s*=\s*(["']?)(.*?)\1(\s|$)/);
+            if (matchResend && matchResend[3]) resendApiKey = matchResend[3].trim();
+          }
         }
       }
     } catch (err) {
@@ -354,8 +384,7 @@ async function sendPaymentNotificationEmails(job, bid, poster, worker, level, fe
       <div style="padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; margin-bottom: 24px;">
         <h3 style="color: #14532d; margin-top: 0; font-size: 16px;">Hired Worker Contact Details</h3>
         <p style="color: #166534; font-size: 14px; margin: 6px 0;"><strong>Name:</strong> ${worker.full_name || 'Worker'}</p>
-        <p style="color: #166534; font-size: 14px; margin: 6px 0;"><strong>Email:</strong> <a href="mailto:${worker.email}" style="color: #15803d; font-weight: 600; text-decoration: underline;">${worker.email}</a></p>
-        <p style="color: #166534; font-size: 14px; margin: 6px 0;"><strong>UPI ID:</strong> ${worker.upi_id || 'N/A'}</p>
+        <p style="color: #166534; font-size: 14px; margin: 6px 0;"><strong>Phone:</strong> ${worker.phone || 'N/A'}</p>
       </div>
       
       <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin-bottom: 20px;">

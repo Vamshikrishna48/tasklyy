@@ -20,20 +20,26 @@ export default async function handler(req, res) {
   // Prioritize Vercel environment variables first
   let key = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
 
-  // Fallback to local .env file only if not configured in system variables
+  // Fallback to local .env/.env.local files only if not configured in system variables
   if (!key) {
     try {
-      const envPath = path.join(process.cwd(), '.env');
-      if (fs.existsSync(envPath)) {
-        const envContent = fs.readFileSync(envPath, 'utf8');
-        const match = envContent.match(/VITE_RAZORPAY_KEY_ID\s*=\s*(["']?)(.*?)\1(\s|$)/);
-        if (match && match[2]) {
-          key = match[2].trim();
-          console.log("Loaded Razorpay key from .env file: " + key);
+      const paths = [
+        path.join(process.cwd(), '.env.local'),
+        path.join(process.cwd(), '.env')
+      ];
+      for (const envPath of paths) {
+        if (fs.existsSync(envPath)) {
+          const envContent = fs.readFileSync(envPath, 'utf8');
+          const match = envContent.match(/VITE_RAZORPAY_KEY_ID\s*=\s*(["']?)(.*?)\1(\s|$)/);
+          if (match && match[2]) {
+            key = match[2].trim();
+            console.log("Loaded Razorpay key from " + path.basename(envPath) + ": " + key);
+            break;
+          }
         }
       }
     } catch (err) {
-      console.error("Failed to parse .env file dynamically:", err);
+      console.error("Failed to parse env files dynamically:", err);
     }
   }
 

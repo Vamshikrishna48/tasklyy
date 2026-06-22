@@ -19,7 +19,7 @@ import { FileUp, X, Loader2 } from "lucide-react";
 
 const PostJob = () => {
   const navigate = useNavigate();
-  const { addJob, recordPostingFee, profile, refreshProfile } = useApp();
+  const { addJob, recordPostingFee, profile, refreshProfile, refreshJobs, updateMyJobs } = useApp();
   
   // UPI Modal States
   const [showUpiModal, setShowUpiModal] = useState(false);
@@ -208,6 +208,8 @@ const PostJob = () => {
         
         if (result) {
           toast.success("Job posted successfully!");
+          await refreshJobs();
+          await updateMyJobs();
           navigate("/dashboard/jobs");
         }
       } catch (err: any) {

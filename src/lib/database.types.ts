@@ -52,6 +52,13 @@ export interface Database {
           is_verified: boolean
           verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
           upi_id: string | null
+          phone: string | null
+          bank_name: string | null
+          bank_account_number: string | null
+          bank_ifsc_code: string | null
+          bank_account_holder_name: string | null
+          tasskly_id: string | null
+          internship_password: string | null
           created_at: string
         }
         Insert: {
@@ -64,6 +71,13 @@ export interface Database {
           is_verified?: boolean
           verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
           upi_id?: string | null
+          phone?: string | null
+          bank_name?: string | null
+          bank_account_number?: string | null
+          bank_ifsc_code?: string | null
+          bank_account_holder_name?: string | null
+          tasskly_id?: string | null
+          internship_password?: string | null
           created_at?: string
         }
         Update: {
@@ -76,6 +90,13 @@ export interface Database {
           is_verified?: boolean
           verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
           upi_id?: string | null
+          phone?: string | null
+          bank_name?: string | null
+          bank_account_number?: string | null
+          bank_ifsc_code?: string | null
+          bank_account_holder_name?: string | null
+          tasskly_id?: string | null
+          internship_password?: string | null
           created_at?: string
         }
       }
@@ -337,7 +358,47 @@ export interface Database {
           admin_note?: string | null
           reviewed_by?: string | null
           reviewed_at?: string | null
+        }
+      }
+      withdrawals: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          status: 'pending' | 'approved' | 'rejected'
+          bank_name: string
+          bank_account_number: string
+          bank_ifsc_code: string
+          bank_account_holder_name: string
+          admin_note: string | null
+          created_at: string
+          processed_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          amount: number
+          status?: 'pending' | 'approved' | 'rejected'
+          bank_name: string
+          bank_account_number: string
+          bank_ifsc_code: string
+          bank_account_holder_name: string
+          admin_note?: string | null
           created_at?: string
+          processed_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          amount?: number
+          status?: 'pending' | 'approved' | 'rejected'
+          bank_name?: string
+          bank_account_number?: string
+          bank_ifsc_code?: string
+          bank_account_holder_name?: string
+          admin_note?: string | null
+          created_at?: string
+          processed_at?: string | null
         }
       }
     }

@@ -41,7 +41,11 @@ const statusConfig = {
 };
 
 const MyJobs = () => {
-  const { myPostedJobs, myWorkingJobs, deleteJob, profile } = useApp();
+  const { myPostedJobs, myWorkingJobs, deleteJob, profile, updateMyJobs } = useApp();
+
+  useEffect(() => {
+    updateMyJobs();
+  }, [updateMyJobs]);
   const { submitWork } = useJobs();
   const { subscribeToAllMessages } = useChat();
   const [filter, setFilter] = useState<"all" | "open" | "payment_pending" | "in_progress" | "completed" | "submitted">("all");

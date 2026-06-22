@@ -290,12 +290,14 @@ const JobDetail = () => {
     const paymentDueAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     // Update bid status
     await (supabase as any).from("bids").update({ status: "accepted" }).eq("id", bid.id);
-    // Update job with worker and payment deadline
+    // Update job with worker, payment deadline and the summed budget
+    const totalAmount = Number(job.budget) + Number(bid.amount);
     await (supabase as any).from("jobs").update({
       worker_id: bid.bidder_id,
       status: "payment_pending" as any, // Use payment_pending first
       payment_due_at: paymentDueAt,
       accepted_bid_id: bid.id,
+      budget: totalAmount,
     }).eq("id", id!);
 
     setPaymentDue(paymentDueAt);
@@ -529,7 +531,7 @@ const JobDetail = () => {
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Button variant="hero" className="flex-1 h-12 text-lg shadow-lg shadow-primary/20" 
-                      onClick={() => handlePayment({ amount: job.budget, bidder_id: job.worker_id })}
+                      onClick={() => handlePayment({ amount: job.budget, bidder_id: job.worker_id, id: job.accepted_bid_id || 'direct' })}
                       disabled={processingPayment}
                     >
                       {processingPayment ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
@@ -751,23 +753,7 @@ const JobDetail = () => {
                                 </div>
                               )}
 
-                              {bid.status === "accepted" && paymentDue && (
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                    <span className="text-xs font-bold text-amber-700">Pay within:</span>
-                                    <span className="text-lg font-black text-amber-800">{timeLeft}</span>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <Button variant="hero" className="flex-grow gap-2 bg-amber-600 hover:bg-amber-700" 
-                                      onClick={() => handlePayment(bid)}
-                                      disabled={processingPayment}
-                                    >
-                                      {processingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : <IndianRupee className="h-4 w-4" />}
-                                      Pay ₹{bid.amount} Now
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
+                              {/* Payment handled via banner only */}
                             </CardContent>
                           </Card>
                         </motion.div>

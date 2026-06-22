@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import { UserCircle, Mail, Star, Briefcase, Calendar, ShieldCheck, CreditCard, Pencil, Check, X, Loader2 } from "lucide-react";
+import { UserCircle, Mail, Star, Briefcase, Calendar, ShieldCheck, CreditCard, Pencil, Check, X, Loader2, Phone, Landmark } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -14,6 +14,65 @@ const Profile = () => {
   const [editingUpi, setEditingUpi] = useState(false);
   const [upiValue, setUpiValue] = useState("");
   const [savingUpi, setSavingUpi] = useState(false);
+
+  const [editingBank, setEditingBank] = useState(false);
+  const [bankNameValue, setBankNameValue] = useState("");
+  const [bankAccNumValue, setBankAccNumValue] = useState("");
+  const [bankIfscValue, setBankIfscValue] = useState("");
+  const [bankHolderValue, setBankHolderValue] = useState("");
+  const [savingBank, setSavingBank] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setBankNameValue((profile as any).bank_name || "");
+      setBankAccNumValue((profile as any).bank_account_number || "");
+      setBankIfscValue((profile as any).bank_ifsc_code || "");
+      setBankHolderValue((profile as any).bank_account_holder_name || "");
+    }
+  }, [profile]);
+
+  const handleSaveBank = async () => {
+    if (!bankHolderValue.trim()) {
+      toast.error("Please enter Account Holder Name");
+      return;
+    }
+    if (!bankNameValue.trim()) {
+      toast.error("Please enter Bank Name");
+      return;
+    }
+    if (!bankAccNumValue.trim()) {
+      toast.error("Please enter Account Number");
+      return;
+    }
+    if (!bankIfscValue.trim()) {
+      toast.error("Please enter IFSC Code");
+      return;
+    }
+    if (bankIfscValue.trim().length !== 11) {
+      toast.error("IFSC Code must be exactly 11 characters (e.g. SBIN0001234)");
+      return;
+    }
+
+    setSavingBank(true);
+    const { error } = await (supabase as any)
+      .from("profiles")
+      .update({
+        bank_name: bankNameValue.trim(),
+        bank_account_number: bankAccNumValue.trim(),
+        bank_ifsc_code: bankIfscValue.trim().toUpperCase(),
+        bank_account_holder_name: bankHolderValue.trim()
+      })
+      .eq("id", profile!.id);
+    
+    setSavingBank(false);
+    if (error) {
+      toast.error("Failed to save bank details: " + error.message);
+    } else {
+      toast.success("Bank details saved successfully! ✅");
+      setEditingBank(false);
+      refreshProfile();
+    }
+  };
 
   const [levelInfo, setLevelInfo] = useState<any>(null);
   const [levelLoading, setLevelLoading] = useState(true);
@@ -384,6 +443,14 @@ const Profile = () => {
                   <p className="text-sm font-semibold text-foreground">{profile.email}</p>
                 </div>
               </div>
+
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                <Phone className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium">Phone Number</p>
+                  <p className="text-sm font-semibold text-foreground">{(profile as any).phone || "Not set"}</p>
+                </div>
+              </div>
  
               {/* UPI ID - editable */}
               <div className={`flex items-start gap-3 p-4 rounded-lg ${upiId ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-200'}`}>
@@ -440,9 +507,25 @@ const Profile = () => {
 
               <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
                 <Briefcase className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Account ID</p>
-                  <p className="text-sm font-semibold text-foreground text-[10px]">{profile.id}</p>
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">Tasskly ID</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-foreground font-mono">{(profile as any).tasskly_id || "Generating..."}</p>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-5 w-5"
+                      onClick={() => {
+                        const tid = (profile as any).tasskly_id;
+                        if (tid) {
+                          navigator.clipboard.writeText(tid);
+                          toast.success("Tasskly ID copied to clipboard! 📋");
+                        }
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -456,6 +539,153 @@ const Profile = () => {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Bank Account details card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+      >
+        <Card className="shadow-card mt-6">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Landmark className="h-6 w-6 text-primary" />
+                <div>
+                  <h3 className="font-display text-lg font-bold text-foreground">Bank Account Details</h3>
+                  <p className="text-xs text-muted-foreground">Required for securing withdrawals</p>
+                </div>
+              </div>
+              {!editingBank && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setEditingBank(true)}
+                >
+                  {(profile as any).bank_account_number ? "Edit Details" : "Add Details"}
+                </Button>
+              )}
+            </div>
+
+            {editingBank ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground">Account Holder Name</label>
+                    <Input 
+                      value={bankHolderValue} 
+                      onChange={(e) => setBankHolderValue(e.target.value)} 
+                      placeholder="e.g. SHRIKAR AKARAPU" 
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground">Bank Name</label>
+                    <Input 
+                      value={bankNameValue} 
+                      onChange={(e) => setBankNameValue(e.target.value)} 
+                      placeholder="e.g. State Bank of India" 
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground">Account Number</label>
+                    <Input 
+                      value={bankAccNumValue} 
+                      onChange={(e) => setBankAccNumValue(e.target.value)} 
+                      placeholder="e.g. 12345678901" 
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground">IFSC Code</label>
+                    <Input 
+                      value={bankIfscValue} 
+                      onChange={(e) => setBankIfscValue(e.target.value)} 
+                      placeholder="e.g. SBIN0001234" 
+                      className="text-sm uppercase"
+                      maxLength={11}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 justify-end pt-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      setEditingBank(false);
+                      setBankNameValue((profile as any).bank_name || "");
+                      setBankAccNumValue((profile as any).bank_account_number || "");
+                      setBankIfscValue((profile as any).bank_ifsc_code || "");
+                      setBankHolderValue((profile as any).bank_account_holder_name || "");
+                    }}
+                    disabled={savingBank}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="hero" 
+                    size="sm" 
+                    onClick={handleSaveBank}
+                    disabled={savingBank}
+                  >
+                    {savingBank ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Bank Details"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                {(profile as any).bank_account_number ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg bg-muted/30">
+                      <p className="text-xs text-muted-foreground font-medium">Account Holder</p>
+                      <p className="text-sm font-semibold text-foreground">{(profile as any).bank_account_holder_name}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/30">
+                      <p className="text-xs text-muted-foreground font-medium">Bank Name</p>
+                      <p className="text-sm font-semibold text-foreground">{(profile as any).bank_name}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/30">
+                      <p className="text-xs text-muted-foreground font-medium">Account Number</p>
+                      <p className="text-sm font-semibold text-foreground font-mono">
+                        {`******${(profile as any).bank_account_number.slice(-4)}`}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/30">
+                      <p className="text-xs text-muted-foreground font-medium">IFSC Code</p>
+                      <p className="text-sm font-semibold text-foreground font-mono">{(profile as any).bank_ifsc_code}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-6 border border-dashed rounded-xl bg-muted/20">
+                    <Landmark className="h-8 w-8 text-muted-foreground/45 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-foreground">No bank account configured</p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                      Please enter your bank account details. This is mandatory for processing withdrawal requests securely.
+                    </p>
+                    <Button 
+                      variant="hero" 
+                      size="sm" 
+                      className="mt-4"
+                      onClick={() => setEditingBank(true)}
+                    >
+                      Add Bank Account
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>

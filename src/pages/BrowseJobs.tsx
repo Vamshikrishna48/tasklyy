@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,11 @@ const BrowseJobs = () => {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(categoryParam);
 
-  const { jobs, profile } = useApp();
+  const { jobs, profile, refreshJobs } = useApp();
+
+  useEffect(() => {
+    refreshJobs();
+  }, [refreshJobs]);
 
   const filteredJobs = jobs.filter((job) => {
     if (job.status !== "open") return false;

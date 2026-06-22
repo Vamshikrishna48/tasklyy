@@ -13,6 +13,7 @@ import AdminLedger from "./pages/admin/AdminLedger.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminNotifications from "./pages/admin/AdminNotifications.tsx";
 import AdminRefunds from "./pages/admin/AdminRefunds.tsx";
+import AdminWithdrawals from "./pages/admin/AdminWithdrawals.tsx";
 import AdminAuth from "./pages/admin/AdminAuth.tsx";
 import AdminGuard from "./components/AdminGuard.tsx";
 import Index from "./pages/Index.tsx";
@@ -54,15 +55,15 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   ];
 
   useEffect(() => {
-    const duration = 8000; // 8 seconds total loading
+    const duration = 1500; // 1.5 seconds total loading
     const intervalTime = 50; // update progress every 50ms
-    const step = 100 / (duration / intervalTime); // increment step: 0.625% per step
+    const step = 100 / (duration / intervalTime); // increment step
 
     const timer = setInterval(() => {
       setProgress((old) => {
         if (old >= 100) {
           clearInterval(timer);
-          setTimeout(onComplete, 300); // Pause briefly at 100% so it is fully visible
+          setTimeout(onComplete, 150); // Pause briefly at 100% so it is fully visible
           return 100;
         }
         return Math.min(old + step, 100);
@@ -255,6 +256,7 @@ const App = () => {
                     <Route path="ledger" element={<AdminLedger />} />
                     <Route path="users" element={<AdminUsers />} />
                     <Route path="refunds" element={<AdminRefunds />} />
+                    <Route path="withdrawals" element={<AdminWithdrawals />} />
                     <Route path="notifications" element={<AdminNotifications />} />
                   </Route>
                   <Route path="*" element={<NotFound />} />

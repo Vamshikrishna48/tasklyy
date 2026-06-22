@@ -36,23 +36,28 @@ export default async function handler(req, res) {
   let supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  // Fallback to local .env parsing for local development
+  // Fallback to local .env/.env.local parsing for local development
   if (!supabaseUrl || !supabaseServiceKey) {
     try {
-      const envPath = path.join(process.cwd(), '.env');
-      if (fs.existsSync(envPath)) {
-        const envContent = fs.readFileSync(envPath, 'utf8');
-        if (!supabaseUrl) {
-          const matchUrl = envContent.match(/VITE_SUPABASE_URL\s*=\s*(["']?)(.*?)\1(\s|$)/);
-          if (matchUrl && matchUrl[2]) supabaseUrl = matchUrl[2].trim();
-        }
-        if (!supabaseServiceKey) {
-          const matchServKey = envContent.match(/SUPABASE_SERVICE_ROLE_KEY\s*=\s*(["']?)(.*?)\1(\s|$)/);
-          if (matchServKey && matchServKey[2]) supabaseServiceKey = matchServKey[2].trim();
+      const paths = [
+        path.join(process.cwd(), '.env.local'),
+        path.join(process.cwd(), '.env')
+      ];
+      for (const envPath of paths) {
+        if (fs.existsSync(envPath)) {
+          const envContent = fs.readFileSync(envPath, 'utf8');
+          if (!supabaseUrl) {
+            const matchUrl = envContent.match(/VITE_SUPABASE_URL\s*=\s*(["']?)(.*?)\1(\s|$)/);
+            if (matchUrl && matchUrl[2]) supabaseUrl = matchUrl[2].trim();
+          }
+          if (!supabaseServiceKey) {
+            const matchServKey = envContent.match(/SUPABASE_SERVICE_ROLE_KEY\s*=\s*(["']?)(.*?)\1(\s|$)/);
+            if (matchServKey && matchServKey[2]) supabaseServiceKey = matchServKey[2].trim();
+          }
         }
       }
     } catch (err) {
-      console.error("Failed to parse .env file dynamically:", err);
+      console.error("Failed to parse env files dynamically:", err);
     }
   }
 
