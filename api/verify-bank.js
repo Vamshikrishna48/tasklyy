@@ -21,10 +21,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { bank_name, bank_account_number, bank_ifsc_code, bank_account_holder_name } = req.body;
+  const { bank_name, bank_account_number, bank_ifsc_code } = req.body;
 
-  if (!bank_name || !bank_account_number || !bank_ifsc_code || !bank_account_holder_name) {
-    return res.status(400).json({ error: 'All bank details are required (holder name, bank name, account number, IFSC).' });
+  if (!bank_name || !bank_account_number || !bank_ifsc_code) {
+    return res.status(400).json({ error: 'All bank details are required (bank name, account number, IFSC).' });
   }
 
   // 1. Validate Account Number format (9 to 18 digits)
@@ -96,14 +96,22 @@ export default async function handler(req, res) {
     // Wait for 1.2 seconds to simulate communication with NPCI / bank server
     await new Promise(resolve => setTimeout(resolve, 1200));
 
-    // 4. Update profiles table with verified details
+    // 4. Fetch the user's profile to get their name
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single();
+
+    const holderName = profileData?.full_name || 'Account Holder';
+
+    // 5. Update profiles table with verified details
     const { error: updateErr } = await supabase
       .from('profiles')
       .update({
         bank_name: bank_name.trim(),
         bank_account_number: cleanAccNum,
         bank_ifsc_code: cleanIfsc,
-        bank_account_holder_name: bank_account_holder_name.trim(),
         bank_verification_status: 'verified'
       })
       .eq('id', user.id);

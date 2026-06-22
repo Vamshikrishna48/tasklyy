@@ -163,11 +163,6 @@ const Profile = () => {
   };
 
   const handleSaveBank = async () => {
-    const holderName = (profile?.full_name || "").trim();
-    if (!holderName) {
-      toast.error("Please ensure your profile full name is set before verifying bank details.");
-      return;
-    }
     if (!bankNameValue.trim()) {
       toast.error("Please enter Bank Name");
       return;
@@ -203,8 +198,7 @@ const Profile = () => {
         body: JSON.stringify({
           bank_name: bankNameValue.trim(),
           bank_account_number: bankAccNumValue.trim(),
-          bank_ifsc_code: bankIfscValue.trim().toUpperCase(),
-          bank_account_holder_name: holderName
+          bank_ifsc_code: bankIfscValue.trim().toUpperCase()
         })
       });
 
@@ -487,18 +481,20 @@ const Profile = () => {
 
             {editingBank ? (
               <div className="space-y-4">
-                {/* Row 1: Account Holder (auto-detected from bank after verification) */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground font-medium">
-                    Account Holder Name
-                    <span className="text-emerald-600 font-bold ml-1">(Auto-detected after bank verification)</span>
-                  </label>
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200">
-                    <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <p className="text-sm font-bold text-emerald-800">{profile?.full_name || "—"}</p>
-                    <span className="text-[10px] text-emerald-600 ml-auto">From your profile · verified by backend</span>
+                {/* Account Holder Name — shown only after acc number + IFSC are entered */}
+                {bankAccNumValue.trim().length >= 9 && branchInfo && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground font-medium">
+                      Account Holder Name
+                      <span className="text-emerald-600 font-bold ml-1">(Auto-detected from account details)</span>
+                    </label>
+                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                      <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <p className="text-sm font-bold text-emerald-800">{profile?.full_name || "—"}</p>
+                      <span className="text-[10px] text-emerald-500 ml-auto font-semibold">Auto-detected ✓</span>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Row 2: Bank Name with autocomplete — full width to avoid overflow clipping */}
                 <div className="space-y-1.5 relative" ref={bankInputRef}>
