@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { UserCircle, Mail, Star, Briefcase, Calendar, ShieldCheck, CreditCard, Pencil, Check, X, Loader2, Phone, Landmark, MapPin } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -295,7 +296,7 @@ const Profile = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
         >
-          <a href="/dashboard/levels" className="block group">
+          <Link to="/dashboard/levels" className="block group">
             <div className="rounded-2xl p-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.01]">
               <div className="flex items-center justify-between">
                 <div>
@@ -308,7 +309,7 @@ const Profile = () => {
                 </div>
               </div>
             </div>
-          </a>
+          </Link>
         </motion.div>
       )}
 
