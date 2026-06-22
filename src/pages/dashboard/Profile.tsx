@@ -578,7 +578,7 @@ const Profile = () => {
                     <Input 
                       value={bankHolderValue} 
                       onChange={(e) => setBankHolderValue(e.target.value)} 
-                      placeholder="e.g. SHRIKAR AKARAPU" 
+                      placeholder="" 
                       className="text-sm"
                     />
                   </div>
@@ -587,7 +587,7 @@ const Profile = () => {
                     <Input 
                       value={bankNameValue} 
                       onChange={(e) => setBankNameValue(e.target.value)} 
-                      placeholder="e.g. State Bank of India" 
+                      placeholder="" 
                       className="text-sm"
                     />
                   </div>
@@ -596,7 +596,7 @@ const Profile = () => {
                     <Input 
                       value={bankAccNumValue} 
                       onChange={(e) => setBankAccNumValue(e.target.value)} 
-                      placeholder="e.g. 12345678901" 
+                      placeholder="" 
                       className="text-sm"
                     />
                   </div>
@@ -605,7 +605,7 @@ const Profile = () => {
                     <Input 
                       value={bankIfscValue} 
                       onChange={(e) => setBankIfscValue(e.target.value)} 
-                      placeholder="e.g. SBIN0001234" 
+                      placeholder="" 
                       className="text-sm uppercase"
                       maxLength={11}
                     />
