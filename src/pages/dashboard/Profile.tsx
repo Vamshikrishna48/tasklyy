@@ -4,10 +4,48 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import { UserCircle, Mail, Star, Briefcase, Calendar, ShieldCheck, CreditCard, Pencil, Check, X, Loader2, Phone, Landmark } from "lucide-react";
+import { UserCircle, Mail, Star, Briefcase, Calendar, ShieldCheck, CreditCard, Pencil, Check, X, Loader2, Phone, Landmark, MapPin } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+
+const popularIndianBanks = [
+  "State Bank of India",
+  "HDFC Bank",
+  "ICICI Bank",
+  "Axis Bank",
+  "Kotak Mahindra Bank",
+  "IndusInd Bank",
+  "Yes Bank",
+  "Punjab National Bank",
+  "Bank of Baroda",
+  "Canara Bank",
+  "Union Bank of India",
+  "Bank of India",
+  "Indian Bank",
+  "Central Bank of India",
+  "Indian Overseas Bank",
+  "UCO Bank",
+  "Bank of Maharashtra",
+  "IDBI Bank",
+  "IDFC First Bank",
+  "Federal Bank",
+  "South Indian Bank",
+  "Karnataka Bank",
+  "Karur Vysya Bank",
+  "RBL Bank",
+  "Bandhan Bank",
+  "Paytm Payments Bank",
+  "Airtel Payments Bank",
+  "Jio Payments Bank",
+  "Saraswat Co-operative Bank",
+  "Cosmos Co-operative Bank",
+  "SVC Co-operative Bank",
+  "Standard Chartered Bank",
+  "Citi Bank",
+  "HSBC Bank",
+  "Deutsche Bank"
+];
 
 const Profile = () => {
   const { profile, authLoading, refreshProfile } = useApp();
@@ -22,14 +60,74 @@ const Profile = () => {
   const [bankHolderValue, setBankHolderValue] = useState("");
   const [savingBank, setSavingBank] = useState(false);
 
+  // Auto-complete & IFSC location lookup states
+  const [bankSuggestions, setBankSuggestions] = useState<string[]>([]);
+  const [showBankSuggestions, setShowBankSuggestions] = useState(false);
+  const [branchPlace, setBranchPlace] = useState("");
+  const [branchLoading, setBranchLoading] = useState(false);
+
+  const lookupIfsc = async (ifsc: string) => {
+    const cleanIfsc = ifsc.trim().toUpperCase();
+    if (cleanIfsc.length === 11) {
+      setBranchLoading(true);
+      try {
+        const res = await fetch(`https://ifsc.razorpay.com/${cleanIfsc}`);
+        if (res.ok) {
+          const data = await res.json();
+          const place = `${data.BRANCH || ""}, ${data.CENTRE || data.CITY || ""}, ${data.STATE || ""}`.trim().replace(/^,\s*|,\s*$/, "");
+          setBranchPlace(place);
+        } else {
+          setBranchPlace("");
+        }
+      } catch (e) {
+        console.error("IFSC lookup failed:", e);
+        setBranchPlace("");
+      } finally {
+        setBranchLoading(false);
+      }
+    } else {
+      setBranchPlace("");
+    }
+  };
+
   useEffect(() => {
     if (profile) {
       setBankNameValue((profile as any).bank_name || "");
       setBankAccNumValue((profile as any).bank_account_number || "");
-      setBankIfscValue((profile as any).bank_ifsc_code || "");
+      const savedIfsc = (profile as any).bank_ifsc_code || "";
+      setBankIfscValue(savedIfsc);
       setBankHolderValue((profile as any).bank_account_holder_name || "");
+      if (savedIfsc.trim().length === 11) {
+        lookupIfsc(savedIfsc.trim());
+      } else {
+        setBranchPlace("");
+      }
     }
   }, [profile]);
+
+  const handleBankNameChange = (val: string) => {
+    setBankNameValue(val);
+    if (val.trim().length > 0) {
+      const filtered = popularIndianBanks.filter(b => 
+        b.toLowerCase().includes(val.toLowerCase())
+      );
+      setBankSuggestions(filtered);
+      setShowBankSuggestions(true);
+    } else {
+      setBankSuggestions([]);
+      setShowBankSuggestions(false);
+    }
+  };
+
+  const handleIfscChange = (val: string) => {
+    const cleanVal = val.trim().toUpperCase();
+    setBankIfscValue(cleanVal);
+    if (cleanVal.length === 11) {
+      lookupIfsc(cleanVal);
+    } else {
+      setBranchPlace("");
+    }
+  };
 
   const handleSaveBank = async () => {
     if (!bankHolderValue.trim()) {
@@ -611,14 +709,44 @@ const Profile = () => {
                       className="text-sm"
                     />
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 relative">
                     <label className="text-xs font-semibold text-muted-foreground">Bank Name</label>
                     <Input 
                       value={bankNameValue} 
-                      onChange={(e) => setBankNameValue(e.target.value)} 
+                      onChange={(e) => handleBankNameChange(e.target.value)} 
+                      onFocus={() => {
+                        if (bankNameValue.trim().length > 0) {
+                          const filtered = popularIndianBanks.filter(b => 
+                            b.toLowerCase().includes(bankNameValue.toLowerCase())
+                          );
+                          setBankSuggestions(filtered);
+                          setShowBankSuggestions(true);
+                        }
+                      }}
+                      onBlur={() => {
+                        setTimeout(() => setShowBankSuggestions(false), 200);
+                      }}
                       placeholder="" 
                       className="text-sm"
                     />
+                    {showBankSuggestions && bankSuggestions.length > 0 && (
+                      <div className="absolute z-50 left-0 right-0 top-[100%] mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto py-1">
+                        {bankSuggestions.map((bank, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-slate-50 transition-colors text-slate-700"
+                            onClick={() => {
+                              setBankNameValue(bank);
+                              setBankSuggestions([]);
+                              setShowBankSuggestions(false);
+                            }}
+                          >
+                            {bank}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-muted-foreground">Account Number</label>
@@ -633,13 +761,29 @@ const Profile = () => {
                     <label className="text-xs font-semibold text-muted-foreground">IFSC Code</label>
                     <Input 
                       value={bankIfscValue} 
-                      onChange={(e) => setBankIfscValue(e.target.value)} 
+                      onChange={(e) => handleIfscChange(e.target.value)} 
                       placeholder="" 
                       className="text-sm uppercase"
                       maxLength={11}
                     />
                   </div>
                 </div>
+
+                {branchLoading && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground italic px-1">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                    Locating bank branch...
+                  </div>
+                )}
+                {!branchLoading && branchPlace && (
+                  <div className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl flex items-start gap-2.5">
+                    <MapPin className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Detected Branch Location</p>
+                      <p className="text-xs text-slate-700 font-semibold">{branchPlace}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2 justify-end pt-2">
                   <Button 
@@ -695,6 +839,15 @@ const Profile = () => {
                       <p className="text-xs text-muted-foreground font-medium">IFSC Code</p>
                       <p className="text-sm font-semibold text-foreground font-mono">{(profile as any).bank_ifsc_code}</p>
                     </div>
+                    {branchPlace && (
+                      <div className="col-span-1 md:col-span-2 p-4 rounded-lg bg-emerald-50/40 border border-emerald-100 flex items-start gap-2.5">
+                        <MapPin className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs text-muted-foreground font-medium">Branch Location</p>
+                          <p className="text-sm font-semibold text-slate-800">{branchPlace}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-6 border border-dashed rounded-xl bg-muted/20">
