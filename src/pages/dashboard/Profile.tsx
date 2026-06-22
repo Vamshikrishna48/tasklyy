@@ -54,23 +54,40 @@ const Profile = () => {
     }
 
     setSavingBank(true);
-    const { error } = await (supabase as any)
-      .from("profiles")
-      .update({
-        bank_name: bankNameValue.trim(),
-        bank_account_number: bankAccNumValue.trim(),
-        bank_ifsc_code: bankIfscValue.trim().toUpperCase(),
-        bank_account_holder_name: bankHolderValue.trim()
-      })
-      .eq("id", profile!.id);
-    
-    setSavingBank(false);
-    if (error) {
-      toast.error("Failed to save bank details: " + error.message);
-    } else {
-      toast.success("Bank details saved successfully! ✅");
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        toast.error("Session expired. Please sign in again.");
+        return;
+      }
+
+      const response = await fetch("/api/verify-bank", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          bank_name: bankNameValue.trim(),
+          bank_account_number: bankAccNumValue.trim(),
+          bank_ifsc_code: bankIfscValue.trim().toUpperCase(),
+          bank_account_holder_name: bankHolderValue.trim()
+        })
+      });
+
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.error || "Failed to verify bank details");
+      }
+
+      toast.success(resData.message || "Bank details verified by backend automatically! ✅");
       setEditingBank(false);
       refreshProfile();
+    } catch (err: any) {
+      toast.error(err.message || "Verification failed");
+    } finally {
+      setSavingBank(false);
     }
   };
 
@@ -555,7 +572,19 @@ const Profile = () => {
               <div className="flex items-center gap-3">
                 <Landmark className="h-6 w-6 text-primary" />
                 <div>
-                  <h3 className="font-display text-lg font-bold text-foreground">Bank Account Details</h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-display text-lg font-bold text-foreground">Bank Account Details</h3>
+                    <Badge
+                      variant={(profile as any).bank_verification_status === "verified" ? "default" : "outline"}
+                      className={`text-[9px] uppercase tracking-widest font-black py-0.5 px-1.5 ${
+                        (profile as any).bank_verification_status === "verified"
+                          ? "text-green-700 bg-green-50 border-green-200"
+                          : "text-orange-600 bg-orange-50 border-orange-200"
+                      }`}
+                    >
+                      {(profile as any).bank_verification_status === "verified" ? "verified" : "unverified"}
+                    </Badge>
+                  </div>
                   <p className="text-xs text-muted-foreground">Required for securing withdrawals</p>
                 </div>
               </div>

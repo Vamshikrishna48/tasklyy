@@ -340,6 +340,18 @@ const Earnings = () => {
                 </Button>
               </Link>
             </div>
+          ) : (profile as any)?.bank_verification_status !== 'verified' ? (
+            <div className="py-4 text-center space-y-3">
+              <p className="text-sm text-amber-600 font-semibold">Bank Details Unverified ⚠️</p>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                Your bank details must be verified automatically by the backend before you can request a withdrawal.
+              </p>
+              <Link to="/dashboard/profile" onClick={() => setIsWithdrawOpen(false)}>
+                <Button variant="hero" size="sm">
+                  Go to Profile Settings
+                </Button>
+              </Link>
+            </div>
           ) : (
             <div className="space-y-4 py-2">
               <div className="p-3 bg-slate-50 border rounded-xl space-y-1 text-xs text-slate-600">

@@ -521,30 +521,6 @@ const Internships = () => {
                 </div>
 
                 <div className="flex items-center gap-3.5 flex-wrap">
-                  <div className="flex bg-muted/65 p-1 rounded-xl border gap-1 self-start">
-                    <Button
-                      variant={dashboardTab === "explore" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setDashboardTab("explore")}
-                      className="text-xs font-bold rounded-lg px-4 h-8"
-                    >
-                      <Briefcase className="h-3.5 w-3.5 mr-1.5" /> Explore Openings
-                    </Button>
-                    <Button
-                      variant={dashboardTab === "applications" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setDashboardTab("applications")}
-                      className="text-xs font-bold rounded-lg px-4 h-8 relative"
-                    >
-                      <FileText className="h-3.5 w-3.5 mr-1.5" /> Applications
-                      {applications.length > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[8px] font-black text-white">
-                          {applications.length}
-                        </span>
-                      )}
-                    </Button>
-                  </div>
-
                   <Button
                     variant="outline"
                     size="sm"
@@ -556,208 +532,29 @@ const Internships = () => {
                 </div>
               </div>
 
-              {/* Portal Stats row */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white/40 border p-4 rounded-2xl flex items-center justify-between shadow-sm">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Applied Openings</p>
-                    <p className="text-2xl font-black text-slate-800">{applications.length}</p>
-                  </div>
-                  <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
-                    <Send className="h-4.5 w-4.5" />
-                  </div>
+              {/* Coming Soon Announcement Card */}
+              <div className="bg-white/60 backdrop-blur-md border border-slate-200/80 rounded-3xl p-10 flex flex-col items-center text-center gap-6 shadow-md">
+                <div className="h-16 w-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm animate-bounce">
+                  <Rocket className="h-8 w-8 animate-pulse" />
                 </div>
-
-                <div className="bg-white/40 border p-4 rounded-2xl flex items-center justify-between shadow-sm">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Shortlisted</p>
-                    <p className="text-2xl font-black text-slate-800">
-                      {applications.filter(a => a.status === "shortlisted").length}
-                    </p>
-                  </div>
-                  <div className="h-9 w-9 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                    <CheckCircle className="h-4.5 w-4.5" />
-                  </div>
+                <div className="space-y-2 max-w-md">
+                  <h3 className="font-display font-black text-2xl text-gray-800">Internship Portal is Coming Soon!</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
+                    We are actively curating premium internship listings from top companies and startups. The portal is currently in closed-beta. We will launch soon. Stay tuned!
+                  </p>
                 </div>
-
-                <div className="bg-white/40 border p-4 rounded-2xl flex items-center justify-between shadow-sm">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Under Review</p>
-                    <p className="text-2xl font-black text-slate-800">
-                      {applications.filter(a => a.status === "under_review" || a.status === "submitted").length}
-                    </p>
+                
+                {/* Progress bar indicator */}
+                <div className="w-full max-w-xs space-y-1.5">
+                  <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span>Beta Status</span>
+                    <span>90% Ready</span>
                   </div>
-                  <div className="h-9 w-9 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600">
-                    <Briefcase className="h-4.5 w-4.5" />
+                  <div className="h-2 w-full bg-slate-200/60 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 w-[90%]" />
                   </div>
                 </div>
               </div>
-
-              {/* Tabs Content Router */}
-              <AnimatePresence mode="wait">
-                {dashboardTab === "explore" ? (
-                  /* ───────────────────────────────────────────────────────────
-                     TAB: EXPLORE INTERNSHIPS
-                     ─────────────────────────────────────────────────────────── */
-                  <motion.div
-                    key="explore-tab"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 15 }}
-                    className="space-y-5"
-                  >
-                    {/* Search Panel */}
-                    <div className="relative w-full max-w-md">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400" />
-                      <Input
-                        placeholder="Search by role, company name, or skills..."
-                        className="pl-10 rounded-xl bg-white/50 border-slate-200/80 h-10 shadow-sm"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                      />
-                    </div>
-
-                    {/* Internships Listing Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {filteredInternships.length === 0 ? (
-                        <div className="col-span-full py-16 text-center text-slate-500 italic bg-white/30 border border-dashed rounded-3xl">
-                          No internships match your search query. Try searching another term!
-                        </div>
-                      ) : (
-                        filteredInternships.map((item) => {
-                          const isAlreadyApplied = applications.some(app => app.internshipId === item.id);
-
-                          return (
-                            <Card
-                              key={item.id}
-                              className="shadow-sm border border-slate-200/80 bg-white/60 backdrop-blur-sm flex flex-col justify-between"
-                            >
-                              <CardContent className="p-5 space-y-4">
-                                <div className="space-y-1">
-                                  <div className="flex justify-between items-start gap-2">
-                                    <h3 className="font-bold text-base text-gray-800">{item.title}</h3>
-                                    {isAlreadyApplied && (
-                                      <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200 uppercase text-[9px] font-black tracking-wider py-0.5">
-                                        Applied
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-emerald-700 font-bold flex items-center gap-1">
-                                    <Building2 className="h-3.5 w-3.5 shrink-0" />
-                                    {item.company}
-                                  </p>
-                                </div>
-
-                                <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                                  {item.description}
-                                </p>
-
-                                {/* Meta details tags */}
-                                <div className="flex items-center gap-3.5 text-[11px] text-slate-600 font-semibold flex-wrap">
-                                  <span className="flex items-center gap-1">
-                                    <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                    {item.location}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                    {item.duration}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <IndianRupee className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                    {item.stipend}
-                                  </span>
-                                </div>
-
-                                {/* Skills tags */}
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  {item.skills.map(skill => (
-                                    <span key={skill} className="text-[10px] bg-slate-100 font-bold text-slate-600 px-2 py-0.5 rounded">
-                                      {skill}
-                                    </span>
-                                  ))}
-                                </div>
-
-                                {/* Action */}
-                                <div className="pt-2">
-                                  {isAlreadyApplied ? (
-                                    <Button
-                                      disabled
-                                      className="w-full bg-slate-200 text-slate-500 font-bold h-9 rounded-xl"
-                                    >
-                                      Application Submitted
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      onClick={() => setSelectedInternship(item)}
-                                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 rounded-xl"
-                                    >
-                                      Apply Now
-                                    </Button>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          );
-                        })
-                      )}
-                    </div>
-                  </motion.div>
-                ) : (
-                  /* ───────────────────────────────────────────────────────────
-                     TAB: APPLIED LISTING
-                     ─────────────────────────────────────────────────────────── */
-                  <motion.div
-                    key="apps-tab"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 15 }}
-                    className="space-y-4"
-                  >
-                    {applications.length === 0 ? (
-                      <div className="py-16 text-center text-slate-500 italic bg-white/30 border border-dashed rounded-3xl">
-                        You have not submitted any internship applications yet.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {applications.map((app) => (
-                          <div
-                            key={app.id}
-                            className="bg-white/60 backdrop-blur-sm border rounded-2xl p-5 flex flex-col sm:flex-row justify-between gap-4"
-                          >
-                            <div className="space-y-2">
-                              <div>
-                                <h3 className="font-bold text-sm text-gray-800">{app.internshipTitle}</h3>
-                                <p className="text-xs text-emerald-700 font-bold">{app.company}</p>
-                              </div>
-
-                              <div className="space-y-1 text-[11px] text-slate-500">
-                                <p>Applied on: <strong>{app.appliedDate}</strong></p>
-                                <p className="truncate max-w-md">Resume/Portfolio: <a href={app.portfolioLink} target="_blank" rel="noreferrer" className="text-blue-600 underline font-mono">{app.portfolioLink}</a></p>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-row sm:flex-col justify-between items-center sm:items-end gap-2">
-                              <Badge
-                                variant={app.status === "shortlisted" ? "default" : "secondary"}
-                                className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border-none ${
-                                  app.status === "shortlisted"
-                                    ? "bg-green-600 text-white animate-pulse"
-                                    : app.status === "under_review"
-                                    ? "bg-cyan-100 text-cyan-700"
-                                    : "bg-slate-100 text-slate-600"
-                                }`}
-                              >
-                                {app.status.replace("_", " ")}
-                              </Badge>
-                              <span className="text-[10px] text-slate-400 font-mono font-bold">App ID: {app.id}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
             </motion.div>
           )}

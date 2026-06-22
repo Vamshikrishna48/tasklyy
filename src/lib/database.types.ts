@@ -59,6 +59,7 @@ export interface Database {
           bank_account_holder_name: string | null
           tasskly_id: string | null
           internship_password: string | null
+          bank_verification_status: string | null
           created_at: string
         }
         Insert: {
@@ -78,6 +79,7 @@ export interface Database {
           bank_account_holder_name?: string | null
           tasskly_id?: string | null
           internship_password?: string | null
+          bank_verification_status?: string | null
           created_at?: string
         }
         Update: {
@@ -97,6 +99,7 @@ export interface Database {
           bank_account_holder_name?: string | null
           tasskly_id?: string | null
           internship_password?: string | null
+          bank_verification_status?: string | null
           created_at?: string
         }
       }

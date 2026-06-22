@@ -81,13 +81,20 @@ export default async function handler(req, res) {
     // Get the user's profile and bank account details
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('wallet_balance, bank_name, bank_account_number, bank_ifsc_code, bank_account_holder_name')
+      .select('wallet_balance, bank_name, bank_account_number, bank_ifsc_code, bank_account_holder_name, bank_verification_status')
       .eq('id', user.id)
       .single();
 
     if (profileErr || !profile) {
       console.error("Profile not found:", profileErr);
       return res.status(404).json({ error: 'User profile not found.' });
+    }
+
+    // Check if bank account has been verified by the backend
+    if (profile.bank_verification_status !== 'verified') {
+      return res.status(400).json({ 
+        error: 'Your bank account details have not been verified by the backend. Please add and automatically verify them in your profile settings.' 
+      });
     }
 
     // Check if bank account details are filled
