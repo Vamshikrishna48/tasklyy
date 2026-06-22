@@ -482,20 +482,7 @@ const Profile = () => {
 
             {editingBank ? (
               <div className="space-y-4">
-                {/* Account Holder Name — shown only after acc number + IFSC are entered */}
-                {bankAccNumValue.trim().length >= 9 && branchInfo && (
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground font-medium">
-                      Account Holder Name
-                      <span className="text-emerald-600 font-bold ml-1">(Auto-detected from account details)</span>
-                    </label>
-                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
-                      <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <p className="text-sm font-bold text-emerald-800">{profile?.full_name || "—"}</p>
-                      <span className="text-[10px] text-emerald-500 ml-auto font-semibold">Auto-detected ✓</span>
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Row 2: Bank Name with autocomplete — full width to avoid overflow clipping */}
                 <div className="space-y-1.5 relative" ref={bankInputRef}>

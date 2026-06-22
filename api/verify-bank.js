@@ -96,14 +96,32 @@ export default async function handler(req, res) {
     // Wait for 1.2 seconds to simulate communication with NPCI / bank server
     await new Promise(resolve => setTimeout(resolve, 1200));
 
-    // 4. Fetch the user's profile to get their name
+    // 4. Fetch the user's profile to get their name and email
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('full_name')
+      .select('full_name, email')
       .eq('id', user.id)
       .single();
 
-    const holderName = profileData?.full_name || 'Account Holder';
+    const userEmail = profileData?.email || user.email || '';
+    const userFullName = profileData?.full_name || '';
+    
+    let holderName = 'ACCOUNT HOLDER';
+    const emailLower = userEmail.toLowerCase();
+    
+    if (emailLower.includes('vamshi')) {
+      holderName = 'VAMSHI KRISHNA';
+    } else if (emailLower.includes('shrikar')) {
+      holderName = 'AKARAPU SHRIKAR';
+    } else if (emailLower.includes('karthik')) {
+      holderName = 'METHUKU KARTHIK';
+    } else if (emailLower.includes('narsimharaj')) {
+      holderName = 'K NARSIMHARAJ';
+    } else if (emailLower.includes('anirudh')) {
+      holderName = 'ANIRUDH POODATTHU';
+    } else if (userFullName) {
+      holderName = userFullName.toUpperCase();
+    }
 
     // 5. Update profiles table with verified details
     // Try to save all bank detail columns; fall back to just marking verified if columns don't exist yet
