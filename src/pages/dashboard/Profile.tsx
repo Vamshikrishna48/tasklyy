@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { UserCircle, Mail, Star, Briefcase, Calendar, ShieldCheck, CreditCard, Pencil, Check, X, Loader2, Phone, Landmark, MapPin } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -73,6 +73,20 @@ const Profile = () => {
     contact?: string;
     bankName?: string;
   } | null>(null);
+
+  const bankInputRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (bankInputRef.current && !bankInputRef.current.contains(event.target as Node)) {
+        setShowBankSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const lookupIfsc = async (ifsc: string) => {
     const cleanIfsc = ifsc.trim().toUpperCase();
@@ -728,7 +742,7 @@ const Profile = () => {
                       className="text-sm"
                     />
                   </div>
-                  <div className="space-y-1.5 relative">
+                  <div className="space-y-1.5 relative" ref={bankInputRef}>
                     <label className="text-xs font-semibold text-muted-foreground">Bank Name</label>
                     <Input 
                       value={bankNameValue} 
@@ -741,9 +755,6 @@ const Profile = () => {
                           setBankSuggestions(filtered);
                           setShowBankSuggestions(true);
                         }
-                      }}
-                      onBlur={() => {
-                        setTimeout(() => setShowBankSuggestions(false), 200);
                       }}
                       placeholder="" 
                       className="text-sm"
