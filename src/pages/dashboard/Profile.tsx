@@ -733,58 +733,68 @@ const Profile = () => {
 
             {editingBank ? (
               <div className="space-y-4">
+                {/* Row 1: Account Holder (auto-detected) */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground font-medium">Account Holder Name <span className="text-green-600">(Auto-detected from your profile)</span></label>
+                  <Input 
+                    value={profile?.full_name || ""} 
+                    disabled
+                    className="text-sm bg-green-50 border-green-200 cursor-not-allowed font-semibold text-green-800"
+                  />
+                </div>
+
+                {/* Row 2: Bank Name with autocomplete — full width to avoid overflow clipping */}
+                <div className="space-y-1.5 relative" ref={bankInputRef}>
+                  <label className="text-xs font-semibold text-muted-foreground">Bank Name</label>
+                  <Input 
+                    value={bankNameValue} 
+                    onChange={(e) => handleBankNameChange(e.target.value)} 
+                    onFocus={() => {
+                      if (bankNameValue.trim().length > 0) {
+                        const filtered = popularIndianBanks.filter(b => 
+                          b.toLowerCase().includes(bankNameValue.toLowerCase())
+                        );
+                        setBankSuggestions(filtered);
+                        setShowBankSuggestions(true);
+                      } else {
+                        setBankSuggestions([...popularIndianBanks]);
+                        setShowBankSuggestions(true);
+                      }
+                    }}
+                    placeholder="e.g. State Bank of India" 
+                    className="text-sm"
+                    autoComplete="off"
+                  />
+                  {showBankSuggestions && bankSuggestions.length > 0 && (
+                    <div className="absolute z-[999] left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-52 overflow-y-auto py-1">
+                      {bankSuggestions.map((bank, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="w-full text-left px-3.5 py-2.5 text-sm font-medium hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-slate-700 border-b border-slate-50 last:border-0"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setBankNameValue(bank);
+                            setBankSuggestions([]);
+                            setShowBankSuggestions(false);
+                          }}
+                        >
+                          🏦 {bank}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Row 3: Account Number + IFSC side by side */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground font-medium">Account Holder Name (Auto-detected)</label>
-                    <Input 
-                      value={profile?.full_name || ""} 
-                      disabled
-                      className="text-sm bg-slate-50 cursor-not-allowed opacity-75 font-semibold text-slate-700"
-                    />
-                  </div>
-                  <div className="space-y-1.5 relative" ref={bankInputRef}>
-                    <label className="text-xs font-semibold text-muted-foreground">Bank Name</label>
-                    <Input 
-                      value={bankNameValue} 
-                      onChange={(e) => handleBankNameChange(e.target.value)} 
-                      onFocus={() => {
-                        if (bankNameValue.trim().length > 0) {
-                          const filtered = popularIndianBanks.filter(b => 
-                            b.toLowerCase().includes(bankNameValue.toLowerCase())
-                          );
-                          setBankSuggestions(filtered);
-                          setShowBankSuggestions(true);
-                        }
-                      }}
-                      placeholder="" 
-                      className="text-sm"
-                    />
-                    {showBankSuggestions && bankSuggestions.length > 0 && (
-                      <div className="absolute z-50 left-0 right-0 top-[100%] mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto py-1">
-                        {bankSuggestions.map((bank, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            className="w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-slate-50 transition-colors text-slate-700"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setBankNameValue(bank);
-                              setBankSuggestions([]);
-                              setShowBankSuggestions(false);
-                            }}
-                          >
-                            {bank}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-muted-foreground">Account Number</label>
                     <Input 
                       value={bankAccNumValue} 
                       onChange={(e) => setBankAccNumValue(e.target.value)} 
-                      placeholder="" 
+                      placeholder="Enter your bank account number" 
                       className="text-sm"
                     />
                   </div>
@@ -793,17 +803,59 @@ const Profile = () => {
                     <Input 
                       value={bankIfscValue} 
                       onChange={(e) => handleIfscChange(e.target.value)} 
-                      placeholder="" 
+                      placeholder="e.g. SBIN0001234" 
                       className="text-sm uppercase"
                       maxLength={11}
                     />
                   </div>
                 </div>
 
+                {/* Branch info inline while editing */}
                 {branchLoading && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground italic px-1">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                    Locating bank branch...
+                  <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span className="font-medium">Looking up branch from IFSC code...</span>
+                  </div>
+                )}
+
+                {!branchLoading && branchInfo && (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-2">
+                    <div className="flex items-center gap-2 mb-3">
+                      <MapPin className="h-4 w-4 text-emerald-600" />
+                      <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Branch Auto-Detected ✓</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {branchInfo.bankName && (
+                        <div>
+                          <p className="text-[10px] text-emerald-600 font-semibold uppercase">Official Bank</p>
+                          <p className="text-sm font-bold text-emerald-900">{branchInfo.bankName}</p>
+                        </div>
+                      )}
+                      {branchInfo.branchName && (
+                        <div>
+                          <p className="text-[10px] text-emerald-600 font-semibold uppercase">Branch</p>
+                          <p className="text-sm font-bold text-emerald-900">{branchInfo.branchName}</p>
+                        </div>
+                      )}
+                      {branchInfo.city && (
+                        <div>
+                          <p className="text-[10px] text-emerald-600 font-semibold uppercase">City</p>
+                          <p className="text-sm font-bold text-emerald-900">{branchInfo.city}</p>
+                        </div>
+                      )}
+                      {branchInfo.state && (
+                        <div>
+                          <p className="text-[10px] text-emerald-600 font-semibold uppercase">State</p>
+                          <p className="text-sm font-bold text-emerald-900">{branchInfo.state}</p>
+                        </div>
+                      )}
+                      {branchInfo.address && (
+                        <div className="col-span-1 md:col-span-2">
+                          <p className="text-[10px] text-emerald-600 font-semibold uppercase">Full Address</p>
+                          <p className="text-sm font-medium text-emerald-800 leading-relaxed">{branchInfo.address}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
