@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { bank_name, bank_account_number, bank_ifsc_code } = req.body || {};
+    const { bank_name, bank_account_number, bank_ifsc_code, bank_account_holder_name } = req.body || {};
 
     if (!bank_name || !bank_account_number || !bank_ifsc_code) {
       return res.status(400).json({ error: 'All bank details are required (bank name, account number, IFSC).' });
@@ -106,21 +106,24 @@ export default async function handler(req, res) {
     const userEmail = profileData?.email || user.email || '';
     const userFullName = profileData?.full_name || '';
     
-    let holderName = 'ACCOUNT HOLDER';
-    const emailLower = userEmail.toLowerCase();
-    
-    if (emailLower.includes('vamshi')) {
-      holderName = 'VAMSHI KRISHNA';
-    } else if (emailLower.includes('shrikar')) {
-      holderName = 'AKARAPU SHRIKAR';
-    } else if (emailLower.includes('karthik')) {
-      holderName = 'METHUKU KARTHIK';
-    } else if (emailLower.includes('narsimharaj')) {
-      holderName = 'K NARSIMHARAJ';
-    } else if (emailLower.includes('anirudh')) {
-      holderName = 'ANIRUDH POODATTHU';
-    } else if (userFullName) {
-      holderName = userFullName.toUpperCase();
+    let holderName = bank_account_holder_name?.trim() || 'ACCOUNT HOLDER';
+    if (holderName === 'ACCOUNT HOLDER' || !bank_account_holder_name) {
+      const emailLower = userEmail.toLowerCase();
+      if (emailLower.includes('vamshi')) {
+        holderName = 'VAMSHI KRISHNA';
+      } else if (emailLower.includes('shrikar')) {
+        holderName = 'AKARAPU SHRIKAR';
+      } else if (emailLower.includes('karthik')) {
+        holderName = 'METHUKU KARTHIK';
+      } else if (emailLower.includes('narsimharaj')) {
+        holderName = 'K NARSIMHARAJ';
+      } else if (emailLower.includes('anirudh')) {
+        holderName = 'ANIRUDH POODATTHU';
+      } else if (userFullName) {
+        holderName = userFullName.toUpperCase();
+      }
+    } else {
+      holderName = holderName.toUpperCase();
     }
 
     // 5. Update profiles table with verified details

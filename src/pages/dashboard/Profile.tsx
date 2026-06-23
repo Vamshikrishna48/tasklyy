@@ -129,12 +129,15 @@ const Profile = () => {
         if (res.ok) {
           const data = await res.json();
           const place = `${data.BRANCH || ""}, ${data.CENTRE || data.CITY || ""}, ${data.STATE || ""}`.trim().replace(/^,\s*|,\s*$/, "");
+          const detectedAddress = (data.ADDRESS && data.ADDRESS.trim().length > 15)
+            ? data.ADDRESS
+            : `${data.BRANCH || ""}, ${data.CENTRE || data.CITY || ""}, ${data.STATE || ""}`.trim().replace(/^,\s*|,\s*$/, "");
           setBranchPlace(place);
           setBranchInfo({
             branchName: data.BRANCH,
             city: data.CENTRE || data.CITY,
             state: data.STATE,
-            address: data.ADDRESS,
+            address: detectedAddress,
             contact: data.CONTACT && data.CONTACT !== "N/A" && data.CONTACT !== "0" ? data.CONTACT : undefined,
             bankName: data.BANK
           });
@@ -164,7 +167,7 @@ const Profile = () => {
       setBankAccNumValue((profile as any).bank_account_number || "");
       const savedIfsc = (profile as any).bank_ifsc_code || "";
       setBankIfscValue(savedIfsc);
-      setBankHolderValue((profile as any).bank_account_holder_name || "");
+      setBankHolderValue((profile as any).bank_account_holder_name || profile.full_name || "");
       if (savedIfsc.trim().length === 11) {
         lookupIfsc(savedIfsc.trim());
       } else {
@@ -236,7 +239,8 @@ const Profile = () => {
           body: JSON.stringify({
             bank_name: bankNameValue.trim(),
             bank_account_number: bankAccNumValue.trim(),
-            bank_ifsc_code: bankIfscValue.trim().toUpperCase()
+            bank_ifsc_code: bankIfscValue.trim().toUpperCase(),
+            bank_account_holder_name: bankHolderValue.trim()
           })
         });
       } catch (fetchErr) {
@@ -266,21 +270,23 @@ const Profile = () => {
         console.log("Using client-side Supabase save fallback...");
         const userEmail = profile.email || "";
         const userFullName = profile.full_name || "";
-        let holderName = 'ACCOUNT HOLDER';
-        const emailLower = userEmail.toLowerCase();
+        let holderName = bankHolderValue.trim().toUpperCase() || 'ACCOUNT HOLDER';
         
-        if (emailLower.includes('vamshi')) {
-          holderName = 'VAMSHI KRISHNA';
-        } else if (emailLower.includes('shrikar')) {
-          holderName = 'AKARAPU SHRIKAR';
-        } else if (emailLower.includes('karthik')) {
-          holderName = 'METHUKU KARTHIK';
-        } else if (emailLower.includes('narsimharaj')) {
-          holderName = 'K NARSIMHARAJ';
-        } else if (emailLower.includes('anirudh')) {
-          holderName = 'ANIRUDH POODATTHU';
-        } else if (userFullName) {
-          holderName = userFullName.toUpperCase();
+        if (holderName === 'ACCOUNT HOLDER' || !bankHolderValue.trim()) {
+          const emailLower = userEmail.toLowerCase();
+          if (emailLower.includes('vamshi')) {
+            holderName = 'VAMSHI KRISHNA';
+          } else if (emailLower.includes('shrikar')) {
+            holderName = 'AKARAPU SHRIKAR';
+          } else if (emailLower.includes('karthik')) {
+            holderName = 'METHUKU KARTHIK';
+          } else if (emailLower.includes('narsimharaj')) {
+            holderName = 'K NARSIMHARAJ';
+          } else if (emailLower.includes('anirudh')) {
+            holderName = 'ANIRUDH POODATTHU';
+          } else if (userFullName) {
+            holderName = userFullName.toUpperCase();
+          }
         }
 
         const { error: updateErr } = await (supabase as any)
@@ -582,13 +588,14 @@ const Profile = () => {
 
             {editingBank ? (
               <div className="space-y-4">
-                {/* Account Holder Name (Read-only auto-fill) */}
+                {/* Account Holder Name (Editable) */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground">Account Holder Name (Auto-filled from Profile)</label>
+                  <label className="text-xs font-semibold text-muted-foreground">Account Holder Name</label>
                   <Input 
-                    value={bankHolderValue || profile.full_name || ""} 
-                    disabled 
-                    className="text-sm bg-slate-50 border-slate-200 text-slate-500 font-semibold"
+                    value={bankHolderValue} 
+                    onChange={(e) => setBankHolderValue(e.target.value)}
+                    placeholder="Enter account holder name"
+                    className="text-sm border-slate-200 font-semibold"
                   />
                 </div>
 
