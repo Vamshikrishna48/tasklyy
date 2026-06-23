@@ -108,6 +108,11 @@ const Profile = () => {
   } | null>(null);
 
   const bankInputRef = useRef<HTMLDivElement>(null);
+  const bankHolderValueRef = useRef(bankHolderValue);
+
+  useEffect(() => {
+    bankHolderValueRef.current = bankHolderValue;
+  }, [bankHolderValue]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -142,17 +147,26 @@ const Profile = () => {
             contact: data.CONTACT && data.CONTACT !== "N/A" && data.CONTACT !== "0" ? data.CONTACT : undefined,
             bankName: data.BANK
           });
+          if (data.BANK) {
+            setBankNameValue(data.BANK);
+          }
         } else {
           console.warn("IFSC API responded with error, using mock fallback");
           const mockInfo = getMockBranchInfo(cleanIfsc);
           setBranchPlace(`${mockInfo.branchName}, ${mockInfo.city}, ${mockInfo.state}`);
           setBranchInfo(mockInfo);
+          if (mockInfo.bankName) {
+            setBankNameValue(mockInfo.bankName);
+          }
         }
       } catch (e) {
         console.warn("IFSC lookup network/CORS error, using mock fallback:", e);
         const mockInfo = getMockBranchInfo(cleanIfsc);
         setBranchPlace(`${mockInfo.branchName}, ${mockInfo.city}, ${mockInfo.state}`);
         setBranchInfo(mockInfo);
+        if (mockInfo.bankName) {
+          setBankNameValue(mockInfo.bankName);
+        }
       } finally {
         setBranchLoading(false);
       }
@@ -206,11 +220,12 @@ const Profile = () => {
     const isAccValid = /^\d{9,18}$/.test(cleanAcc);
     const isIfscValid = /^[A-Z]{4}0[A-Z0-9]{6}$/.test(cleanIfsc);
     
-    // Only run if editing and the fields are different from the saved profile values
-    const isEdited = cleanAcc !== ((profile as any)?.bank_account_number || "") || 
-                     cleanIfsc !== ((profile as any)?.bank_ifsc_code || "");
+    // Run if editing and either the fields changed OR the current name is empty/default
+    const isDifferent = cleanAcc !== ((profile as any)?.bank_account_number || "") || 
+                        cleanIfsc !== ((profile as any)?.bank_ifsc_code || "");
+    const isHolderEmpty = !bankHolderValueRef.current.trim() || bankHolderValueRef.current.trim().toUpperCase() === "ACCOUNT HOLDER";
 
-    if (editingBank && isAccValid && isIfscValid && isEdited) {
+    if (editingBank && isAccValid && isIfscValid && (isDifferent || isHolderEmpty)) {
       const delayDebounceFn = setTimeout(async () => {
         setIsFetchingName(true);
         try {
@@ -250,6 +265,7 @@ const Profile = () => {
           const resolvedFallback = resolveFallbackName();
           if (resolvedFallback) {
             setBankHolderValue(resolvedFallback);
+            toast.success(`Account holder name resolved: ${resolvedFallback} 👤`);
           }
         } finally {
           setIsFetchingName(false);
@@ -275,7 +291,11 @@ const Profile = () => {
   };
 
   const handleIfscChange = (val: string) => {
-    const cleanVal = val.trim().toUpperCase();
+    let cleanVal = val.trim().toUpperCase();
+    // Auto-correct common typo: letter 'O' instead of number '0' at index 4 (5th character)
+    if (cleanVal.length >= 5 && cleanVal[4] === 'O') {
+      cleanVal = cleanVal.substring(0, 4) + '0' + cleanVal.substring(5);
+    }
     setBankIfscValue(cleanVal);
     if (cleanVal.length === 11) {
       lookupIfsc(cleanVal);
