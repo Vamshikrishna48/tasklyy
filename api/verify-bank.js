@@ -155,7 +155,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: 'Bank account verified successfully by backend! ✅'
+      message: 'Bank account verified successfully by backend! ✅',
+      account_holder_name: holderName
     });
 
   } catch (err) {

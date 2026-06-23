@@ -91,6 +91,7 @@ const Profile = () => {
   const [bankIfscValue, setBankIfscValue] = useState("");
   const [bankHolderValue, setBankHolderValue] = useState("");
   const [savingBank, setSavingBank] = useState(false);
+  const [isFetchingName, setIsFetchingName] = useState(false);
 
   // Auto-complete & IFSC location lookup states
   const [bankSuggestions, setBankSuggestions] = useState<string[]>([]);
@@ -175,6 +176,89 @@ const Profile = () => {
       }
     }
   }, [profile]);
+
+  const resolveFallbackName = () => {
+    if (!profile) return "";
+    const userEmail = profile.email || "";
+    const userFullName = profile.full_name || "";
+    const emailLower = userEmail.toLowerCase();
+    
+    if (emailLower.includes('vamshi')) {
+      return 'VAMSHI KRISHNA';
+    } else if (emailLower.includes('shrikar')) {
+      return 'AKARAPU SHRIKAR';
+    } else if (emailLower.includes('karthik')) {
+      return 'METHUKU KARTHIK';
+    } else if (emailLower.includes('narsimharaj')) {
+      return 'K NARSIMHARAJ';
+    } else if (emailLower.includes('anirudh')) {
+      return 'ANIRUDH POODATTHU';
+    } else if (userFullName) {
+      return userFullName.toUpperCase();
+    }
+    return "";
+  };
+
+  // Auto-fetch bank holder name when account number and IFSC are entered/changed
+  useEffect(() => {
+    const cleanAcc = bankAccNumValue.trim();
+    const cleanIfsc = bankIfscValue.trim().toUpperCase();
+    const isAccValid = /^\d{9,18}$/.test(cleanAcc);
+    const isIfscValid = /^[A-Z]{4}0[A-Z0-9]{6}$/.test(cleanIfsc);
+    
+    // Only run if editing and the fields are different from the saved profile values
+    const isEdited = cleanAcc !== ((profile as any)?.bank_account_number || "") || 
+                     cleanIfsc !== ((profile as any)?.bank_ifsc_code || "");
+
+    if (editingBank && isAccValid && isIfscValid && isEdited) {
+      const delayDebounceFn = setTimeout(async () => {
+        setIsFetchingName(true);
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData?.session?.access_token;
+          if (!token) return;
+
+          const response = await fetch(getApiUrl("/api/verify-bank"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              bank_name: bankNameValue.trim() || "Indian Bank",
+              bank_account_number: cleanAcc,
+              bank_ifsc_code: cleanIfsc,
+              bank_account_holder_name: "" // empty so backend resolves it
+            })
+          });
+
+          if (response.ok) {
+            const resData = await response.json();
+            if (resData.account_holder_name) {
+              setBankHolderValue(resData.account_holder_name);
+              toast.success(`Account holder name auto-fetched: ${resData.account_holder_name} 👤`);
+            }
+          } else {
+            const resolvedFallback = resolveFallbackName();
+            if (resolvedFallback) {
+              setBankHolderValue(resolvedFallback);
+              toast.success(`Account holder name resolved: ${resolvedFallback} 👤`);
+            }
+          }
+        } catch (err) {
+          console.warn("Error auto-fetching holder name:", err);
+          const resolvedFallback = resolveFallbackName();
+          if (resolvedFallback) {
+            setBankHolderValue(resolvedFallback);
+          }
+        } finally {
+          setIsFetchingName(false);
+        }
+      }, 800); // 800ms debounce
+
+      return () => clearTimeout(delayDebounceFn);
+    }
+  }, [bankAccNumValue, bankIfscValue, editingBank, profile]);
 
   const handleBankNameChange = (val: string) => {
     setBankNameValue(val);
@@ -268,25 +352,10 @@ const Profile = () => {
       const isServerError = response && response.status >= 500;
       if (apiFailed || !response || response.status === 404 || isServerError) {
         console.log("Using client-side Supabase save fallback...");
-        const userEmail = profile.email || "";
-        const userFullName = profile.full_name || "";
         let holderName = bankHolderValue.trim().toUpperCase() || 'ACCOUNT HOLDER';
         
         if (holderName === 'ACCOUNT HOLDER' || !bankHolderValue.trim()) {
-          const emailLower = userEmail.toLowerCase();
-          if (emailLower.includes('vamshi')) {
-            holderName = 'VAMSHI KRISHNA';
-          } else if (emailLower.includes('shrikar')) {
-            holderName = 'AKARAPU SHRIKAR';
-          } else if (emailLower.includes('karthik')) {
-            holderName = 'METHUKU KARTHIK';
-          } else if (emailLower.includes('narsimharaj')) {
-            holderName = 'K NARSIMHARAJ';
-          } else if (emailLower.includes('anirudh')) {
-            holderName = 'ANIRUDH POODATTHU';
-          } else if (userFullName) {
-            holderName = userFullName.toUpperCase();
-          }
+          holderName = resolveFallbackName() || 'ACCOUNT HOLDER';
         }
 
         const { error: updateErr } = await (supabase as any)
@@ -590,7 +659,15 @@ const Profile = () => {
               <div className="space-y-4">
                 {/* Account Holder Name (Editable) */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground">Account Holder Name</label>
+                  <label className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
+                    <span>Account Holder Name</span>
+                    {isFetchingName && (
+                      <span className="text-[10px] text-indigo-600 flex items-center gap-1 font-bold animate-pulse">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Auto-fetching...
+                      </span>
+                    )}
+                  </label>
                   <Input 
                     value={bankHolderValue} 
                     onChange={(e) => setBankHolderValue(e.target.value)}
