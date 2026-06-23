@@ -32,7 +32,7 @@ export const useJobs = () => {
     }
   };
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     const { data, error } = await (supabase as any)
       .from('jobs')
       .select('*, poster:profiles!jobs_poster_id_fkey(full_name, avatar_url)')
@@ -43,7 +43,7 @@ export const useJobs = () => {
       return [];
     }
     return data || [];
-  };
+  }, []);
 
   const fetchJobById = async (id: string) => {
     const { data, error } = await (supabase as any)
@@ -60,7 +60,7 @@ export const useJobs = () => {
     return data;
   };
 
-  const fetchMyJobs = async (userId: string) => {
+  const fetchMyJobs = useCallback(async (userId: string) => {
     const { data: posted, error: postedError } = await (supabase as any)
       .from('jobs')
       .select('*')
@@ -75,7 +75,7 @@ export const useJobs = () => {
       posted: posted || [],
       working: working || []
     };
-  };
+  }, []);
 
   const postJob = async (jobData: any, userId: string) => {
     setLoading(true);

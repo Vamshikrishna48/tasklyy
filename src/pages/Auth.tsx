@@ -37,7 +37,9 @@ const Auth = () => {
 
   // Helper to generate a secure random 6-digit code
   const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log("[Tasskly Dev Mode] OTP Verification Code:", code);
+    return code;
   };
 
   // Helper to trigger custom OTP delivery (SMTP / Resend)
@@ -75,11 +77,17 @@ const Auth = () => {
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && view !== "reset") {
+      const isOtpVerified = safeLocalStorage.getItem("tasskly_otp_verified") === "true";
+      if (session && isOtpVerified) {
         navigate("/dashboard", { replace: true });
+      } else if (session && !isOtpVerified) {
+        setView("otp_verify");
+        if (session.user?.email) {
+          setEmail(session.user.email);
+        }
       }
     });
-  }, [navigate, view]);
+  }, [navigate]);
 
   const handleResendCode = async () => {
     if (!email) {
@@ -131,9 +139,6 @@ const Auth = () => {
         const isOtpPending = data.user?.user_metadata?.otp_verified === false;
         
         if (isOtpPending) {
-          // Immediately sign them out so they cannot access the dashboard
-          await supabase.auth.signOut();
-          
           // Generate a new OTP code for them
           const code = generateOTP();
           setGeneratedOtp(code);
@@ -202,9 +207,6 @@ const Auth = () => {
           throw signUpErr;
         }
 
-        // Immediately sign them out so they are not authenticated yet (must verify OTP)
-        await supabase.auth.signOut();
-
         // Generate custom OTP code for signup
         const code = generateOTP();
         setGeneratedOtp(code);
@@ -230,18 +232,21 @@ const Auth = () => {
           throw new Error("Invalid verification code. Please check your inbox or developer console (F12) and try again.");
         }
 
-        // OTP matches! Perform real login in Supabase
-        const targetPassword = tempPassword || password;
-        if (!targetPassword) {
-          throw new Error("Temporary login session expired. Please sign in again.");
+        // OTP matches! Check if we are already signed in
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession) {
+          const targetPassword = tempPassword || password;
+          if (!targetPassword) {
+            throw new Error("Temporary login session expired. Please sign in again.");
+          }
+
+          const { error: finalSignInErr } = await supabase.auth.signInWithPassword({
+            email: storedEmail,
+            password: targetPassword
+          });
+
+          if (finalSignInErr) throw finalSignInErr;
         }
-
-        const { error: finalSignInErr } = await supabase.auth.signInWithPassword({
-          email: storedEmail,
-          password: targetPassword
-        });
-
-        if (finalSignInErr) throw finalSignInErr;
 
         // Set metadata otp_verified to true upon successful OTP match
         const { error: updateMetaErr } = await supabase.auth.updateUser({
@@ -305,19 +310,18 @@ const Auth = () => {
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         >
           <motion.div
-            className="flex flex-col items-center justify-center animate-in fade-in"
-            style={{ gap: 0 }}
+            className="flex flex-col items-center justify-center animate-in fade-in gap-3"
             whileHover={{ scale: 1.05 }}
           >
             <img
               src="/taskly-logo.png"
               alt="Tasskly logo"
-              style={{ width: "220px", height: "220px" }}
-              className="object-contain shrink-0 mb-0"
+              style={{ width: "70px", height: "70px" }}
+              className="object-contain shrink-0"
             />
             <span
               className="text-gray-900 font-bold tracking-tight animate-in fade-in"
-              style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2", marginTop: "-25px" }}
+              style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2" }}
             >
               Tasskly
             </span>
@@ -338,10 +342,12 @@ const Auth = () => {
             {!(view === "signin" || view === "signup") && (
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   setView("signin");
                   setError("");
                   setInfoMessage("");
+                  // Clean up session if they click back to login
+                  await supabase.auth.signOut();
                 }}
                 className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-wider"
               >
@@ -624,13 +630,13 @@ const Auth = () => {
             <div className="relative z-10 text-center space-y-4 flex flex-col items-center">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 12, delay: 0.1 }}
-                className="mx-auto flex flex-col items-center justify-center" style={{ gap: 0 }}>
+                className="mx-auto flex flex-col items-center justify-center gap-3" >
                 <img src="/taskly-logo.png" alt="Tasskly logo"
-                  style={{ width: "220px", height: "220px" }}
-                  className="object-contain shrink-0 mb-0" />
+                  style={{ width: "70px", height: "70px" }}
+                  className="object-contain shrink-0" />
                 <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                   className="text-gray-900 font-bold tracking-tight animate-in fade-in"
-                  style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2", marginTop: "-25px" }}>Tasskly</motion.h1>
+                  style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2" }}>Tasskly</motion.h1>
               </motion.div>
               <div>
                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}

@@ -7,6 +7,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -69,7 +70,7 @@ const Earnings = () => {
         return;
       }
 
-      const response = await fetch("/api/request-withdrawal", {
+      const response = await fetch(getApiUrl("/api/request-withdrawal"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

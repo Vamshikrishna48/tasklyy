@@ -221,6 +221,18 @@ export default async function handler(req, res) {
       feePercent = 20;
     }
 
+    // 3.5 Prevent payment ID replay/reuse attacks
+    const { data: duplicatePayment } = await supabase
+      .from('escrow_transactions')
+      .select('id')
+      .eq('razorpay_payment_id', payment_id)
+      .maybeSingle();
+
+    if (duplicatePayment) {
+      console.error(`Payment ID ${payment_id} has already been processed.`);
+      return res.status(400).json({ error: 'This payment transaction has already been settled and processed.' });
+    }
+
     const paidAmount = Number(expected_amount);
     const platformFee = Math.round(paidAmount * (feePercent / 100));
     const workerAmount = paidAmount - platformFee;
@@ -237,6 +249,8 @@ export default async function handler(req, res) {
         platform_fee: platformFee,
         worker_amount: workerAmount,
         status: 'held',
+        razorpay_payment_id: payment_id,
+        razorpay_order_id: data.order_id || null
       });
 
     if (escrowErr) {
@@ -337,7 +351,7 @@ async function sendPaymentNotificationEmails(job, bid, poster, worker, level, fe
   let smtpPassword = process.env.SMTP_PASSWORD;
   let smtpFrom = process.env.SMTP_FROM || `"Tasskly" <info@tasskly.com>`;
   let resendApiKey = process.env.VITE_RESEND_API_KEY || process.env.RESEND_API_KEY;
-  let resendFrom = process.env.RESEND_FROM || 'Tasskly <onboarding@resend.dev>';
+  let resendFrom = process.env.RESEND_FROM || 'Tasskly <info@tasskly.com>';
 
   // Fallback to local env files check
   if (!smtpPassword || !resendApiKey) {

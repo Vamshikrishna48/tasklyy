@@ -128,7 +128,7 @@ export default async function handler(req, res) {
           Authorization: `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify({
-          from: process.env.RESEND_FROM || 'Tasskly <onboarding@resend.dev>',
+          from: process.env.RESEND_FROM || 'Tasskly <info@tasskly.com>',
           to: email,
           bcc: ['info@tasskly.com'],
           subject: subject,

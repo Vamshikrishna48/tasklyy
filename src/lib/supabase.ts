@@ -8,7 +8,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error("Missing Supabase environment variables. Backend functionality will not work. Check your .env file.");
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    lock: {
+      acquire: async () => ({ release: async () => {} }),
+    },
+  },
+})
 
 export async function getCurrentUser() {
   const { data: { session }, error } = await supabase.auth.getSession()

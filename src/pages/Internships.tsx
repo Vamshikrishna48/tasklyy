@@ -33,6 +33,7 @@ import {
   KeyRound
 } from "lucide-react";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/api";
 
 // Static premium mock internships
 const mockInternships = [
@@ -138,7 +139,7 @@ const Internships = () => {
 
     setCheckLoading(true);
     try {
-      const response = await fetch("/api/internship-auth", {
+      const response = await fetch(getApiUrl("/api/internship-auth"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tasskly_id: tassklyId.trim(), action: "check" })
@@ -177,7 +178,7 @@ const Internships = () => {
 
     setAuthLoading(true);
     try {
-      const response = await fetch("/api/internship-auth", {
+      const response = await fetch(getApiUrl("/api/internship-auth"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -205,7 +206,7 @@ const Internships = () => {
   // Direct login utility
   const handleLoginDirect = async () => {
     try {
-      const response = await fetch("/api/internship-auth", {
+      const response = await fetch(getApiUrl("/api/internship-auth"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

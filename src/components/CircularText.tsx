@@ -50,7 +50,8 @@ const CircularText = ({
       scale: 1,
       transition: getTransition(spinDuration, start)
     });
-  }, [spinDuration, text, onHover, controls, rotation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleHoverStart = () => {
     const start = rotation.get();

@@ -361,17 +361,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.id, profile?.full_name, supabaseFetchMyJobs]);
 
-  // On auth ready, fetch real jobs from Supabase and merge with mock
+  // Keep latest function references in refs to prevent Realtime channel resubscription churn
+  const latestRefreshJobs = React.useRef(refreshJobs);
+  const latestUpdateMyJobs = React.useRef(updateMyJobs);
+
+  useEffect(() => {
+    latestRefreshJobs.current = refreshJobs;
+  }, [refreshJobs]);
+
+  useEffect(() => {
+    latestUpdateMyJobs.current = updateMyJobs;
+  }, [updateMyJobs]);
+
+  // On auth ready, fetch real jobs from Supabase and subscribe to Realtime updates
   useEffect(() => {
     if (!authLoading) {
-      refreshJobs();
-      updateMyJobs();
+      latestRefreshJobs.current();
+      latestUpdateMyJobs.current();
 
       // Real-time subscription to keep dashboard updated across accounts
-      const channel = supabase.channel('public:jobs')
+      const channel = supabase.channel('realtime-jobs-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, () => {
-          refreshJobs();
-          updateMyJobs();
+          latestRefreshJobs.current();
+          latestUpdateMyJobs.current();
         })
         .subscribe();
 
@@ -379,7 +391,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         supabase.removeChannel(channel);
       };
     }
-  }, [authLoading, refreshJobs, updateMyJobs]);
+  }, [authLoading]);
 
   const addJob = useCallback(async (jobData: Omit<Job, "id" | "postedBy" | "bidsCount" | "status" | "createdAt">) => {
     // Ensure user is authenticated

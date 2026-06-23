@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -47,6 +47,7 @@ const NotificationGate = ({ children }: { children: React.ReactNode }) => {
 const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [progress, setProgress] = useState(0);
   const [currentText, setCurrentText] = useState(0);
+  const [dimensions, setDimensions] = useState({ size: 440, radius: 176 });
 
   const loadingTexts = [
     "Finding assignments for you...",
@@ -54,6 +55,23 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
     "Loading your marketplace...",
     "Almost ready...",
   ];
+
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 640;
+      setDimensions((prev) => {
+        const nextSize = isMobile ? 310 : 440;
+        const nextRadius = isMobile ? 122 : 176;
+        if (prev.size === nextSize && prev.radius === nextRadius) {
+          return prev;
+        }
+        return { size: nextSize, radius: nextRadius };
+      });
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const duration = 1500; // 1.5 seconds total loading
@@ -111,21 +129,25 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }}
-          className="relative flex items-center justify-center mb-6 scale-[0.75] xs:scale-[0.85] sm:scale-100 origin-center"
+          className="relative flex items-center justify-center mb-6 origin-center"
         >
           {/* Soft glow ring */}
           <motion.div
             animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.1, 0.3] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute w-[450px] h-[450px] rounded-full bg-gradient-to-br from-violet-300/30 to-emerald-300/30 blur-3xl pointer-events-none"
+            className="absolute rounded-full bg-gradient-to-br from-violet-300/30 to-emerald-300/30 blur-3xl pointer-events-none"
+            style={{
+              width: `${dimensions.size + 10}px`,
+              height: `${dimensions.size + 10}px`,
+            }}
           />
 
           <CircularText
             text="TASSKLY • INDIA'S STUDENT MARKETPLACE • "
             spinDuration={20}
             onHover="speedUp"
-            size={440}
-            radius={176}
+            size={dimensions.size}
+            radius={dimensions.radius}
           >
             {/* Brand — bigger logo + text, dark color for light bg */}
             <div className="flex flex-col items-center justify-center">
@@ -133,10 +155,14 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
                  <img
                    src="/taskly-logo.png"
                    alt="Tasskly Logo"
-                   style={{ width: '100px', height: '100px', animationDuration: '4s' }}
+                   style={{
+                     width: dimensions.size === 310 ? '75px' : '100px',
+                     height: dimensions.size === 310 ? '75px' : '100px',
+                     animationDuration: '4s'
+                   }}
                    className="object-contain animate-pulse shrink-0 mb-2"
                  />
-                 <h1 className="text-gray-900 font-bold tracking-tight animate-in fade-in" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: '36px', lineHeight: '1.2', marginTop: '0px' }}>
+                 <h1 className="text-gray-900 font-bold tracking-tight animate-in fade-in" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: dimensions.size === 310 ? '26px' : '36px', lineHeight: '1.2', marginTop: '0px' }}>
                    Tasskly
                  </h1>
                </div>
@@ -219,7 +245,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
+
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -231,7 +261,7 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               {showSplash ? (
-                <SplashScreen onComplete={() => setShowSplash(false)} />
+                <SplashScreen onComplete={handleSplashComplete} />
               ) : (
                 <Routes>
                   <Route path="/auth" element={<Auth />} />

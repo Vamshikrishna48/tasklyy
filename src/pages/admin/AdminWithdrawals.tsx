@@ -33,6 +33,7 @@ import {
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/api";
 
 interface Profile {
   full_name: string | null;
@@ -104,7 +105,7 @@ const AdminWithdrawals = () => {
         return;
       }
 
-      const response = await fetch("/api/process-withdrawal", {
+      const response = await fetch(getApiUrl("/api/process-withdrawal"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
