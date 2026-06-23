@@ -10,8 +10,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    lock: {
-      acquire: async () => ({ release: async () => {} }),
+    lock: async (name: any, acquireTimeout: any, fn: any) => {
+      return await fn();
     },
   },
 })
