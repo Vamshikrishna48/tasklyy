@@ -2,7 +2,7 @@ import { useApp } from "@/context/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Briefcase, DollarSign, TrendingUp, ArrowRight, ShieldCheck } from "lucide-react";
+import { Briefcase, IndianRupee, TrendingUp, ArrowRight, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -28,7 +28,7 @@ const DashboardOverview = () => {
     : [];
 
   const stats = [
-    { label: "My Balance", value: `₹${profile?.wallet_balance ?? 0}`, icon: DollarSign, color: "text-primary" },
+    { label: "My Balance", value: `₹${profile?.wallet_balance ?? 0}`, icon: IndianRupee, color: "text-primary" },
     { label: "Live Jobs", value: openJobs, icon: Briefcase, color: "text-accent" },
     { label: "Held in Escrow", value: `₹${inEscrow}`, icon: ShieldCheck, color: "text-primary" },
     { label: "Total Earned", value: `₹${totalEarned}`, icon: TrendingUp, color: "text-primary" },
@@ -125,7 +125,7 @@ const DashboardOverview = () => {
         </Link>
         <Link to="/dashboard/earnings">
           <Button variant="outline" className="w-full gap-2">
-            <DollarSign className="h-4 w-4" /> View Earnings
+            <IndianRupee className="h-4 w-4" /> View Earnings
           </Button>
         </Link>
       </div>

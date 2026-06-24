@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Lock, Users, CheckCircle } from "lucide-react";
+import { IndianRupee, Lock, Users, CheckCircle } from "lucide-react";
 
 interface AdminStats {
   platform_balance: number;
@@ -42,7 +42,7 @@ const AdminOverview = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="shadow-card">
           <CardContent className="p-4 space-y-1">
-            <DollarSign className="h-5 w-5 text-primary mb-1" />
+            <IndianRupee className="h-5 w-5 text-primary mb-1" />
             <div className="font-display text-2xl font-bold text-foreground">{loading ? '...' : fmt(stats?.platform_balance ?? 0)}</div>
             <div className="text-xs text-muted-foreground">Platform / Admin Balance</div>
           </CardContent>

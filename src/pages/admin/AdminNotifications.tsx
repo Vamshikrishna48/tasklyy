@@ -1,6 +1,6 @@
 import { mockNotifications } from "@/hooks/useAdmin";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bell, Clock, User, DollarSign, Package, AlertTriangle, CheckCircle } from "lucide-react";
+import { Bell, Clock, User, IndianRupee, Package, AlertTriangle, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const AdminNotifications = () => {
@@ -37,7 +37,7 @@ const AdminNotifications = () => {
                 }`}>
                   {n.type === 'bid' && <User className="h-6 w-6" />}
                   {n.type === 'acceptance' && <CheckCircle className="h-6 w-6" />}
-                  {n.type === 'payment' && <DollarSign className="h-6 w-6" />}
+                  {n.type === 'payment' && <IndianRupee className="h-6 w-6" />}
                   {n.type === 'timeout' && <AlertTriangle className="h-6 w-6" />}
                   {n.type === 'work_submitted' && <Package className="h-6 w-6" />}
                 </div>

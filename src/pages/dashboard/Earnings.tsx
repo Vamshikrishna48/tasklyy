@@ -1,7 +1,7 @@
 import { useApp } from "@/context/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, ArrowDownLeft, ArrowUpRight, Lock, Landmark, Loader2 } from "lucide-react";
+import { IndianRupee, TrendingUp, ArrowDownLeft, ArrowUpRight, Lock, Landmark, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { useState, useEffect, useCallback } from "react";
@@ -120,7 +120,7 @@ const Earnings = () => {
     : [];
 
   const stats = [
-    { label: "Available Balance", value: `₹${balance}`, icon: DollarSign, color: "text-primary", desc: "Ready to withdraw" },
+    { label: "Available Balance", value: `₹${balance}`, icon: IndianRupee, color: "text-primary", desc: "Ready to withdraw" },
     { label: "Total Earned", value: `₹${totalEarned}`, icon: TrendingUp, color: "text-primary", desc: "All time" },
     { label: "Total Spent", value: `₹${totalSpent}`, icon: ArrowUpRight, color: "text-accent", desc: "On posted jobs" },
     { label: "In Escrow", value: `₹${inEscrow}`, icon: Lock, color: "text-muted-foreground", desc: "Pending completion" },

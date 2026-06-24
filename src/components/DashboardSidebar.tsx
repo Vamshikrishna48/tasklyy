@@ -6,7 +6,7 @@ import {
   LayoutDashboard,
   Briefcase,
   Gavel,
-  DollarSign,
+  IndianRupee,
   Settings,
   ArrowLeft,
   FolderOutput,
@@ -30,13 +30,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
-
+ 
 const baseMenuItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "My Jobs", url: "/dashboard/jobs", icon: Briefcase },
   { title: "Submitted Work", url: "/dashboard/submitted", icon: Upload },
   { title: "Portfolio", url: "/dashboard/portfolio", icon: FolderOutput },
-  { title: "Earnings", url: "/dashboard/earnings", icon: DollarSign },
+  { title: "Earnings", url: "/dashboard/earnings", icon: IndianRupee },
   { title: "My Level", url: "/dashboard/levels", icon: TrendingUp },
   { title: "Your Information", url: "/dashboard/profile", icon: UserCircle },
   { title: "Customer Service", url: "/dashboard/support", icon: Headphones },
