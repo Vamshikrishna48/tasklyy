@@ -127,7 +127,13 @@ export default async function handler(req, res) {
         "43616964707": "VAMSHI KRISHNA"
       };
       
-      if (mockAccounts[cleanAccNum]) {
+      if (cleanAccNum.endsWith("0476")) {
+        holderName = "SAMBU VIVEK CHAITANYA";
+      } else if (cleanAccNum.endsWith("950") || cleanAccNum === "39948935950") {
+        holderName = "KUCHURU SIDDARTHA REDDY";
+      } else if (cleanAccNum.endsWith("019") || cleanAccNum.endsWith("707") || cleanAccNum === "50100850887019" || cleanAccNum === "43616964707") {
+        holderName = "VAMSHI KRISHNA";
+      } else if (mockAccounts[cleanAccNum]) {
         holderName = mockAccounts[cleanAccNum];
       } else {
         const emailLower = userEmail.toLowerCase();
@@ -141,6 +147,8 @@ export default async function handler(req, res) {
           holderName = 'K NARSIMHARAJ';
         } else if (emailLower.includes('anirudh')) {
           holderName = 'ANIRUDH POODATTHU';
+        } else if (emailLower.includes('vivek')) {
+          holderName = 'SAMBU VIVEK CHAITANYA';
         } else if (userFullName) {
           holderName = userFullName.toUpperCase();
         } else {

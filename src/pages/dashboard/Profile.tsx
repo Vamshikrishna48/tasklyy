@@ -226,6 +226,16 @@ const Profile = () => {
       "43616964707": "VAMSHI KRISHNA"
     };
 
+    if (cleanAcc.endsWith("0476")) {
+      return "SAMBU VIVEK CHAITANYA";
+    }
+    if (cleanAcc.endsWith("950") || cleanAcc === "39948935950") {
+      return "KUCHURU SIDDARTHA REDDY";
+    }
+    if (cleanAcc.endsWith("019") || cleanAcc.endsWith("707") || cleanAcc === "50100850887019" || cleanAcc === "43616964707") {
+      return "VAMSHI KRISHNA";
+    }
+
     if (mockAccounts[cleanAcc]) {
       return mockAccounts[cleanAcc];
     }
@@ -245,6 +255,8 @@ const Profile = () => {
       return 'K NARSIMHARAJ';
     } else if (emailLower.includes('anirudh')) {
       return 'ANIRUDH POODATTHU';
+    } else if (emailLower.includes('vivek')) {
+      return 'SAMBU VIVEK CHAITANYA';
     } else if (userFullName) {
       return userFullName.toUpperCase();
     }
