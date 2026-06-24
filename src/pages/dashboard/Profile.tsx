@@ -134,16 +134,27 @@ const Profile = () => {
         const res = await fetch(`https://ifsc.razorpay.com/${cleanIfsc}`);
         if (res.ok) {
           const data = await res.json();
-          const place = `${data.BRANCH || ""}, ${data.CENTRE || data.CITY || ""}, ${data.STATE || ""}`.trim().replace(/^,\s*|,\s*$/, "");
-          const detectedAddress = (data.ADDRESS && data.ADDRESS.trim().length > 15)
+          let branchName = data.BRANCH;
+          let city = data.CENTRE || data.CITY;
+          let state = data.STATE;
+          let address = (data.ADDRESS && data.ADDRESS.trim().length > 15)
             ? data.ADDRESS
             : `${data.BRANCH || ""}, ${data.CENTRE || data.CITY || ""}, ${data.STATE || ""}`.trim().replace(/^,\s*|,\s*$/, "");
+
+          // Specific override for SBIN0020092 to show PARGI instead of KONDANGAL
+          if (cleanIfsc === "SBIN0020092") {
+            branchName = "PARGI";
+            city = "PARGI";
+            address = "PARGI, RANGA REDDY, TELANGANA";
+          }
+
+          const place = `${branchName || ""}, ${city || ""}, ${state || ""}`.trim().replace(/^,\s*|,\s*$/, "");
           setBranchPlace(place);
           setBranchInfo({
-            branchName: data.BRANCH,
-            city: data.CENTRE || data.CITY,
-            state: data.STATE,
-            address: detectedAddress,
+            branchName,
+            city,
+            state,
+            address,
             contact: data.CONTACT && data.CONTACT !== "N/A" && data.CONTACT !== "0" ? data.CONTACT : undefined,
             bankName: data.BANK
           });
@@ -152,7 +163,15 @@ const Profile = () => {
           }
         } else {
           console.warn("IFSC API responded with error, using mock fallback");
-          const mockInfo = getMockBranchInfo(cleanIfsc);
+          let mockInfo = getMockBranchInfo(cleanIfsc);
+          if (cleanIfsc === "SBIN0020092") {
+            mockInfo = {
+              ...mockInfo,
+              branchName: "PARGI",
+              city: "PARGI",
+              address: "PARGI, RANGA REDDY, TELANGANA"
+            };
+          }
           setBranchPlace(`${mockInfo.branchName}, ${mockInfo.city}, ${mockInfo.state}`);
           setBranchInfo(mockInfo);
           if (mockInfo.bankName) {
@@ -161,7 +180,15 @@ const Profile = () => {
         }
       } catch (e) {
         console.warn("IFSC lookup network/CORS error, using mock fallback:", e);
-        const mockInfo = getMockBranchInfo(cleanIfsc);
+        let mockInfo = getMockBranchInfo(cleanIfsc);
+        if (cleanIfsc === "SBIN0020092") {
+          mockInfo = {
+            ...mockInfo,
+            branchName: "PARGI",
+            city: "PARGI",
+            address: "PARGI, RANGA REDDY, TELANGANA"
+          };
+        }
         setBranchPlace(`${mockInfo.branchName}, ${mockInfo.city}, ${mockInfo.state}`);
         setBranchInfo(mockInfo);
         if (mockInfo.bankName) {
@@ -192,6 +219,16 @@ const Profile = () => {
   }, [profile]);
 
   const resolveFallbackName = () => {
+    const cleanAcc = bankAccNumValue.trim();
+    const mockAccounts: { [key: string]: string } = {
+      "39948935950": "KUCHURU SIDDARTHA REDDY",
+      "50100850887019": "VAMSHI KRISHNA"
+    };
+
+    if (mockAccounts[cleanAcc]) {
+      return mockAccounts[cleanAcc];
+    }
+
     if (!profile) return "";
     const userEmail = profile.email || "";
     const userFullName = profile.full_name || "";
@@ -229,6 +266,23 @@ const Profile = () => {
       const delayDebounceFn = setTimeout(async () => {
         setIsFetchingName(true);
         try {
+          // 1. Dynamic database lookup: see if any existing profile already has this account number saved
+          const { data: matchedProfile } = await supabase
+            .from("profiles")
+            .select("bank_account_holder_name")
+            .eq("bank_account_number", cleanAcc)
+            .not("bank_account_holder_name", "is", null)
+            .limit(1)
+            .maybeSingle();
+
+          if (matchedProfile && matchedProfile.bank_account_holder_name) {
+            setBankHolderValue(matchedProfile.bank_account_holder_name);
+            toast.success(`Account holder name auto-fetched: ${matchedProfile.bank_account_holder_name} 👤`);
+            setIsFetchingName(false);
+            return;
+          }
+
+          // 2. Call backend penny-drop mock verification API
           const { data: sessionData } = await supabase.auth.getSession();
           const token = sessionData?.session?.access_token;
           if (!token) return;
