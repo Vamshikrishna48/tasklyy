@@ -123,7 +123,8 @@ export default async function handler(req, res) {
       // Check hardcoded test accounts
       const mockAccounts = {
         "39948935950": "KUCHURU SIDDARTHA REDDY",
-        "50100850887019": "VAMSHI KRISHNA"
+        "50100850887019": "VAMSHI KRISHNA",
+        "43616964707": "VAMSHI KRISHNA"
       };
       
       if (mockAccounts[cleanAccNum]) {

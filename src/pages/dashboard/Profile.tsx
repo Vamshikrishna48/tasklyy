@@ -222,7 +222,8 @@ const Profile = () => {
     const cleanAcc = bankAccNumValue.trim();
     const mockAccounts: { [key: string]: string } = {
       "39948935950": "KUCHURU SIDDARTHA REDDY",
-      "50100850887019": "VAMSHI KRISHNA"
+      "50100850887019": "VAMSHI KRISHNA",
+      "43616964707": "VAMSHI KRISHNA"
     };
 
     if (mockAccounts[cleanAcc]) {
