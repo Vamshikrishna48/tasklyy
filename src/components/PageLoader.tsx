@@ -42,12 +42,14 @@ const PageLoader = () => {
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="flex flex-col items-center justify-center gap-3 mt-8 mb-8 z-10"
           >
-            <img
-              src="/taskly-logo.png"
-              alt="Tasskly logo"
-              style={{ width: "130px", height: "130px" }}
-              className="object-contain"
-            />
+            <div className="w-32 h-32 rounded-full bg-white shadow-md flex items-center justify-center p-3">
+              <img
+                src="/taskly-logo.png"
+                alt="Tasskly logo"
+                style={{ width: "100px", height: "100px" }}
+                className="object-contain"
+              />
+            </div>
             <span className="text-gray-700 font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "36px", lineHeight: "1.2" }}>
               Tasskly
             </span>
