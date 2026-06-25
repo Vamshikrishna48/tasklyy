@@ -4,11 +4,11 @@ const config: CapacitorConfig = {
   appId: 'com.tasskly.app',
   appName: 'Tasskly',
   webDir: 'dist',
-  server: {
+  /* server: {
     androidScheme: 'https',
     url: 'http://192.168.1.109:8080',
     cleartext: true
-  },
+  }, */
   plugins: {
     SplashScreen: {
       launchShowDuration: 0,
