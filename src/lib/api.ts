@@ -7,7 +7,7 @@ import { Capacitor } from '@capacitor/core';
 
 export const getApiUrl = (path: string): string => {
   if (Capacitor.isNativePlatform()) {
-    return `https://tasskly.com${path}`;
+    return `https://www.tasskly.com${path}`;
   }
   if (typeof window !== "undefined") {
     const isMobileContainer = 
@@ -17,7 +17,7 @@ export const getApiUrl = (path: string): string => {
       window.location.hostname === "";
       
     if (isMobileContainer) {
-      return `https://tasskly.com${path}`;
+      return `https://www.tasskly.com${path}`;
     }
   }
   return path;
