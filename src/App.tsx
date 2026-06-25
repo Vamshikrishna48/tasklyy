@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -152,18 +154,18 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
             {/* Brand — bigger logo + text, dark color for light bg */}
             <div className="flex flex-col items-center justify-center">
                <div className="flex flex-col items-center justify-center" style={{ gap: 0 }}>
-                 <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 p-2">
-                   <img
-                     src="/taskly-logo.png"
-                     alt="Tasskly Logo"
-                     style={{
-                       width: dimensions.size === 310 ? '60px' : '80px',
-                       height: dimensions.size === 310 ? '60px' : '80px',
-                       animationDuration: '4s'
-                     }}
-                     className="object-contain animate-pulse shrink-0"
-                   />
-                 </div>
+                  <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center mb-2">
+                    <img
+                      src="/taskly-logo.png"
+                      alt="Tasskly Logo"
+                      style={{
+                        width: dimensions.size === 310 ? '60px' : '80px',
+                        height: dimensions.size === 310 ? '60px' : '80px',
+                        animationDuration: '4s'
+                      }}
+                      className="object-contain animate-pulse shrink-0"
+                    />
+                  </div>
                  <h1 className="text-gray-900 font-bold tracking-tight animate-in fade-in" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: dimensions.size === 310 ? '26px' : '36px', lineHeight: '1.2', marginTop: '0px' }}>
                    Tasskly
                  </h1>
@@ -248,6 +250,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const setupStatusBar = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await StatusBar.setOverlaysWebView({ overlay: false });
+          await StatusBar.setBackgroundColor({ color: '#ffffff' });
+          await StatusBar.setStyle({ style: Style.Light });
+        } catch (e) {
+          console.warn("StatusBar setup failed:", e);
+        }
+      }
+    };
+    setupStatusBar();
+  }, []);
 
   const handleSplashComplete = useCallback(() => {
     setShowSplash(false);
