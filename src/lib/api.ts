@@ -3,7 +3,12 @@
  * Resolves absolute production URL when running on mobile devices (Capacitor/localhost)
  * to prevent relative route connection drops.
  */
+import { Capacitor } from '@capacitor/core';
+
 export const getApiUrl = (path: string): string => {
+  if (Capacitor.isNativePlatform()) {
+    return `https://tasskly.com${path}`;
+  }
   if (typeof window !== "undefined") {
     const isMobileContainer = 
       window.location.hostname === "localhost" || 
