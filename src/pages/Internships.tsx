@@ -323,7 +323,7 @@ const Internships = () => {
       </div>
 
       {/* Back to Home Button */}
-      <div className={`absolute left-4 z-20 ${Capacitor.isNativePlatform() ? 'top-10' : 'top-4'}`}>
+      <div className="absolute top-4 left-4 z-20">
         <Link to="/">
           <Button variant="ghost" size="sm" className="gap-2 text-gray-500 hover:text-gray-800 hover:bg-white/60">
             <ArrowLeft className="h-4 w-4" />
@@ -333,7 +333,7 @@ const Internships = () => {
       </div>
 
       {/* Main Container */}
-      <div className={`relative z-10 w-full max-w-6xl px-4 flex flex-col items-center flex-1 justify-center ${Capacitor.isNativePlatform() ? 'pt-24 pb-16' : 'py-16'}`}>
+      <div className="relative z-10 w-full max-w-6xl px-4 flex flex-col items-center flex-1 justify-center py-16">
         
         <AnimatePresence mode="wait">
           {!portalUser ? (

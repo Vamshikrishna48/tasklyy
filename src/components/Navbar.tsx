@@ -35,7 +35,7 @@ const Navbar = () => {
   const isNative = Capacitor.isNativePlatform();
 
   return (
-    <nav className={`sticky top-0 z-50 border-b bg-transparent backdrop-blur-md shadow-sm ${isNative ? "pt-8" : "safe-padding-top"}`}>
+    <nav className="sticky top-0 z-50 border-b bg-transparent backdrop-blur-md shadow-sm safe-padding-top">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <Link to="/" className="flex items-center" style={{ gap: 0 }}>
           <img
