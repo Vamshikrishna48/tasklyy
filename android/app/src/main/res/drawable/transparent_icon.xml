@@ -3,5 +3,8 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Empty vector path makes the icon fully transparent and invisible -->
+    <!-- A path filled with transparent color to avoid falling back to the app icon -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,0h24v24H0z" />
 </vector>

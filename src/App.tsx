@@ -76,7 +76,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   }, []);
 
   useEffect(() => {
-    const duration = 1500; // 1.5 seconds total loading
+    const duration = 3000; // 3.0 seconds total loading
     const intervalTime = 50; // update progress every 50ms
     const step = 100 / (duration / intervalTime); // increment step
 
@@ -194,6 +194,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           <div className="w-full h-[3px] bg-gray-200 rounded-full overflow-hidden">
             <motion.div
               className="h-full rounded-full bg-gradient-to-r from-violet-500 via-pink-400 to-emerald-500"
+              initial={{ width: "0%" }}
               animate={{ width: `${progress}%` }}
               transition={{ ease: "easeOut", duration: 0.3 }}
             />
