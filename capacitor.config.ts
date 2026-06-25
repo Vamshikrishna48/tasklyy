@@ -8,6 +8,12 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
     url: 'http://192.168.1.109:8080',
     cleartext: true
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 0,
+      launchAutoHide: true
+    }
   }
 };
 
