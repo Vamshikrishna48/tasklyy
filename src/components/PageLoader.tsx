@@ -42,7 +42,7 @@ const PageLoader = () => {
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="flex flex-col items-center justify-center gap-3 mt-8 mb-8 z-10"
           >
-            <div className="w-32 h-32 rounded-full bg-white shadow-md flex items-center justify-center p-3">
+            <div className="w-32 h-32 flex items-center justify-center">
               <img
                 src="/taskly-logo.png"
                 alt="Tasskly logo"
