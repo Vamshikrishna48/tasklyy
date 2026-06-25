@@ -35,7 +35,7 @@ const DashboardOverview = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Welcome back, {profile?.full_name?.split(' ')[0] || 'User'}! 👋</h1>
         <p className="text-muted-foreground">Here's what's happening with your gigs.</p>

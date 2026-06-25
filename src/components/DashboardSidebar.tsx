@@ -56,7 +56,7 @@ export function DashboardSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r">
-      <SidebarContent>
+      <SidebarContent className="safe-padding-top">
 
         <SidebarGroup>
           <SidebarGroupLabel>Dashboard</SidebarGroupLabel>

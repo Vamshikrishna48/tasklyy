@@ -19,7 +19,7 @@ const DashboardLayout = () => {
       <div className="min-h-screen flex w-full bg-slate-50">
         <DashboardSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center border-b bg-card/80 backdrop-blur-lg px-4 gap-3">
+          <header className="min-h-14 flex items-center bg-card/80 backdrop-blur-lg px-4 gap-3 safe-padding-top">
             <SidebarTrigger />
             <span className="font-display font-semibold text-foreground">Tasskly Dashboard</span>
           </header>
