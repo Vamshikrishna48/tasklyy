@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
+import { SplashScreen as NativeSplashScreen } from '@capacitor/splash-screen';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -47,7 +48,7 @@ const NotificationGate = ({ children }: { children: React.ReactNode }) => {
 };
 
 const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
-  const [progress, setProgress] = useState(0);
+  const [startActive, setStartActive] = useState(false);
   const [currentText, setCurrentText] = useState(0);
   const [dimensions, setDimensions] = useState({ size: 440, radius: 176 });
 
@@ -76,27 +77,22 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   }, []);
 
   useEffect(() => {
-    const duration = 3000; // 3.0 seconds total loading
-    const intervalTime = 50; // update progress every 50ms
-    const step = 100 / (duration / intervalTime); // increment step
+    // Start CSS progress transition shortly after mount
+    const triggerTimer = setTimeout(() => setStartActive(true), 50);
+    
+    // Complete the splash animation after 1.5 seconds (snappy loading)
+    const completeTimer = setTimeout(onComplete, 1600);
 
-    const timer = setInterval(() => {
-      setProgress((old) => {
-        if (old >= 100) {
-          clearInterval(timer);
-          setTimeout(onComplete, 150); // Pause briefly at 100% so it is fully visible
-          return 100;
-        }
-        return Math.min(old + step, 100);
-      });
-    }, intervalTime);
-    return () => clearInterval(timer);
+    return () => {
+      clearTimeout(triggerTimer);
+      clearTimeout(completeTimer);
+    };
   }, [onComplete]);
 
   useEffect(() => {
     const t = setInterval(() => {
       setCurrentText((old) => (old + 1) % loadingTexts.length);
-    }, 2000); // calm transition matching the 8 second load time
+    }, 700);
     return () => clearInterval(t);
   }, []);
 
@@ -192,16 +188,14 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
         {/* Progress bar */}
         <div className="w-64">
           <div className="w-full h-[3px] bg-gray-200 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-violet-500 via-pink-400 to-emerald-500"
-              initial={{ width: "0%" }}
-              animate={{ width: `${progress}%` }}
-              transition={{ ease: "easeOut", duration: 0.3 }}
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-violet-500 via-pink-400 to-emerald-500 transition-all duration-[1500ms] ease-out"
+              style={{ width: startActive ? "100%" : "0%" }}
             />
           </div>
           <div className="flex justify-between mt-1.5">
             <span className="text-[10px] text-gray-400">Loading</span>
-            <span className="text-[10px] text-gray-400">{Math.round(progress)}%</span>
+            <span className="text-[10px] text-gray-400">Please wait...</span>
           </div>
         </div>
       </motion.div>
@@ -253,7 +247,7 @@ const App = () => {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    const setupStatusBar = async () => {
+    const setupStatusBarAndSplash = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
           await StatusBar.setOverlaysWebView({ overlay: false });
@@ -262,9 +256,15 @@ const App = () => {
         } catch (e) {
           console.warn("StatusBar setup failed:", e);
         }
+        try {
+          // Hide native splash screen so the smooth React splash displays
+          await NativeSplashScreen.hide();
+        } catch (e) {
+          console.warn("NativeSplashScreen hide failed:", e);
+        }
       }
     };
-    setupStatusBar();
+    setupStatusBarAndSplash();
   }, []);
 
   const handleSplashComplete = useCallback(() => {
