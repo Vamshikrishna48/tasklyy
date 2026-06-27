@@ -19,6 +19,7 @@ import AdminRefunds from "./pages/admin/AdminRefunds.tsx";
 import AdminWithdrawals from "./pages/admin/AdminWithdrawals.tsx";
 import AdminAuth from "./pages/admin/AdminAuth.tsx";
 import AdminGuard from "./components/AdminGuard.tsx";
+import AdminBestMatch from "./pages/admin/AdminBestMatch.tsx";
 import Index from "./pages/Index.tsx";
 import BrowseJobs from "./pages/BrowseJobs.tsx";
 import JobDetail from "./pages/JobDetail.tsx";
@@ -310,6 +311,7 @@ const App = () => {
                     <Route path="refunds" element={<AdminRefunds />} />
                     <Route path="withdrawals" element={<AdminWithdrawals />} />
                     <Route path="notifications" element={<AdminNotifications />} />
+                    <Route path="best-match" element={<AdminBestMatch />} />
                   </Route>
                   <Route path="*" element={<NotFound />} />
                 </Routes>
