@@ -79,10 +79,10 @@ const JobCard = ({ job, index = 0 }: JobCardProps) => {
             <div className="flex items-center justify-between border-t pt-3">
               <div className="flex items-center gap-2">
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary truncate p-1">
-                  {job.poster?.avatar_url?.[0] || job.poster?.full_name?.[0] || 'T'}
+                  {job.poster?.avatar_url?.[0] || job.poster?.full_name?.[0] || job.postedBy?.avatar?.[0] || job.postedBy?.name?.[0] || 'T'}
                 </div>
                 <div className="text-xs">
-                  <span className="font-medium text-foreground">{job.poster?.full_name || 'User'}</span>
+                  <span className="font-medium text-foreground">{job.poster?.full_name || job.postedBy?.name || 'User'}</span>
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Star className="h-3 w-3 fill-accent text-accent" />
                     5.0

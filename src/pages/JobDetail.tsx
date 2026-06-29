@@ -290,8 +290,8 @@ const JobDetail = () => {
     const paymentDueAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     // Update bid status
     await (supabase as any).from("bids").update({ status: "accepted" }).eq("id", bid.id);
-    // Update job with worker, payment deadline and the summed budget
-    const totalAmount = Number(job.budget) + Number(bid.amount);
+    // Update job with worker, payment deadline and the bid budget
+    const totalAmount = Number(bid.amount);
     await (supabase as any).from("jobs").update({
       worker_id: bid.bidder_id,
       status: "payment_pending" as any, // Use payment_pending first
