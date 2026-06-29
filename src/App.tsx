@@ -42,6 +42,7 @@ import NotificationBanner from "./components/NotificationBanner";
 import { motion } from "framer-motion";
 import CircularText from "./components/CircularText";
 import ColorBends from "./components/ColorBends";
+import AIChatBot from "./components/AIChatBot";
 
 const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   useNotificationPermission();
@@ -284,37 +285,40 @@ const App = () => {
               {showSplash ? (
                 <SplashScreen onComplete={handleSplashComplete} />
               ) : (
-                <Routes>
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/" element={<Index />} />
-                  <Route path="/jobs" element={<BrowseJobs />} />
-                  <Route path="/internships" element={<Internships />} />
-                  <Route path="/jobs/:id" element={<JobDetail />} />
-                  <Route path="/post-job" element={<ProtectedRoute><PostJob /></ProtectedRoute>} />
-                  <Route path="/on-time-works" element={<ProtectedRoute><OnTimeWorks /></ProtectedRoute>} />
-                  <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                    <Route index element={<DashboardOverview />} />
-                    <Route path="jobs" element={<MyJobs />} />
-                    <Route path="earnings" element={<Earnings />} />
-                    <Route path="portfolio" element={<Portfolio />} />
-                    <Route path="profile" element={<Profile />} />
-                    <Route path="levels" element={<Levels />} />
-                    <Route path="submitted" element={<SubmittedWork />} />
-                    <Route path="support" element={<CustomerService />} />
-                  </Route>
-                  <Route path="/admin/auth" element={<AdminAuth />} />
-                  <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
-                    <Route index element={<AdminOverview />} />
-                    <Route path="escrow" element={<AdminEscrow />} />
-                    <Route path="ledger" element={<AdminLedger />} />
-                    <Route path="users" element={<AdminUsers />} />
-                    <Route path="refunds" element={<AdminRefunds />} />
-                    <Route path="withdrawals" element={<AdminWithdrawals />} />
-                    <Route path="notifications" element={<AdminNotifications />} />
-                    <Route path="best-match" element={<AdminBestMatch />} />
-                  </Route>
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <>
+                  <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/" element={<Index />} />
+                    <Route path="/jobs" element={<BrowseJobs />} />
+                    <Route path="/internships" element={<Internships />} />
+                    <Route path="/jobs/:id" element={<JobDetail />} />
+                    <Route path="/post-job" element={<ProtectedRoute><PostJob /></ProtectedRoute>} />
+                    <Route path="/on-time-works" element={<ProtectedRoute><OnTimeWorks /></ProtectedRoute>} />
+                    <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                      <Route index element={<DashboardOverview />} />
+                      <Route path="jobs" element={<MyJobs />} />
+                      <Route path="earnings" element={<Earnings />} />
+                      <Route path="portfolio" element={<Portfolio />} />
+                      <Route path="profile" element={<Profile />} />
+                      <Route path="levels" element={<Levels />} />
+                      <Route path="submitted" element={<SubmittedWork />} />
+                      <Route path="support" element={<CustomerService />} />
+                    </Route>
+                    <Route path="/admin/auth" element={<AdminAuth />} />
+                    <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
+                      <Route index element={<AdminOverview />} />
+                      <Route path="escrow" element={<AdminEscrow />} />
+                      <Route path="ledger" element={<AdminLedger />} />
+                      <Route path="users" element={<AdminUsers />} />
+                      <Route path="refunds" element={<AdminRefunds />} />
+                      <Route path="withdrawals" element={<AdminWithdrawals />} />
+                      <Route path="notifications" element={<AdminNotifications />} />
+                      <Route path="best-match" element={<AdminBestMatch />} />
+                    </Route>
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                  <AIChatBot />
+                </>
               )}
             </BrowserRouter>
           </NotificationGate>
