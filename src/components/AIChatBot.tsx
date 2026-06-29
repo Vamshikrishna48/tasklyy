@@ -111,10 +111,10 @@ export default function AIChatBot() {
             <X className="h-6 w-6" />
           ) : (
             <>
-              <MessageSquare className="h-6 w-6" />
+              <Bot className="h-6 w-6" />
               {/* Soft pulsing notification dot */}
-              <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-white animate-bounce">
-                AI
+              <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-[10px] font-bold text-white ring-2 ring-white shadow-lg animate-pulse">
+                ✨
               </span>
             </>
           )}
