@@ -79,7 +79,7 @@ const Index = () => {
               </Link>
               <Link to="/post-job">
                 <Button variant="hero-outline" size="lg" className="h-14 px-10 text-lg rounded-full transition-all">
-                  Start New Project
+                  Post a Task
                 </Button>
               </Link>
             </div>
@@ -230,7 +230,6 @@ const Index = () => {
               <a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@tasskly.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground mb-2 block hover:text-primary transition-colors">
                 support@tasskly.com
               </a>
-              <p className="text-sm text-muted-foreground font-bold underline cursor-pointer">Start New Project</p>
             </div>
           </div>
           <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground uppercase tracking-widest">
