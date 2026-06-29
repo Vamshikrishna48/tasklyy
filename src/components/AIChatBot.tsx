@@ -48,7 +48,7 @@ export default function AIChatBot() {
     }
     
     if (q.includes("escrow") || q.includes("payment") || q.includes("pay") || q.includes("fee") || q.includes("commission")) {
-      return "Tasskly uses a secure Escrow System:\n1. When an employer accepts a bid, they pay the amount to the platform.\n2. Tasskly holds this payment safely in escrow.\n3. The platform keeps a 10% fee and holds the rest (90%) for the worker.\n4. Once the worker submits the task and it is verified, the admin releases the escrow funds directly to the worker's wallet.";
+      return "Tasskly uses a secure Escrow System:\n1. When an employer accepts a bid, they pay the amount to the platform.\n2. Tasskly holds this payment safely in escrow.\n3. The platform keeps a fee based on the worker's level (Level 1: 30% fee, Level 2: 20% fee, Level 3: 10% fee) and holds the rest for the worker.\n4. Once the worker submits the task and it is verified, the admin releases the escrow funds directly to the worker's wallet.";
     }
 
     if (q.includes("withdraw") || q.includes("wallet") || q.includes("upi") || q.includes("bank") || q.includes("transfer") || q.includes("money")) {
