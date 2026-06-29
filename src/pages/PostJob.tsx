@@ -127,10 +127,6 @@ const PostJob = () => {
       toast.error("Please fill in all required fields (Title, Description, Category, Deadline)");
       return;
     }
-    if (skills.length === 0) {
-      toast.error("Please add at least one required skill for the worker.");
-      return;
-    }
     if (!budget) {
       toast.error("Please provide a budget.");
       return;
@@ -142,12 +138,12 @@ const PostJob = () => {
     }
     
     if (!selectedFile) {
-      toast.error("You must upload a project file or brief to post this job.");
+      toast.error("You must upload a project file or brief to post this task.");
       return;
     }
 
     if (!agreedToTerms) {
-      toast.error("You must agree to the refund policy terms to post a job.");
+      toast.error("You must agree to the refund policy terms to post a task.");
       return;
     }
     
@@ -207,7 +203,7 @@ const PostJob = () => {
         }
         
         if (result) {
-          toast.success("Job posted successfully!");
+          toast.success("Task posted successfully!");
           await refreshJobs();
           await updateMyJobs();
           navigate("/dashboard/jobs");
@@ -235,7 +231,7 @@ const PostJob = () => {
         </div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="font-display text-3xl font-bold text-foreground">Post a Job</h1>
+          <h1 className="font-display text-3xl font-bold text-foreground">Post a Task</h1>
           <p className="mt-1 mb-8 text-muted-foreground">Describe what you need done and how you want to pay.</p>
 
 
@@ -247,7 +243,7 @@ const PostJob = () => {
               {/* Basic Details */}
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground">Job Title *</label>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">Task Title *</label>
                   <Input
                     placeholder="e.g. Design a poster for college event"
                     value={title}
@@ -259,7 +255,7 @@ const PostJob = () => {
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Description *</label>
                   <textarea
                     className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    placeholder="Describe the job requirements, deliverables, and any specific instructions..."
+                    placeholder="Describe the task requirements, deliverables, and any specific instructions..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                   />
@@ -314,7 +310,7 @@ const PostJob = () => {
 
               {/* Skills Area */}
               <div className="pt-4 border-t">
-                <label className="mb-1.5 block text-sm font-medium text-foreground">Required Skills for Worker *</label>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Required Skills for Worker (Optional)</label>
                 <div className="flex gap-2">
                   <Input
                     placeholder="Add a required skill..."
@@ -395,7 +391,7 @@ const PostJob = () => {
                       I agree to the Refund Policy
                     </label>
                     <p className="text-xs text-muted-foreground">
-                      By posting this job, I agree that if I reject the submitted work, I will receive a 70% refund, 25% will compensate the worker for their time, and 5% is charged as a platform fee.
+                      By posting this task, I agree that if I reject the submitted work, I will receive a 70% refund, 25% will compensate the worker for their time, and 5% is charged as a platform fee.
                     </p>
                   </div>
                 </div>
@@ -403,7 +399,7 @@ const PostJob = () => {
               
               <Button variant="hero" className="w-full gap-2 mt-4" size="lg" onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                {isSubmitting ? "Posting..." : "Post Job"}
+                {isSubmitting ? "Posting..." : "Post Task"}
               </Button>
             </CardContent>
           </Card>
@@ -419,7 +415,7 @@ const PostJob = () => {
               UPI ID Required
             </DialogTitle>
             <DialogDescription>
-              Please provide your UPI ID to receive payouts and proceed with posting this job.
+              Please provide your UPI ID to receive payouts and proceed with posting this task.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4 text-left">

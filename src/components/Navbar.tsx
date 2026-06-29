@@ -59,7 +59,7 @@ const Navbar = () => {
           <Link to="/post-job">
             <Button variant={isActive("/post-job") ? "secondary" : "ghost"} size="sm" className="gap-2">
               <PlusCircle className="h-4 w-4" />
-              Post a Job
+              Post a Task
             </Button>
           </Link>
           <Link to="/internships">
@@ -148,7 +148,7 @@ const Navbar = () => {
                   <Link to="/post-job" className="w-full">
                     <Button variant={isActive("/post-job") ? "secondary" : "ghost"} className="w-full justify-start gap-3 h-11 text-base">
                       <PlusCircle className="h-4 w-4 text-muted-foreground" />
-                      Post a Job
+                      Post a Task
                     </Button>
                   </Link>
                 </SheetClose>
