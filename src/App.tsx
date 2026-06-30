@@ -43,7 +43,7 @@ import { motion } from "framer-motion";
 import CircularText from "./components/CircularText";
 import ColorBends from "./components/ColorBends";
 import AIChatBot from "./components/AIChatBot";
-import Lightfall from "./components/Lightfall";
+import SoftAurora from "./components/SoftAurora";
 
 const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   useNotificationPermission();
@@ -287,20 +287,21 @@ const App = () => {
                 <SplashScreen onComplete={handleSplashComplete} />
               ) : (
                 <>
-                  <Lightfall
+                  <SoftAurora
                     className="fixed inset-0 -z-50 pointer-events-none"
-                    backgroundColor="#000000"
-                    colors={['#818cf8', '#a78bfa', '#f472b6', '#4f46e5', '#d946ef', '#c084fc', '#3b82f6']}
                     speed={0.45}
-                    streakCount={8}
-                    streakWidth={1.3}
-                    streakLength={2.2}
-                    glow={1.8}
-                    density={0.85}
-                    twinkle={0.7}
-                    zoom={3.5}
-                    opacity={0.85}
-                    backgroundGlow={0}
+                    scale={1.8}
+                    brightness={0.8}
+                    color1="#d946ef"
+                    color2="#3b82f6"
+                    noiseFrequency={2.0}
+                    noiseAmplitude={0.8}
+                    bandHeight={0.4}
+                    bandSpread={1.2}
+                    octaveDecay={0.15}
+                    colorSpeed={0.5}
+                    enableMouseInteraction={true}
+                    mouseInfluence={0.15}
                   />
                   <Routes>
                     <Route path="/auth" element={<Auth />} />
