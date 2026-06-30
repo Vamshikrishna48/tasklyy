@@ -43,7 +43,6 @@ import { motion } from "framer-motion";
 import CircularText from "./components/CircularText";
 import ColorBends from "./components/ColorBends";
 import AIChatBot from "./components/AIChatBot";
-import SoftAurora from "./components/SoftAurora";
 
 const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   useNotificationPermission();
@@ -287,22 +286,6 @@ const App = () => {
                 <SplashScreen onComplete={handleSplashComplete} />
               ) : (
                 <>
-                  <SoftAurora
-                    className="fixed inset-0 -z-50 pointer-events-none"
-                    speed={0.45}
-                    scale={1.8}
-                    brightness={0.8}
-                    color1="#d946ef"
-                    color2="#3b82f6"
-                    noiseFrequency={2.0}
-                    noiseAmplitude={0.8}
-                    bandHeight={0.4}
-                    bandSpread={1.2}
-                    octaveDecay={0.15}
-                    colorSpeed={0.5}
-                    enableMouseInteraction={true}
-                    mouseInfluence={0.15}
-                  />
                   <Routes>
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/" element={<Index />} />
