@@ -311,14 +311,10 @@ const Internships = () => {
   return (
     <div
       className="min-h-screen w-screen relative overflow-x-hidden flex flex-col items-center bg-slate-50"
-      style={{
-        backgroundImage: "linear-gradient(135deg, #e0f7f4 0%, #f0fdf4 40%, #d1fae5 70%, #bae6fd 100%)",
-        backgroundAttachment: "fixed"
-      }}
     >
       {/* Absolute Blobs for Ambient Aesthetics */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full bg-emerald-200/20 blur-3xl" />
+        <div className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full bg-purple-200/20 blur-3xl" />
         <div className="absolute bottom-10 right-10 w-[500px] h-[500px] rounded-full bg-cyan-200/20 blur-3xl" />
       </div>
 

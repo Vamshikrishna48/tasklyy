@@ -280,14 +280,14 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4"
       style={{
-        background: "linear-gradient(135deg, #bae6fd 0%, #f0fdf4 75%, #d1fae5 100%)",
+        background: "#f8fafc",
       }}
     >
       {/* Soft brand-matching blob backgrounds */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-sky-200/40 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-emerald-200/40 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-teal-100/30 blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-indigo-200/40 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-purple-100/30 blur-3xl" />
       </div>
 
       {/* Subtle dot grid */}
@@ -625,7 +625,7 @@ const Auth = () => {
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.1 }} transition={{ duration: 0.3 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #bae6fd 0%, #f0fdf4 75%, #d1fae5 100%)" }}
+            style={{ background: "#f8fafc" }}
           >
             <div className="relative z-10 text-center space-y-4 flex flex-col items-center">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}

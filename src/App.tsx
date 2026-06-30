@@ -104,7 +104,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
       {/* Soft colorful gradient blobs — light theme */}
       <div className="absolute inset-0 z-0">
         <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-violet-200 via-pink-100 to-transparent opacity-70 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-tl from-emerald-200 via-cyan-100 to-transparent opacity-60 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-gradient-to-tl from-purple-200 via-cyan-100 to-transparent opacity-60 blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-blue-100 via-indigo-50 to-transparent opacity-50 blur-3xl" />
       </div>
 
@@ -135,7 +135,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           <motion.div
             animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.1, 0.3] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute rounded-full bg-gradient-to-br from-violet-300/30 to-emerald-300/30 blur-3xl pointer-events-none"
+            className="absolute rounded-full bg-gradient-to-br from-violet-300/30 to-fuchsia-300/30 blur-3xl pointer-events-none"
             style={{
               width: `${dimensions.size + 10}px`,
               height: `${dimensions.size + 10}px`,
@@ -191,7 +191,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
         <div className="w-64">
           <div className="w-full h-[3px] bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-violet-500 via-pink-400 to-emerald-500 transition-all duration-[1500ms] ease-out"
+              className="h-full rounded-full bg-gradient-to-r from-violet-500 via-pink-400 to-fuchsia-500 transition-all duration-[1500ms] ease-out"
               style={{ width: startActive ? "100%" : "0%" }}
             />
           </div>
