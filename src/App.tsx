@@ -43,6 +43,7 @@ import { motion } from "framer-motion";
 import CircularText from "./components/CircularText";
 import ColorBends from "./components/ColorBends";
 import AIChatBot from "./components/AIChatBot";
+import Lightfall from "./components/Lightfall";
 
 const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   useNotificationPermission();
@@ -286,6 +287,20 @@ const App = () => {
                 <SplashScreen onComplete={handleSplashComplete} />
               ) : (
                 <>
+                  <Lightfall
+                    className="fixed inset-0 -z-50 pointer-events-none"
+                    backgroundColor="#000000"
+                    colors={['#38bdf8', '#818cf8', '#f472b6']}
+                    speed={0.35}
+                    streakCount={4}
+                    streakWidth={1.5}
+                    streakLength={1.5}
+                    glow={1.2}
+                    density={0.5}
+                    twinkle={0.8}
+                    opacity={0.7}
+                    backgroundGlow={0}
+                  />
                   <Routes>
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/" element={<Index />} />
