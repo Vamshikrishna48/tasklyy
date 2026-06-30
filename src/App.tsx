@@ -290,15 +290,16 @@ const App = () => {
                   <Lightfall
                     className="fixed inset-0 -z-50 pointer-events-none"
                     backgroundColor="#000000"
-                    colors={['#38bdf8', '#818cf8', '#f472b6']}
-                    speed={0.35}
-                    streakCount={4}
-                    streakWidth={1.5}
-                    streakLength={1.5}
-                    glow={1.2}
-                    density={0.5}
-                    twinkle={0.8}
-                    opacity={0.7}
+                    colors={['#818cf8', '#a78bfa', '#f472b6', '#4f46e5', '#d946ef', '#c084fc', '#3b82f6']}
+                    speed={0.45}
+                    streakCount={8}
+                    streakWidth={1.3}
+                    streakLength={2.2}
+                    glow={1.8}
+                    density={0.85}
+                    twinkle={0.7}
+                    zoom={3.5}
+                    opacity={0.85}
                     backgroundGlow={0}
                   />
                   <Routes>
