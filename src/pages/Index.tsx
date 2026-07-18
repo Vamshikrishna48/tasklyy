@@ -227,8 +227,11 @@ const Index = () => {
             </div>
             <div>
               <h4 className="font-bold mb-4 uppercase text-xs tracking-widest text-primary">Contact</h4>
-              <a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@tasskly.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground mb-2 block hover:text-primary transition-colors">
+              <a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@tasskly.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground mb-2 block hover:text-primary transition-colors animate-in fade-in duration-300">
                 support@tasskly.com
+              </a>
+              <a href="https://wa.me/919640008684" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground mb-2 block hover:text-primary transition-colors animate-in fade-in duration-350">
+                WhatsApp: 9640008684
               </a>
             </div>
           </div>
