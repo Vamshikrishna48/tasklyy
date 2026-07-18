@@ -67,7 +67,7 @@ export default function AIChatBot() {
       return "Hello! How can I help you today? You can ask me about placing bids, payment flows, levels, or withdraw processes. 😊";
     }
 
-    return "I understand your doubt. Tasskly is a secure student marketplace. You can search jobs, place bids, upload deliverables, and get paid securely. If you have any specific query about escrow payments, bids, or withdrawals, let me know!";
+    return "I understand your doubt. Tasskly is a secure student marketplace. You can search tasks, place bids, upload deliverables, and get paid securely.\n\nIf your query is still not solved, you can directly chat with us on WhatsApp for personal assistance: https://wa.me/919640008684";
   };
 
   const handleSendMessage = (textToSend: string) => {
@@ -180,7 +180,24 @@ export default function AIChatBot() {
                           : "bg-white text-slate-800 border-slate-100 rounded-tl-none"
                       }`}
                     >
-                      {msg.text}
+                      {msg.text.includes("https://wa.me/") ? (
+                        <div>
+                          <p>{msg.text.split("https://wa.me/")[0]}</p>
+                          <a
+                            href="https://wa.me/919640008684"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg mt-2.5 shadow-sm transition-all text-[11px]"
+                          >
+                            <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.725 1.45h.005c5.422 0 9.832-4.41 9.835-9.83.001-2.624-1.02-5.09-2.873-6.944C16.483 1.975 14.022 1.96 12.012 1.96c-5.424 0-9.83 4.407-9.834 9.829-.001 1.742.453 3.442 1.316 4.96L2.502 21.2l4.145-1.046zm11.082-7.46c-.287-.143-1.697-.838-1.959-.933-.262-.096-.452-.143-.642.143-.19.285-.733.933-.899 1.123-.166.19-.332.214-.618.072-.287-.143-1.21-.446-2.305-1.424-.853-.76-1.429-1.698-1.597-1.983-.167-.285-.018-.44.125-.581.13-.127.287-.333.43-.5.143-.166.19-.285.286-.476.095-.19.048-.357-.024-.5-.071-.143-.642-1.548-.88-2.119-.232-.56-.47-.482-.642-.49-.166-.008-.357-.01-.548-.01-.19 0-.5.072-.762.357-.262.285-1.002.977-1.002 2.38 0 1.403 1.022 2.757 1.164 2.948.143.19 2.01 3.07 4.872 4.312.68.297 1.213.474 1.627.605.684.218 1.306.187 1.8.113.548-.083 1.697-.69 1.936-1.357.238-.667.238-1.238.166-1.357-.07-.12-.262-.19-.548-.332z" />
+                            </svg>
+                            Chat on WhatsApp
+                          </a>
+                        </div>
+                      ) : (
+                        msg.text
+                      )}
                     </div>
                     <span className="text-[8px] text-muted-foreground block px-1">
                       {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

@@ -45,7 +45,7 @@ const CustomerService = () => {
       </div>
 
       {/* Support Cards */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -89,6 +89,34 @@ const CustomerService = () => {
               <p className="text-xs text-muted-foreground mt-2">
                 Refer to our online guides or mail support with your Job ID for faster response.
               </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <Card className="h-full border border-emerald-500/20 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="p-5 pb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 mb-3">
+                <svg className="h-5 w-5 fill-current text-emerald-600" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.725 1.45h.005c5.422 0 9.832-4.41 9.835-9.83.001-2.624-1.02-5.09-2.873-6.944C16.483 1.975 14.022 1.96 12.012 1.96c-5.424 0-9.83 4.407-9.834 9.829-.001 1.742.453 3.442 1.316 4.96L2.502 21.2l4.145-1.046zm11.082-7.46c-.287-.143-1.697-.838-1.959-.933-.262-.096-.452-.143-.642.143-.19.285-.733.933-.899 1.123-.166.19-.332.214-.618.072-.287-.143-1.21-.446-2.305-1.424-.853-.76-1.429-1.698-1.597-1.983-.167-.285-.018-.44.125-.581.13-.127.287-.333.43-.5.143-.166.19-.285.286-.476.095-.19.048-.357-.024-.5-.071-.143-.642-1.548-.88-2.119-.232-.56-.47-.482-.642-.49-.166-.008-.357-.01-.548-.01-.19 0-.5.072-.762.357-.262.285-1.002.977-1.002 2.38 0 1.403 1.022 2.757 1.164 2.948.143.19 2.01 3.07 4.872 4.312.68.297 1.213.474 1.627.605.684.218 1.306.187 1.8.113.548-.083 1.697-.69 1.936-1.357.238-.667.238-1.238.166-1.357-.07-.12-.262-.19-.548-.332z" />
+                </svg>
+              </div>
+              <CardTitle className="text-lg">WhatsApp Support</CardTitle>
+              <CardDescription>Get in touch with us via WhatsApp for instant chat support.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-5 pt-0">
+              <a
+                href="https://wa.me/919640008684"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-semibold text-sm transition-colors mt-2"
+              >
+                9640008684 &rarr;
+              </a>
             </CardContent>
           </Card>
         </motion.div>
