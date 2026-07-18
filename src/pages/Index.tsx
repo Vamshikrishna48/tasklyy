@@ -14,29 +14,7 @@ const Index = () => {
 
       {/* Hero Section - Sticky */}
       <section className="sticky top-0 h-[85vh] overflow-hidden z-0">
-        {/* Animated background */}
-          {[...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full bg-primary/10 blur-[80px]"
-              style={{
-                width: 150 + i * 100,
-                height: 150 + i * 100,
-                left: `${(i * 25) % 100}%`,
-                top: `${(i * 30) % 100}%`,
-              }}
-              animate={{
-                x: [0, Math.sin(i) * 50, 0],
-                y: [0, Math.cos(i) * 50, 0],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: 10 + i * 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
+        
 
         <div className="container relative mx-auto px-4 text-center z-10 h-full flex flex-col justify-center">
           <motion.div
