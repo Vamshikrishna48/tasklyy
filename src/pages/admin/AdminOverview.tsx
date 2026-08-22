@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { IndianRupee, Lock, Users, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { IndianRupee, Lock, Users, CheckCircle, Rocket, Construction } from "lucide-react";
+import { toast } from "sonner";
+import { getIsPlatformLaunched, setPlatformLaunched } from "@/utils/launchControl";
 
 interface AdminStats {
   platform_balance: number;
@@ -17,6 +20,7 @@ const AdminOverview = () => {
   const { fetchAdminStats } = useAdmin();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLaunched, setIsLaunched] = useState(() => getIsPlatformLaunched());
 
   const loadStats = async () => {
     const data = await fetchAdminStats();
@@ -28,6 +32,18 @@ const AdminOverview = () => {
     loadStats();
   }, []);
 
+  const handleToggleLaunch = () => {
+    const nextState = !isLaunched;
+    setPlatformLaunched(nextState);
+    setIsLaunched(nextState);
+
+    if (nextState) {
+      toast.success("🚀 Website Officially Launched to Public! Under Development popup disabled & user logins unlocked.", { duration: 6000 });
+    } else {
+      toast.warning("🚧 Switched to Under Development Mode. Popup enabled & non-admin logins restricted.", { duration: 6000 });
+    }
+  };
+
   const fmt = (n: number) => `₹${(n || 0).toLocaleString('en-IN')}`;
 
   return (
@@ -35,9 +51,59 @@ const AdminOverview = () => {
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Admin Overview</h1>
         <p className="text-muted-foreground text-sm">
-          Manage platform funds and track escrow-based payouts.
+          Manage platform funds, track escrow-based payouts, and control website launch mode.
         </p>
       </div>
+
+      {/* Launch Control Panel */}
+      <Card className="border-2 border-violet-500/20 bg-gradient-to-r from-violet-500/5 via-indigo-500/5 to-purple-500/5 shadow-md">
+        <CardContent className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Rocket className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              <h2 className="font-display text-lg font-bold text-foreground">
+                Website Launch & Development Status
+              </h2>
+              {isLaunched ? (
+                <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-bold">
+                  🟢 LIVE & PUBLIC
+                </Badge>
+              ) : (
+                <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-bold">
+                  🚧 UNDER DEVELOPMENT
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground max-w-xl">
+              {isLaunched
+                ? "The website is currently LIVE for all users. The Under Development popup is disabled globally, and regular user logins are fully enabled."
+                : "The website is currently under active development. Visitors see the Under Development popup, and logins/signups are restricted strictly to Administrators."}
+            </p>
+          </div>
+
+          <Button
+            onClick={handleToggleLaunch}
+            size="lg"
+            className={
+              isLaunched
+                ? "bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2 shrink-0 shadow-md"
+                : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold gap-2 shrink-0 shadow-lg shadow-emerald-500/20"
+            }
+          >
+            {isLaunched ? (
+              <>
+                <Construction className="h-4 w-4" />
+                Switch to Under Development Mode
+              </>
+            ) : (
+              <>
+                <Rocket className="h-4 w-4" />
+                Launch Website to Public
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="shadow-card">

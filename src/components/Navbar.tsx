@@ -16,11 +16,23 @@ import {
 
 import { safeLocalStorage } from "@/utils/safeStorage";
 
+import { useState, useEffect } from "react";
+import { getIsPlatformLaunched, LAUNCH_EVENT } from "@/utils/launchControl";
+
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { session, profile } = useApp();
   const isAuthenticated = !!session;
+  const [isLaunched, setIsLaunched] = useState(() => getIsPlatformLaunched());
+
+  useEffect(() => {
+    const handleLaunchChange = (e: any) => {
+      setIsLaunched(e.detail?.launched ?? getIsPlatformLaunched());
+    };
+    window.addEventListener(LAUNCH_EVENT, handleLaunchChange);
+    return () => window.removeEventListener(LAUNCH_EVENT, handleLaunchChange);
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -49,18 +61,20 @@ const Navbar = () => {
               Tasskly
             </span>
           </Link>
-          <button
-            onClick={() => window.dispatchEvent(new Event("open-under-dev-modal"))}
-            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer shadow-xs"
-            title="Click to view development status notice"
-          >
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
-            </span>
-            <Construction className="w-3 h-3" />
-            Under Dev • Launching Soon
-          </button>
+          {!isLaunched && (
+            <button
+              onClick={() => window.dispatchEvent(new Event("open-under-dev-modal"))}
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer shadow-xs"
+              title="Click to view development status notice"
+            >
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+              </span>
+              <Construction className="w-3 h-3" />
+              Under Dev • Launching Soon
+            </button>
+          )}
         </div>
 
         <div className="hidden items-center gap-1 md:flex">

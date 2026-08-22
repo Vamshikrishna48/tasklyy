@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getApiUrl } from "@/lib/api";
 import { safeLocalStorage } from "@/utils/safeStorage";
+import { getIsPlatformLaunched, isAdminEmail } from "@/utils/launchControl";
 
 type AuthView = "signin" | "signup" | "otp_verify" | "forgot" | "reset" | "upi_required";
 
@@ -122,6 +123,22 @@ const Auth = () => {
     setInfoMessage("");
 
     try {
+      // Under Development restriction check: Only Administrators can log in or register before official launch
+      if (!getIsPlatformLaunched() && (view === "signin" || view === "signup")) {
+        if (!isAdminEmail(email)) {
+          const { data: profileCheck } = await (supabase as any)
+            .from("profiles")
+            .select("role")
+            .eq("email", email.trim())
+            .limit(1)
+            .maybeSingle();
+
+          if (profileCheck?.role !== "admin") {
+            throw new Error("🔒 Platform Under Development: Tasskly is currently in preview mode. Only Administrators are permitted to log in right now. The website will be launching soon!");
+          }
+        }
+      }
+
       if (view === "signin") {
         // 1. Sign In directly with email & password (no OTP!)
         if (!email.trim() || !password.trim()) throw new Error("Email and password are required");

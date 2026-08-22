@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Construction, Sparkles, Clock, ShieldCheck, Rocket, X, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getIsPlatformLaunched, LAUNCH_EVENT } from "@/utils/launchControl";
 
 interface UnderDevelopmentModalProps {
   isOpen?: boolean;
@@ -13,25 +14,45 @@ export const UnderDevelopmentModal: React.FC<UnderDevelopmentModalProps> = ({
   onClose: externalOnClose,
 }) => {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const [isLaunched, setIsLaunched] = useState(() => getIsPlatformLaunched());
 
   useEffect(() => {
-    // Always open popup when website loads/mounts
-    if (externalIsOpen === undefined) {
+    // Listen for launch status changes from Admin Panel
+    const handleLaunchChange = (e: any) => {
+      const launched = e.detail?.launched ?? getIsPlatformLaunched();
+      setIsLaunched(launched);
+      if (launched) {
+        setInternalIsOpen(false);
+      }
+    };
+
+    window.addEventListener(LAUNCH_EVENT, handleLaunchChange);
+    return () => window.removeEventListener(LAUNCH_EVENT, handleLaunchChange);
+  }, []);
+
+  useEffect(() => {
+    // Only open popup if platform is NOT launched yet
+    if (!isLaunched && externalIsOpen === undefined) {
       const timer = setTimeout(() => {
         setInternalIsOpen(true);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [externalIsOpen]);
+  }, [externalIsOpen, isLaunched]);
 
   // Listen for custom trigger event (e.g. when user clicks badge in Navbar)
   useEffect(() => {
     const handleOpenEvent = () => {
-      setInternalIsOpen(true);
+      if (!isLaunched) {
+        setInternalIsOpen(true);
+      }
     };
     window.addEventListener("open-under-dev-modal", handleOpenEvent);
     return () => window.removeEventListener("open-under-dev-modal", handleOpenEvent);
-  }, []);
+  }, [isLaunched]);
+
+  // If platform is officially launched by Admin, do not render modal at all
+  if (isLaunched) return null;
 
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
 
