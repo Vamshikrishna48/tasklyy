@@ -121,5 +121,3 @@ export const UnderDevelopmentModal: React.FC<UnderDevelopmentModalProps> = () =>
 };
 
 export default UnderDevelopmentModal;
-
-export default UnderDevelopmentModal;
