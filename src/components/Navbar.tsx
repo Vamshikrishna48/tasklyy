@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Briefcase, Menu } from "lucide-react";
+import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Briefcase, Menu, Construction } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { Capacitor } from "@capacitor/core";
@@ -37,17 +37,31 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b bg-transparent backdrop-blur-md shadow-sm safe-padding-top">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
-        <Link to="/" className="flex items-center" style={{ gap: 0 }}>
-          <img
-            src="/taskly-logo.png"
-            alt="Tasskly logo"
-            style={{ width: "35px", height: "35px", marginRight: "8px" }}
-            className="object-contain"
-          />
-          <span className="text-foreground font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "28px", lineHeight: "36px" }}>
-            Tasskly
-          </span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center" style={{ gap: 0 }}>
+            <img
+              src="/taskly-logo.png"
+              alt="Tasskly logo"
+              style={{ width: "35px", height: "35px", marginRight: "8px" }}
+              className="object-contain"
+            />
+            <span className="text-foreground font-bold tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: "28px", lineHeight: "36px" }}>
+              Tasskly
+            </span>
+          </Link>
+          <button
+            onClick={() => window.dispatchEvent(new Event("open-under-dev-modal"))}
+            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer shadow-xs"
+            title="Click to view development status notice"
+          >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+            </span>
+            <Construction className="w-3 h-3" />
+            Under Dev • Launching Soon
+          </button>
+        </div>
 
         <div className="hidden items-center gap-1 md:flex">
           <Link to="/jobs">

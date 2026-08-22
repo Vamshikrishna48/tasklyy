@@ -43,6 +43,7 @@ import { motion } from "framer-motion";
 import CircularText from "./components/CircularText";
 import ColorBends from "./components/ColorBends";
 import AIChatBot from "./components/AIChatBot";
+import UnderDevelopmentModal from "./components/UnderDevelopmentModal";
 
 const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   useNotificationPermission();
@@ -318,6 +319,7 @@ const App = () => {
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                   <AIChatBot />
+                  <UnderDevelopmentModal />
                 </>
               )}
             </BrowserRouter>
