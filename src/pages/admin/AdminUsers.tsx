@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   UserCheck, UserX, Shield, Mail, CheckCircle, Clock,
-  AlertTriangle, Eye, X, Check, Briefcase, IndianRupee, ImageOff
+  AlertTriangle, Eye, X, Check, Briefcase, IndianRupee, ImageOff, Trash2, Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +19,7 @@ import {
 const AdminUsers = () => {
   const {
     fetchAllUsers, fetchPendingVerifications, approveVerification,
-    rejectVerification, getSignedUrls
+    rejectVerification, getSignedUrls, deleteUserAndHistory
   } = useAdmin();
 
   const [users, setUsers] = useState<any[]>([]);
@@ -37,8 +37,22 @@ const AdminUsers = () => {
   const [adminNote, setAdminNote] = useState("");
   const [isRejecting, setIsRejecting] = useState(false);
 
-  // User detail modal
+  // User detail modal & deletion states
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    setDeleting(true);
+    const success = await deleteUserAndHistory(selectedUser.id);
+    setDeleting(false);
+    if (success) {
+      setIsDeletingUser(false);
+      setSelectedUser(null);
+      loadData();
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -497,8 +511,50 @@ const AdminUsers = () => {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="flex items-center justify-between gap-2 border-t pt-4">
+            <Button
+              variant="destructive"
+              className="gap-1.5 font-bold text-xs"
+              onClick={() => setIsDeletingUser(true)}
+            >
+              <Trash2 className="h-4 w-4" /> Delete User & History
+            </Button>
             <Button variant="outline" onClick={() => setSelectedUser(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Confirm Delete User Modal ── */}
+      <Dialog open={isDeletingUser} onOpenChange={(open) => !open && !deleting && setIsDeletingUser(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive font-bold">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Delete User & Entire History?
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              Are you sure you want to permanently delete <strong className="text-foreground">{selectedUser?.full_name}</strong> (<span className="font-mono text-xs">{selectedUser?.email}</span>)?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 text-xs text-destructive space-y-2 font-medium">
+            <p className="font-bold uppercase tracking-wider text-[10px]">⚠️ Warning: Irreversible Action</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>All jobs posted by this user will be deleted.</li>
+              <li>All bids, submissions, and active assignments will be deleted.</li>
+              <li>All escrow records, verification docs, and notifications will be wiped from the database.</li>
+              <li>This user profile will be completely erased.</li>
+            </ul>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsDeletingUser(false)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser} disabled={deleting} className="gap-2 font-bold">
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {deleting ? "Deleting Everything..." : "Permanently Delete User"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -386,6 +386,95 @@ export const useAdmin = () => {
     } finally {
       setLoading(false);
     }
+  const deleteUserAndHistory = async (userId: string) => {
+    if (!userId) return false;
+    setLoading(true);
+    try {
+      // 1. Delete user's bids
+      await (supabase as any).from("bids").delete().eq("bidder_id", userId);
+
+      // 2. Delete user's job submissions
+      await (supabase as any).from("job_submissions").delete().eq("freelancer_id", userId);
+
+      // 3. Find all jobs posted by the user or where user is worker
+      const { data: userJobs } = await (supabase as any)
+        .from("jobs")
+        .select("id")
+        .or(`posted_by.eq.${userId},worker_id.eq.${userId}`);
+
+      if (userJobs && userJobs.length > 0) {
+        const jobIds = userJobs.map((j: any) => j.id);
+
+        // Delete bids on user's jobs
+        await (supabase as any).from("bids").delete().in("job_id", jobIds);
+
+        // Delete submissions on user's jobs
+        await (supabase as any).from("job_submissions").delete().in("job_id", jobIds);
+
+        // Delete escrow transactions for these jobs
+        await (supabase as any).from("escrow_transactions").delete().in("job_id", jobIds);
+
+        // Delete admin ledger entries for these jobs
+        await (supabase as any).from("admin_ledger").delete().in("job_id", jobIds);
+
+        // Delete jobs themselves
+        await (supabase as any).from("jobs").delete().in("id", jobIds);
+      }
+
+      // 4. Delete escrow transactions involving user
+      await (supabase as any)
+        .from("escrow_transactions")
+        .delete()
+        .or(`poster_id.eq.${userId},worker_id.eq.${userId}`);
+
+      // 5. Delete admin ledger entries involving user
+      await (supabase as any)
+        .from("admin_ledger")
+        .delete()
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`);
+
+      // 6. Delete verification documents
+      await (supabase as any)
+        .from("verification_documents")
+        .delete()
+        .eq("user_id", userId);
+
+      // 7. Delete notifications
+      await (supabase as any)
+        .from("notifications")
+        .delete()
+        .eq("user_id", userId);
+
+      // 8. Delete user profile from profiles table
+      const { error: profileErr } = await (supabase as any)
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+
+      if (profileErr) {
+        console.error("Error deleting profile row:", profileErr);
+      }
+
+      // 9. Call serverless API to delete from Supabase Auth if available
+      try {
+        await fetch(getApiUrl("/api/delete-user"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        });
+      } catch {
+        // Optional backend fallback
+      }
+
+      toast.success("User account and all associated history permanently deleted!");
+      return true;
+    } catch (err: any) {
+      console.error("Failed to delete user history:", err);
+      toast.error("Error deleting user: " + (err.message || "Unknown error"));
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return {
@@ -401,6 +490,7 @@ export const useAdmin = () => {
     releaseEscrow,
     refundEscrow,
     processSplitRefund,
+    deleteUserAndHistory,
   };
 };
 
