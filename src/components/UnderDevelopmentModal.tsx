@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Construction, Sparkles, Clock, ShieldCheck, Rocket, Lock } from "lucide-react";
+import { Construction, Sparkles, Clock, Rocket, Lock, Shield, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getIsPlatformLaunched, LAUNCH_EVENT } from "@/utils/launchControl";
 
 interface UnderDevelopmentModalProps {
@@ -106,12 +107,21 @@ export const UnderDevelopmentModal: React.FC<UnderDevelopmentModalProps> = () =>
               </div>
             </div>
 
-            {/* Status Footer Notice (No close or explore button!) */}
-            <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 text-center border border-slate-200 dark:border-slate-700">
-              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-spin" style={{ animationDuration: '6s' }} />
-                Stay tuned — Full platform launch expected very soon!
-              </p>
+            {/* Admin Sign In Action Button */}
+            <div className="space-y-3 pt-1">
+              <a href="/admin/auth" className="block w-full">
+                <Button className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold rounded-xl py-3 flex items-center justify-center gap-2 text-xs sm:text-sm shadow-lg shadow-violet-500/25 group">
+                  <Shield className="w-4 h-4" />
+                  Administrator Sign In
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </a>
+
+              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-center border border-slate-200 dark:border-slate-700">
+                <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  ⚡ Authorized Admins only. Regular user accounts unlocked upon official launch.
+                </p>
+              </div>
             </div>
           </div>
         </motion.div>

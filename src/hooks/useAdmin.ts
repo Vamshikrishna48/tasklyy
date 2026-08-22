@@ -390,6 +390,31 @@ export const useAdmin = () => {
     if (!userId) return false;
     setLoading(true);
     try {
+      // 0. Fetch profile details (email & name) to send formal email notification
+      const { data: userProfile } = await (supabase as any)
+        .from("profiles")
+        .select("email, full_name")
+        .eq("id", userId)
+        .maybeSingle();
+
+      const targetEmail = userProfile?.email;
+      const targetName = userProfile?.full_name;
+
+      if (targetEmail) {
+        try {
+          await fetch(getApiUrl("/api/send-deletion-email"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: targetEmail.trim(),
+              userName: targetName || "User",
+            }),
+          });
+        } catch (e) {
+          console.warn("Could not dispatch account deletion email:", e);
+        }
+      }
+
       // 1. Delete user's bids
       await (supabase as any).from("bids").delete().eq("bidder_id", userId);
 
