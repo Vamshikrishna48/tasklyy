@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Construction, Sparkles, Clock, ShieldCheck, Rocket, X, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Construction, Sparkles, Clock, ShieldCheck, Rocket, X, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface UnderDevelopmentModalProps {
@@ -145,16 +145,12 @@ export const UnderDevelopmentModal: React.FC<UnderDevelopmentModalProps> = ({
               </div>
 
               {/* Action Button */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  Click below to continue exploring the preview.
-                </p>
+              <div className="flex items-center justify-end pt-2">
                 <Button
                   onClick={handleClose}
-                  className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-semibold shadow-lg shadow-violet-500/25 rounded-xl px-6 py-2.5 flex items-center justify-center gap-2 group text-xs sm:text-sm"
+                  className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-semibold shadow-lg shadow-violet-500/25 rounded-xl px-6 py-2.5 flex items-center justify-center gap-2 text-xs sm:text-sm"
                 >
-                  Explore Preview
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  Got It
                 </Button>
               </div>
             </div>
