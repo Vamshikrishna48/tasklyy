@@ -386,6 +386,8 @@ export const useAdmin = () => {
     } finally {
       setLoading(false);
     }
+  };
+
   const deleteUserAndHistory = async (userId: string) => {
     if (!userId) return false;
     setLoading(true);
