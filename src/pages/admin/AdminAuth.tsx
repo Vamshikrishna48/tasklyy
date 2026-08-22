@@ -44,6 +44,7 @@ const AdminAuth = () => {
       "tasskly@admin.com",
       "karthikmethuku180@gmail.com",
       "shrikarakarapu@gmail.com",
+      "karshikalamvamshi34@gmail.com",
       "admin@tasskly.com",
       "admin@gmail.com"
     ];

@@ -26,7 +26,10 @@ export const isAdminEmail = (email?: string | null): boolean => {
   const adminEmails = [
     "tasskly@admin.com",
     "karthikmethuku180@gmail.com",
-    "shrikarakarapu@gmail.com"
+    "shrikarakarapu@gmail.com",
+    "karshikalamvamshi34@gmail.com",
+    "admin@tasskly.com",
+    "admin@gmail.com"
   ];
   return adminEmails.includes(e);
 };

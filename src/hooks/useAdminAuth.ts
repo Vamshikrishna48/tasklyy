@@ -40,6 +40,7 @@ export const useAdminAuth = () => {
         const isAdminEmail = lowerEmail === "tasskly@admin.com" || 
                              lowerEmail === "karthikmethuku180@gmail.com" || 
                              lowerEmail === "shrikarakarapu@gmail.com" ||
+                             lowerEmail === "karshikalamvamshi34@gmail.com" ||
                              lowerEmail === "admin@tasskly.com" ||
                              lowerEmail === "admin@gmail.com";
 
