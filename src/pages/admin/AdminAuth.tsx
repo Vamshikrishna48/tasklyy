@@ -19,17 +19,32 @@ const AdminAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // If already authenticated via demoAdminAuth flag, go straight to admin panel
+    if (localStorage.getItem("demoAdminAuth") === "true") {
+      navigate("/admin");
+      return;
+    }
     // Check if already logged in as admin via Supabase session
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
+      const adminEmails = [
+        "tasskly@admin.com",
+        "karthikmethuku180@gmail.com",
+        "shrikarakarapu@gmail.com",
+        "karshikalamvamshi34@gmail.com",
+        "admin@tasskly.com",
+        "admin@gmail.com"
+      ];
       const { data: profile } = await (supabase as any)
         .from("profiles")
         .select("role")
         .eq("id", session.user.id)
         .limit(1)
         .maybeSingle();
-      if (profile?.role === "admin") navigate("/admin");
+      if (profile?.role === "admin" || adminEmails.includes(session.user.email?.toLowerCase() ?? "")) {
+        navigate("/admin");
+      }
     };
     checkSession();
   }, [navigate]);
