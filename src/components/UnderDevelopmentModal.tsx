@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Construction, Sparkles, Clock, Rocket, Lock, Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,8 @@ interface UnderDevelopmentModalProps {
 
 export const UnderDevelopmentModal: React.FC<UnderDevelopmentModalProps> = () => {
   const [isLaunched, setIsLaunched] = useState(() => getIsPlatformLaunched());
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Listen for launch status changes from Admin Panel
@@ -22,8 +25,10 @@ export const UnderDevelopmentModal: React.FC<UnderDevelopmentModalProps> = () =>
     return () => window.removeEventListener(LAUNCH_EVENT, handleLaunchChange);
   }, []);
 
-  // If platform is officially launched by Admin, do not render lock overlay at all
-  if (isLaunched) return null;
+  // If platform is officially launched OR user is accessing Admin routes, do not render lock overlay
+  if (isLaunched || location.pathname.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <AnimatePresence>
@@ -110,7 +115,7 @@ export const UnderDevelopmentModal: React.FC<UnderDevelopmentModalProps> = () =>
             {/* Admin Login Action Button */}
             <div className="space-y-3 pt-2">
               <Button
-                onClick={() => { window.location.href = "/admin/auth"; }}
+                onClick={() => navigate("/admin/auth")}
                 className="w-full bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-extrabold rounded-2xl py-3.5 flex items-center justify-center gap-2 text-sm shadow-xl shadow-violet-500/30 cursor-pointer"
               >
                 <Shield className="w-5 h-5 text-white" />
