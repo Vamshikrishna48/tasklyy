@@ -3,14 +3,15 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/pages/admin/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut, ArrowLeft } from "lucide-react";
-
+import { supabase } from "@/lib/supabase";
 import { safeLocalStorage } from "@/utils/safeStorage";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     safeLocalStorage.removeItem("demoAdminAuth");
+    await supabase.auth.signOut();
     navigate("/admin/auth");
   };
 

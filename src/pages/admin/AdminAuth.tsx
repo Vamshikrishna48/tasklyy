@@ -9,6 +9,7 @@ import { Shield, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide
 import { toast } from "sonner";
 import ColorBends from "@/components/ColorBends";
 import { supabase } from "@/lib/supabase";
+import { isAdminEmail } from "@/utils/launchControl";
 
 const AdminAuth = () => {
   const [email, setEmail] = useState("");
@@ -19,32 +20,20 @@ const AdminAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // If already authenticated via demoAdminAuth flag, go straight to admin panel
-    if (localStorage.getItem("demoAdminAuth") === "true") {
-      navigate("/admin");
-      return;
-    }
-    // Check if already logged in as admin via Supabase session
+    // Remove legacy localStorage bypass
+    localStorage.removeItem("demoAdminAuth");
+
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const adminEmails = [
-        "tasskly@admin.com",
-        "karthikmethuku180@gmail.com",
-        "shrikarakarapu@gmail.com",
-        "karshikalamvamshi34@gmail.com",
-        "admin@tasskly.com",
-        "admin@gmail.com"
-      ];
-      const { data: profile } = await (supabase as any)
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .limit(1)
-        .maybeSingle();
-      if (profile?.role === "admin" || adminEmails.includes(session.user.email?.toLowerCase() ?? "")) {
-        navigate("/admin");
+      if (!session?.user) return;
+
+      const userEmail = session.user.email?.toLowerCase().trim() || "";
+      if (!isAdminEmail(userEmail)) {
+        await supabase.auth.signOut();
+        return;
       }
+
+      navigate("/admin");
     };
     checkSession();
   }, [navigate]);
@@ -55,63 +44,57 @@ const AdminAuth = () => {
     setError("");
 
     const cleanEmail = email.trim().toLowerCase();
-    const adminEmails = [
-      "tasskly@admin.com",
-      "karthikmethuku180@gmail.com",
-      "shrikarakarapu@gmail.com",
-      "karshikalamvamshi34@gmail.com",
-      "admin@tasskly.com",
-      "admin@gmail.com"
-    ];
-
-    const isKnownAdminEmail = adminEmails.includes(cleanEmail);
 
     try {
-      // 1. Try standard Supabase authentication
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-
-      if (!authError && data.user) {
-        const { data: profile } = await (supabase as any)
-          .from("profiles")
-          .select("role")
-          .eq("id", data.user.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (profile?.role === "admin" || isKnownAdminEmail) {
-          localStorage.setItem("demoAdminAuth", "true");
-          localStorage.setItem("tasskly_otp_verified", "true");
-          toast.success("Welcome, Administrator.");
-          navigate("/admin");
-          return;
-        } else {
-          await supabase.auth.signOut();
-          setError("Access Denied: Only authorized Administrators are permitted to log in.");
-          toast.error("Access Denied.");
-          setLoading(false);
-          return;
-        }
-      }
-
-      // 2. Master Admin Passcode / Emergency Fallback for configured admin emails
-      if (isKnownAdminEmail || password === "admin123" || password === "tasskly2026") {
-        if (!isKnownAdminEmail && password !== "admin123" && password !== "tasskly2026") {
-          setError("Access Denied: Email is not authorized for Admin access.");
-          setLoading(false);
-          return;
-        }
-
-        localStorage.setItem("demoAdminAuth", "true");
-        localStorage.setItem("tasskly_otp_verified", "true");
-        toast.success("Welcome, Administrator.");
-        navigate("/admin");
+      // Reject non-admin emails before even hitting Auth
+      if (!isAdminEmail(cleanEmail)) {
+        setError("Access Denied: This email is not an authorized administrator.");
+        toast.error("Only registered administrators can log in.");
+        setLoading(false);
         return;
       }
 
-      setError(authError?.message || "Invalid email or password.");
-      setLoading(false);
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
+
+      if (authError || !data.user) {
+        setError("Invalid email or password.");
+        setLoading(false);
+        return;
+      }
+
+      // Double-check email allowlist on the authenticated user
+      const sessionEmail = data.user.email?.toLowerCase().trim() || "";
+      if (!isAdminEmail(sessionEmail)) {
+        await supabase.auth.signOut();
+        setError("Access Denied: Only authorized administrators can log in here.");
+        toast.error("Access Denied.");
+        setLoading(false);
+        return;
+      }
+
+      // Ensure role is admin in profiles
+      await (supabase as any)
+        .from("profiles")
+        .upsert(
+          {
+            id: data.user.id,
+            email: sessionEmail,
+            role: "admin",
+            full_name: data.user.user_metadata?.full_name || "Administrator",
+          },
+          { onConflict: "id" }
+        );
+
+      // Never set demoAdminAuth — session + allowlist only
+      localStorage.removeItem("demoAdminAuth");
+      toast.success("Welcome, Administrator.");
+      navigate("/admin");
     } catch (err: any) {
       setError(err.message || "Invalid credentials.");
+    } finally {
       setLoading(false);
     }
   };
@@ -146,7 +129,7 @@ const AdminAuth = () => {
 
         <Card className="shadow-2xl border-primary/20 bg-card/80 backdrop-blur-xl">
           <CardContent className="p-8">
-            <form onSubmit={handleAdminLogin} className="space-y-5">
+            <form onSubmit={handleAdminLogin} className="space-y-5" autoComplete="off">
               {error && (
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
@@ -165,7 +148,8 @@ const AdminAuth = () => {
                   <Input
                     id="admin-email"
                     type="email"
-                    placeholder="tasskly@admin.com"
+                    placeholder=""
+                    autoComplete="username"
                     className="pl-10 h-11 bg-background/50 border-primary/10 focus:border-primary/40"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -181,7 +165,8 @@ const AdminAuth = () => {
                   <Input
                     id="admin-password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder=""
+                    autoComplete="current-password"
                     className="pl-10 pr-10 h-11 bg-background/50 border-primary/10 focus:border-primary/40"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

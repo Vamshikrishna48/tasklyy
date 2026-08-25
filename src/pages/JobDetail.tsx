@@ -18,6 +18,7 @@ import { useJobs } from "@/hooks/useJobs";
 import { useJobFiles } from "@/hooks/useJobFiles";
 import { NoScreenshotWrapper } from "@/components/NoScreenshotWrapper";
 import { getApiUrl } from "@/lib/api";
+import { validateUpiId } from "@/utils/upiValidation";
  
 const JobDetail = () => {
   const { id } = useParams();
@@ -183,29 +184,41 @@ const JobDetail = () => {
   };
 
   const handleSaveUpi = async () => {
-    if (!tempUpi.trim()) {
-      toast.error("Please enter your UPI ID");
-      return;
-    }
-    if (!tempUpi.includes("@")) {
-      toast.error("Please enter a valid UPI ID (e.g. name@bank)");
+    const check = validateUpiId(tempUpi);
+    if (!check.valid) {
+      toast.error(check.message);
       return;
     }
 
     setSavingUpi(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const verifyRes = await fetch(getApiUrl("/api/verify-upi"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
+        },
+        body: JSON.stringify({ upi_id: check.normalized }),
+      });
+      const verifyBody = await verifyRes.json().catch(() => ({}));
+      if (!verifyRes.ok || verifyBody.valid === false) {
+        throw new Error(verifyBody.error || "UPI ID could not be verified");
+      }
+
       const { error } = await supabase
         .from("profiles")
-        .update({ upi_id: tempUpi.trim() })
+        .update({ upi_id: check.normalized } as any)
         .eq("id", user!.id);
 
       if (error) throw error;
 
-      toast.success("UPI ID saved successfully! ✅");
+      toast.success(verifyBody.message || "UPI ID verified and saved! ✅");
       setShowUpiModal(false);
-      await refreshProfile(); 
+      await refreshProfile();
 
-      // Re-trigger the pending action
       if (pendingAction) {
         if (pendingAction.type === 'bid') {
           setTimeout(() => handlePlaceBid(), 200);

@@ -6,6 +6,7 @@ import { Job, Bid, mockJobs as initialJobs, mockBids as initialBids } from "@/da
 import { toast } from "sonner";
 import { sendBidNotification, sendJobAcceptedAlarm } from "@/hooks/useNotificationPermission";
 import { useJobs } from "@/hooks/useJobs";
+import { isAdminEmail } from "@/utils/launchControl";
 
 export interface UserBid extends Bid {
   status: "pending" | "accepted" | "rejected";
@@ -125,7 +126,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             id: userId,
             email: user.user.email || '',
             full_name: user.user.user_metadata?.full_name || 'User',
-            role: (['karthikmethuku180@gmail.com', 'shrikarakarapu@gmail.com', 'tasskly@admin.com'].includes(user.user.email || '') ? 'admin' : 'worker') as const,
+            role: (isAdminEmail(user.user.email) ? 'admin' : 'worker') as const,
             wallet_balance: 0,
             is_verified: false,
             verification_status: 'unverified' as const,
@@ -160,8 +161,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       // Auto-upgrade admins who signed up before database trigger inclusion
-      const adminEmails = ['karthikmethuku180@gmail.com', 'shrikarakarapu@gmail.com', 'tasskly@admin.com'];
-      if (data.email && adminEmails.includes(data.email) && data.role !== 'admin') {
+      if (data.email && isAdminEmail(data.email) && data.role !== 'admin') {
         const { data: updatedProfile, error: updateError } = await (supabase
           .from('profiles') as any)
           .update({ role: 'admin' })
@@ -233,11 +233,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [myBids, setMyBids] = useState<UserBid[]>(initialMyBids);
   const [payments, setPayments] = useState<Payment[]>(initialPayments);
   
-  // isAdmin derived from profile or email
-  const isAdmin = profile?.role === 'admin' || 
-    user?.email === 'tasskly@admin.com' || 
-    user?.email === 'karthikmethuku180@gmail.com' ||
-    user?.email === 'shrikarakarapu@gmail.com';
+  // isAdmin derived from profile or allowlisted email
+  const isAdmin = profile?.role === 'admin' || isAdminEmail(user?.email);
   const [platformBalance, setPlatformBalance] = useState(0);
 
   const refreshJobs = useCallback(async () => {

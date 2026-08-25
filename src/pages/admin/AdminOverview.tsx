@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IndianRupee, Lock, Users, CheckCircle, Rocket, Construction } from "lucide-react";
 import { toast } from "sonner";
-import { getIsPlatformLaunched, setPlatformLaunched } from "@/utils/launchControl";
+import { getIsPlatformLaunched, setPlatformLaunched, syncLaunchStateFromServer } from "@/utils/launchControl";
 
 interface AdminStats {
   platform_balance: number;
@@ -21,6 +21,7 @@ const AdminOverview = () => {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLaunched, setIsLaunched] = useState(() => getIsPlatformLaunched());
+  const [launching, setLaunching] = useState(false);
 
   const loadStats = async () => {
     const data = await fetchAdminStats();
@@ -30,17 +31,29 @@ const AdminOverview = () => {
 
   useEffect(() => {
     loadStats();
+    // Sync real launch state from Supabase on mount
+    syncLaunchStateFromServer().then(launched => setIsLaunched(launched));
   }, []);
 
-  const handleToggleLaunch = () => {
+  const handleToggleLaunch = async () => {
+    setLaunching(true);
     const nextState = !isLaunched;
-    setPlatformLaunched(nextState);
+    const persisted = await setPlatformLaunched(nextState);
     setIsLaunched(nextState);
+    setLaunching(false);
+
+    if (!persisted) {
+      toast.error(
+        "Launch updated on this device only. Server save failed — other devices may not see it. Ensure SUPABASE_SERVICE_ROLE_KEY and platform_settings table are configured.",
+        { duration: 8000 }
+      );
+      return;
+    }
 
     if (nextState) {
-      toast.success("🚀 Website Officially Launched to Public! Under Development popup disabled & user logins unlocked.", { duration: 6000 });
+      toast.success("🚀 Website Officially Launched to Public! All devices will unlock within a few seconds.", { duration: 6000 });
     } else {
-      toast.warning("🚧 Switched to Under Development Mode. Popup enabled & non-admin logins restricted.", { duration: 6000 });
+      toast.warning("🚧 Switched to Under Development Mode. Popup enabled & non-admin logins restricted on all devices.", { duration: 6000 });
     }
   };
 

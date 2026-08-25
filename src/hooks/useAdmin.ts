@@ -392,7 +392,6 @@ export const useAdmin = () => {
     if (!userId) return false;
     setLoading(true);
     try {
-      // 0. Fetch profile details (email & name) to send formal email notification
       const { data: userProfile } = await (supabase as any)
         .from("profiles")
         .select("email, full_name")
@@ -402,9 +401,10 @@ export const useAdmin = () => {
       const targetEmail = userProfile?.email;
       const targetName = userProfile?.full_name;
 
+      // Send deletion email BEFORE wiping data
       if (targetEmail) {
         try {
-          await fetch(getApiUrl("/api/send-deletion-email"), {
+          const emailRes = await fetch(getApiUrl("/api/send-deletion-email"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -412,67 +412,56 @@ export const useAdmin = () => {
               userName: targetName || "User",
             }),
           });
+          const emailBody = await emailRes.json().catch(() => ({}));
+          if (!emailRes.ok) {
+            console.warn("Deletion email failed:", emailBody);
+            toast.warning(
+              emailBody.message ||
+                "User will be deleted, but the notification email may not have sent. Configure RESEND_API_KEY or SMTP on Vercel."
+            );
+          }
         } catch (e) {
           console.warn("Could not dispatch account deletion email:", e);
+          toast.warning("Could not reach email service. Continuing with user deletion…");
         }
       }
 
-      // 1. Delete user's bids
+      // Client-side cascade cleanup (best effort; server API also cleans)
       await (supabase as any).from("bids").delete().eq("bidder_id", userId);
-
-      // 2. Delete user's job submissions
       await (supabase as any).from("job_submissions").delete().eq("freelancer_id", userId);
+      await (supabase as any).from("messages").delete().eq("sender_id", userId);
+      await (supabase as any).from("withdrawals").delete().eq("user_id", userId);
+      await (supabase as any).from("job_files").delete().eq("uploader_id", userId);
+      await (supabase as any).from("verification_requests").delete().eq("user_id", userId);
+      await (supabase as any).from("verification_documents").delete().eq("user_id", userId);
+      await (supabase as any).from("notifications").delete().eq("user_id", userId);
 
-      // 3. Find all jobs posted by the user or where user is worker
       const { data: userJobs } = await (supabase as any)
         .from("jobs")
         .select("id")
-        .or(`posted_by.eq.${userId},worker_id.eq.${userId}`);
+        .or(`poster_id.eq.${userId},posted_by.eq.${userId},worker_id.eq.${userId}`);
 
       if (userJobs && userJobs.length > 0) {
         const jobIds = userJobs.map((j: any) => j.id);
-
-        // Delete bids on user's jobs
         await (supabase as any).from("bids").delete().in("job_id", jobIds);
-
-        // Delete submissions on user's jobs
         await (supabase as any).from("job_submissions").delete().in("job_id", jobIds);
-
-        // Delete escrow transactions for these jobs
+        await (supabase as any).from("job_files").delete().in("job_id", jobIds);
+        await (supabase as any).from("messages").delete().in("job_id", jobIds);
         await (supabase as any).from("escrow_transactions").delete().in("job_id", jobIds);
-
-        // Delete admin ledger entries for these jobs
         await (supabase as any).from("admin_ledger").delete().in("job_id", jobIds);
-
-        // Delete jobs themselves
         await (supabase as any).from("jobs").delete().in("id", jobIds);
       }
 
-      // 4. Delete escrow transactions involving user
       await (supabase as any)
         .from("escrow_transactions")
         .delete()
         .or(`poster_id.eq.${userId},worker_id.eq.${userId}`);
 
-      // 5. Delete admin ledger entries involving user
       await (supabase as any)
         .from("admin_ledger")
         .delete()
         .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`);
 
-      // 6. Delete verification documents
-      await (supabase as any)
-        .from("verification_documents")
-        .delete()
-        .eq("user_id", userId);
-
-      // 7. Delete notifications
-      await (supabase as any)
-        .from("notifications")
-        .delete()
-        .eq("user_id", userId);
-
-      // 8. Delete user profile from profiles table
       const { error: profileErr } = await (supabase as any)
         .from("profiles")
         .delete()
@@ -482,18 +471,29 @@ export const useAdmin = () => {
         console.error("Error deleting profile row:", profileErr);
       }
 
-      // 9. Call serverless API to delete from Supabase Auth if available
-      try {
-        await fetch(getApiUrl("/api/delete-user"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId }),
-        });
-      } catch {
-        // Optional backend fallback
+      // Server deletes Auth user + remaining rows with service role
+      const { data: { session } } = await supabase.auth.getSession();
+      const deleteRes = await fetch(getApiUrl("/api/delete-user"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!deleteRes.ok) {
+        const errBody = await deleteRes.json().catch(() => ({}));
+        throw new Error(errBody.error || "Server failed to delete Auth user");
       }
 
-      toast.success("User account and all associated history permanently deleted!");
+      toast.success(
+        targetEmail
+          ? `User deleted from the database. Notification emailed to ${targetEmail}.`
+          : "User account and all associated history permanently deleted!"
+      );
       return true;
     } catch (err: any) {
       console.error("Failed to delete user history:", err);

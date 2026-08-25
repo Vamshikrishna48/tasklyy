@@ -44,6 +44,7 @@ import CircularText from "./components/CircularText";
 import ColorBends from "./components/ColorBends";
 import AIChatBot from "./components/AIChatBot";
 import UnderDevelopmentModal from "./components/UnderDevelopmentModal";
+import { syncLaunchStateFromServer } from "./utils/launchControl";
 
 const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   useNotificationPermission();
@@ -268,6 +269,8 @@ const App = () => {
       }
     };
     setupStatusBarAndSplash();
+    // Sync launch flag from server so all devices share the same lock/unlock state
+    syncLaunchStateFromServer();
   }, []);
 
   const handleSplashComplete = useCallback(() => {

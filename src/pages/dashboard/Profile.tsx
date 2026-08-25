@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { getApiUrl } from "@/lib/api";
+import { validateUpiId } from "@/utils/upiValidation";
 
 const popularIndianBanks = [
   "State Bank of India",
@@ -482,27 +483,60 @@ const Profile = () => {
 
 
   const handleSaveUpi = async () => {
-    if (!upiValue.trim()) {
-      toast.error("Please enter a valid UPI ID");
+    const check = validateUpiId(upiValue);
+    if (!check.valid) {
+      toast.error(check.message);
       return;
     }
-    // Basic UPI format validation: something@something
-    if (!upiValue.includes("@")) {
-      toast.error("UPI ID must be in format: name@bank (e.g. 9876543210@paytm)");
-      return;
-    }
+
     setSavingUpi(true);
-    const { error } = await (supabase as any)
-      .from("profiles")
-      .update({ upi_id: upiValue.trim() })
-      .eq("id", profile!.id);
-    setSavingUpi(false);
-    if (error) {
-      toast.error("Failed to save UPI ID: " + error.message);
-    } else {
-      toast.success("UPI ID saved successfully! ✅");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const verifyRes = await fetch(getApiUrl("/api/verify-upi"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
+        },
+        body: JSON.stringify({ upi_id: check.normalized }),
+      });
+      const verifyBody = await verifyRes.json().catch(() => ({}));
+
+      if (!verifyRes.ok || verifyBody.valid === false) {
+        toast.error(verifyBody.error || "UPI ID could not be verified");
+        return;
+      }
+
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({
+          upi_id: check.normalized,
+          upi_verified: true,
+          upi_verified_at: new Date().toISOString(),
+        })
+        .eq("id", profile!.id);
+
+      if (error) {
+        // Columns may not exist yet — save UPI ID only
+        const { error: fallbackErr } = await (supabase as any)
+          .from("profiles")
+          .update({ upi_id: check.normalized })
+          .eq("id", profile!.id);
+        if (fallbackErr) {
+          toast.error("Failed to save UPI ID: " + fallbackErr.message);
+          return;
+        }
+      }
+
+      toast.success(verifyBody.message || "UPI ID verified and saved ✅");
       setEditingUpi(false);
       refreshProfile();
+    } catch (err: any) {
+      toast.error(err.message || "UPI verification failed");
+    } finally {
+      setSavingUpi(false);
     }
   };
 
@@ -525,6 +559,7 @@ const Profile = () => {
   }
 
   const upiId = (profile as any).upi_id;
+  const upiVerified = !!(profile as any).upi_verified;
 
   return (
     <div className="p-6 space-y-6">
@@ -618,7 +653,10 @@ const Profile = () => {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground font-medium mb-1">
                     UPI ID <span className="text-red-500 font-bold">*</span>
-                    <span className="text-[10px] text-muted-foreground ml-1">(required to post jobs)</span>
+                    <span className="text-[10px] text-muted-foreground ml-1">(auto-verified on save)</span>
+                    {upiId && upiVerified && (
+                      <Badge variant="outline" className="ml-2 text-[9px] text-green-700 border-green-300 py-0">Verified</Badge>
+                    )}
                   </p>
                   {editingUpi ? (
                     <div className="flex items-center gap-2">
@@ -631,7 +669,7 @@ const Profile = () => {
                         onKeyDown={(e) => e.key === "Enter" && handleSaveUpi()}
                       />
                       <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600" onClick={handleSaveUpi} disabled={savingUpi}>
-                        <Check className="h-4 w-4" />
+                        {savingUpi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                       </Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground" onClick={() => { setEditingUpi(false); setUpiValue(""); }}>
                         <X className="h-4 w-4" />

@@ -120,9 +120,9 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({
-    success: true,
-    method: 'logged_only',
-    message: 'Deletion email notification logged successfully'
+  return res.status(503).json({
+    success: false,
+    method: 'none',
+    message: 'No email provider configured. Set RESEND_API_KEY or SMTP_USER/SMTP_PASSWORD.'
   });
 }

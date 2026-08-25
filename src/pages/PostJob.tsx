@@ -16,6 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { FileUp, X, Loader2 } from "lucide-react";
+import { getApiUrl } from "@/lib/api";
+import { validateUpiId } from "@/utils/upiValidation";
 
 const PostJob = () => {
   const navigate = useNavigate();
@@ -77,28 +79,40 @@ const PostJob = () => {
 
 
   const handleSaveUpi = async () => {
-    if (!tempUpi.trim()) {
-      toast.error("Please enter your UPI ID");
-      return;
-    }
-    if (!tempUpi.includes("@")) {
-      toast.error("Please enter a valid UPI ID (e.g. name@bank)");
+    const check = validateUpiId(tempUpi);
+    if (!check.valid) {
+      toast.error(check.message);
       return;
     }
 
     setSavingUpi(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const verifyRes = await fetch(getApiUrl("/api/verify-upi"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
+        },
+        body: JSON.stringify({ upi_id: check.normalized }),
+      });
+      const verifyBody = await verifyRes.json().catch(() => ({}));
+      if (!verifyRes.ok || verifyBody.valid === false) {
+        throw new Error(verifyBody.error || "UPI ID could not be verified");
+      }
+
       const { error } = await supabase
         .from("profiles")
-        .update({ upi_id: tempUpi.trim() })
+        .update({ upi_id: check.normalized } as any)
         .eq("id", profile!.id);
 
       if (error) throw error;
 
-      toast.success("UPI ID saved successfully! ✅");
+      toast.success(verifyBody.message || "UPI ID verified and saved! ✅");
       setShowUpiModal(false);
-      await refreshProfile(); 
-      // Re-trigger submit after saving
+      await refreshProfile();
       setTimeout(() => handleSubmit(), 200);
     } catch (err: any) {
       toast.error("Failed to save UPI ID: " + err.message);
