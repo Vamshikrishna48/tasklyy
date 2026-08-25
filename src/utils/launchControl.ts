@@ -11,6 +11,35 @@ export const ADMIN_EMAILS = [
   "karshikalamvamshi34@gmail.com",
 ] as const;
 
+/** Set only after successful Admin Portal password login — prevents session auto-bypass. */
+export const ADMIN_GATE_KEY = "tasskly_admin_gate_verified";
+
+export const isAdminGateVerified = (): boolean => {
+  try {
+    return sessionStorage.getItem(ADMIN_GATE_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+
+export const markAdminGateVerified = (): void => {
+  try {
+    sessionStorage.setItem(ADMIN_GATE_KEY, "true");
+  } catch {
+    /* ignore */
+  }
+  localStorage.removeItem("demoAdminAuth");
+};
+
+export const clearAdminGate = (): void => {
+  try {
+    sessionStorage.removeItem(ADMIN_GATE_KEY);
+  } catch {
+    /* ignore */
+  }
+  localStorage.removeItem("demoAdminAuth");
+};
+
 /**
  * Returns true if the admin has published/launched the platform to the public.
  * Reads from localStorage (populated from server on load).

@@ -9,7 +9,7 @@ import { Shield, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide
 import { toast } from "sonner";
 import ColorBends from "@/components/ColorBends";
 import { supabase } from "@/lib/supabase";
-import { isAdminEmail } from "@/utils/launchControl";
+import { isAdminEmail, clearAdminGate, markAdminGateVerified } from "@/utils/launchControl";
 
 const AdminAuth = () => {
   const [email, setEmail] = useState("");
@@ -20,23 +20,10 @@ const AdminAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Remove legacy localStorage bypass
+    // Always force a fresh credential check — never auto-enter admin panel
     localStorage.removeItem("demoAdminAuth");
-
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-
-      const userEmail = session.user.email?.toLowerCase().trim() || "";
-      if (!isAdminEmail(userEmail)) {
-        await supabase.auth.signOut();
-        return;
-      }
-
-      navigate("/admin");
-    };
-    checkSession();
-  }, [navigate]);
+    clearAdminGate();
+  }, []);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,13 +33,15 @@ const AdminAuth = () => {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      // Reject non-admin emails before even hitting Auth
       if (!isAdminEmail(cleanEmail)) {
         setError("Access Denied: This email is not an authorized administrator.");
         toast.error("Only registered administrators can log in.");
-        setLoading(false);
         return;
       }
+
+      // Sign out any existing session so login must use the password entered here
+      await supabase.auth.signOut();
+      clearAdminGate();
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
@@ -61,21 +50,18 @@ const AdminAuth = () => {
 
       if (authError || !data.user) {
         setError("Invalid email or password.");
-        setLoading(false);
         return;
       }
 
-      // Double-check email allowlist on the authenticated user
       const sessionEmail = data.user.email?.toLowerCase().trim() || "";
       if (!isAdminEmail(sessionEmail)) {
         await supabase.auth.signOut();
+        clearAdminGate();
         setError("Access Denied: Only authorized administrators can log in here.");
         toast.error("Access Denied.");
-        setLoading(false);
         return;
       }
 
-      // Ensure role is admin in profiles
       await (supabase as any)
         .from("profiles")
         .upsert(
@@ -88,12 +74,13 @@ const AdminAuth = () => {
           { onConflict: "id" }
         );
 
-      // Never set demoAdminAuth — session + allowlist only
       localStorage.removeItem("demoAdminAuth");
+      markAdminGateVerified();
       toast.success("Welcome, Administrator.");
       navigate("/admin");
     } catch (err: any) {
       setError(err.message || "Invalid credentials.");
+      clearAdminGate();
     } finally {
       setLoading(false);
     }
@@ -149,7 +136,7 @@ const AdminAuth = () => {
                     id="admin-email"
                     type="email"
                     placeholder=""
-                    autoComplete="username"
+                    autoComplete="off"
                     className="pl-10 h-11 bg-background/50 border-primary/10 focus:border-primary/40"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -166,7 +153,7 @@ const AdminAuth = () => {
                     id="admin-password"
                     type={showPassword ? "text" : "password"}
                     placeholder=""
-                    autoComplete="current-password"
+                    autoComplete="new-password"
                     className="pl-10 pr-10 h-11 bg-background/50 border-primary/10 focus:border-primary/40"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

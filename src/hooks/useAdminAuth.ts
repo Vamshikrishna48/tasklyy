@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { isAdminEmail } from "@/utils/launchControl";
+import { isAdminEmail, isAdminGateVerified, clearAdminGate } from "@/utils/launchControl";
 
 export const useAdminAuth = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -10,14 +10,20 @@ export const useAdminAuth = () => {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        // Clear legacy bypass flag if present
-        if (localStorage.getItem("demoAdminAuth")) {
-          localStorage.removeItem("demoAdminAuth");
+        localStorage.removeItem("demoAdminAuth");
+
+        // Must have completed Admin Portal password login this browser session
+        if (!isAdminGateVerified()) {
+          setIsAdmin(false);
+          setAdminProfile(null);
+          setLoading(false);
+          return;
         }
 
         const { data: { session } } = await supabase.auth.getSession();
 
         if (!session?.user) {
+          clearAdminGate();
           setIsAdmin(false);
           setAdminProfile(null);
           setLoading(false);
@@ -26,8 +32,8 @@ export const useAdminAuth = () => {
 
         const email = session.user.email?.toLowerCase().trim() || "";
 
-        // Hard allowlist — credentials alone are never enough
         if (!isAdminEmail(email)) {
+          clearAdminGate();
           setIsAdmin(false);
           setAdminProfile(null);
           setLoading(false);
@@ -41,7 +47,6 @@ export const useAdminAuth = () => {
           .limit(1)
           .maybeSingle();
 
-        // Ensure profile role stays admin for allowlisted emails
         if (profile && profile.role !== "admin") {
           await (supabase as any)
             .from("profiles")
@@ -56,6 +61,7 @@ export const useAdminAuth = () => {
             : { role: "admin", full_name: "Admin User", email: session.user.email }
         );
       } catch {
+        clearAdminGate();
         setIsAdmin(false);
         setAdminProfile(null);
       } finally {

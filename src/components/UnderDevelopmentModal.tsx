@@ -8,6 +8,7 @@ import {
   LAUNCH_EVENT,
   syncLaunchStateFromServer,
   subscribeToLaunchState,
+  clearAdminGate,
 } from "@/utils/launchControl";
 
 export const UnderDevelopmentModal: React.FC = () => {
@@ -126,7 +127,10 @@ export const UnderDevelopmentModal: React.FC = () => {
 
             <div className="space-y-3 pt-2">
               <Button
-                onClick={() => navigate("/admin/auth")}
+                onClick={() => {
+                  clearAdminGate();
+                  navigate("/admin/auth");
+                }}
                 className="w-full bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-extrabold rounded-2xl py-3.5 flex items-center justify-center gap-2 text-sm shadow-xl shadow-violet-500/30 cursor-pointer"
               >
                 <Shield className="w-5 h-5 text-white" />

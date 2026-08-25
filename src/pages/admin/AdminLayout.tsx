@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { LogOut, ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { safeLocalStorage } from "@/utils/safeStorage";
+import { clearAdminGate } from "@/utils/launchControl";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     safeLocalStorage.removeItem("demoAdminAuth");
+    clearAdminGate();
     await supabase.auth.signOut();
     navigate("/admin/auth");
   };
