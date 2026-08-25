@@ -13,8 +13,8 @@ const AdminLayout = () => {
   const handleLogout = async () => {
     safeLocalStorage.removeItem("demoAdminAuth");
     clearAdminGate();
-    await supabase.auth.signOut();
-    navigate("/admin/auth");
+    await supabase.auth.signOut({ scope: "local" });
+    window.location.assign("/admin-login");
   };
 
   return (

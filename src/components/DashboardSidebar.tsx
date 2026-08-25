@@ -51,7 +51,7 @@ export function DashboardSidebar() {
 
   const menuItems = [...baseMenuItems];
   if (isAdmin) {
-    menuItems.push({ title: "Admin Panel", url: "/admin", icon: Settings });
+    menuItems.push({ title: "Admin Panel", url: "/admin-login", icon: Settings });
   }
 
   return (

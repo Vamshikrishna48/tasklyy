@@ -11,18 +11,38 @@ import ColorBends from "@/components/ColorBends";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail, clearAdminGate, markAdminGateVerified } from "@/utils/launchControl";
 
+/**
+ * Admin login page — always shows the form.
+ * Never auto-redirects from an existing Supabase session.
+ */
 const AdminAuth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Always force a fresh credential check — never auto-enter admin panel
-    localStorage.removeItem("demoAdminAuth");
-    clearAdminGate();
+    let cancelled = false;
+
+    const reset = async () => {
+      // Wipe any prior admin gate + session so this page cannot auto-enter the panel
+      clearAdminGate();
+      localStorage.removeItem("demoAdminAuth");
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) setReady(true);
+    };
+
+    reset();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -33,14 +53,17 @@ const AdminAuth = () => {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
+      if (!cleanEmail || !password) {
+        setError("Email and password are required.");
+        return;
+      }
+
       if (!isAdminEmail(cleanEmail)) {
         setError("Access Denied: This email is not an authorized administrator.");
         toast.error("Only registered administrators can log in.");
         return;
       }
 
-      // Sign out any existing session so login must use the password entered here
-      await supabase.auth.signOut();
       clearAdminGate();
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -48,14 +71,15 @@ const AdminAuth = () => {
         password,
       });
 
-      if (authError || !data.user) {
+      if (authError || !data.user || !data.session) {
         setError("Invalid email or password.");
+        clearAdminGate();
         return;
       }
 
-      const sessionEmail = data.user.email?.toLowerCase().trim() || "";
+      const sessionEmail = (data.user.email || "").toLowerCase().trim();
       if (!isAdminEmail(sessionEmail)) {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: "local" });
         clearAdminGate();
         setError("Access Denied: Only authorized administrators can log in here.");
         toast.error("Access Denied.");
@@ -74,10 +98,9 @@ const AdminAuth = () => {
           { onConflict: "id" }
         );
 
-      localStorage.removeItem("demoAdminAuth");
-      markAdminGateVerified();
+      markAdminGateVerified(data.user.id);
       toast.success("Welcome, Administrator.");
-      navigate("/admin");
+      navigate("/admin", { replace: true });
     } catch (err: any) {
       setError(err.message || "Invalid credentials.");
       clearAdminGate();
@@ -85,6 +108,14 @@ const AdminAuth = () => {
       setLoading(false);
     }
   };
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="h-8 w-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center relative overflow-hidden px-4">
@@ -111,7 +142,7 @@ const AdminAuth = () => {
           <h1 className="font-display text-3xl font-black text-foreground tracking-tight italic">
             ADMIN <span className="text-primary">PORTAL</span>
           </h1>
-          <p className="text-muted-foreground text-sm mt-2">Authorized Personnel Only</p>
+          <p className="text-muted-foreground text-sm mt-2">Authorized Personnel Only — password required</p>
         </div>
 
         <Card className="shadow-2xl border-primary/20 bg-card/80 backdrop-blur-xl">
@@ -134,9 +165,13 @@ const AdminAuth = () => {
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="admin-email"
+                    name="admin-email"
                     type="email"
                     placeholder=""
                     autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
                     className="pl-10 h-11 bg-background/50 border-primary/10 focus:border-primary/40"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -151,6 +186,7 @@ const AdminAuth = () => {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="admin-password"
+                    name="admin-password"
                     type={showPassword ? "text" : "password"}
                     placeholder=""
                     autoComplete="new-password"
@@ -198,7 +234,10 @@ const AdminAuth = () => {
             variant="ghost"
             size="sm"
             className="text-muted-foreground hover:text-foreground"
-            onClick={() => navigate("/")}
+            onClick={() => {
+              clearAdminGate();
+              navigate("/");
+            }}
           >
             Cancel and Return Home
           </Button>

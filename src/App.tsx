@@ -308,7 +308,8 @@ const App = () => {
                       <Route path="submitted" element={<SubmittedWork />} />
                       <Route path="support" element={<CustomerService />} />
                     </Route>
-                    <Route path="/admin/auth" element={<AdminAuth />} />
+                    <Route path="/admin-login" element={<AdminAuth />} />
+                    <Route path="/admin/auth" element={<Navigate to="/admin-login" replace />} />
                     <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
                       <Route index element={<AdminOverview />} />
                       <Route path="escrow" element={<AdminEscrow />} />

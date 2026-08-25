@@ -12,31 +12,22 @@ export const useAdminAuth = () => {
       try {
         localStorage.removeItem("demoAdminAuth");
 
-        // Must have completed Admin Portal password login this browser session
-        if (!isAdminGateVerified()) {
-          setIsAdmin(false);
-          setAdminProfile(null);
-          setLoading(false);
-          return;
-        }
-
         const { data: { session } } = await supabase.auth.getSession();
 
         if (!session?.user) {
           clearAdminGate();
           setIsAdmin(false);
           setAdminProfile(null);
-          setLoading(false);
           return;
         }
 
         const email = session.user.email?.toLowerCase().trim() || "";
 
-        if (!isAdminEmail(email)) {
+        // Require BOTH: allowlisted email AND password gate for this user id
+        if (!isAdminEmail(email) || !isAdminGateVerified(session.user.id)) {
           clearAdminGate();
           setIsAdmin(false);
           setAdminProfile(null);
-          setLoading(false);
           return;
         }
 
@@ -71,7 +62,9 @@ export const useAdminAuth = () => {
 
     checkAdmin();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event) => {
+      // Re-validate on every auth change; do not trust prior isAdmin
+      setLoading(true);
       checkAdmin();
     });
 

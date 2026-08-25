@@ -22,8 +22,9 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
     );
   }
 
-  if (isAdmin === false) {
-    return <Navigate to="/admin/auth" replace />;
+  // Only allow when explicitly verified — null/false both redirect to login
+  if (isAdmin !== true) {
+    return <Navigate to="/admin-login" replace />;
   }
 
   return <>{children}</>;

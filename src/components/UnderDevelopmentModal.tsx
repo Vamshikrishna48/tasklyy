@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Construction, Sparkles, Clock, Rocket, Lock, Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import {
 export const UnderDevelopmentModal: React.FC = () => {
   const [isLaunched, setIsLaunched] = useState(() => getIsPlatformLaunched());
   const location = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Sync from server on mount so other devices pick up Launch Website
@@ -42,7 +41,12 @@ export const UnderDevelopmentModal: React.FC = () => {
     };
   }, []);
 
-  if (isLaunched || location.pathname.startsWith("/admin")) {
+  // Hide lock overlay when platform is live, or when user is on admin login / admin panel
+  if (
+    isLaunched ||
+    location.pathname.startsWith("/admin") ||
+    location.pathname === "/admin-login"
+  ) {
     return null;
   }
 
@@ -129,7 +133,8 @@ export const UnderDevelopmentModal: React.FC = () => {
               <Button
                 onClick={() => {
                   clearAdminGate();
-                  navigate("/admin/auth");
+                  // Hard navigation clears React/session state that caused auto-bypass
+                  window.location.assign("/admin-login");
                 }}
                 className="w-full bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-extrabold rounded-2xl py-3.5 flex items-center justify-center gap-2 text-sm shadow-xl shadow-violet-500/30 cursor-pointer"
               >

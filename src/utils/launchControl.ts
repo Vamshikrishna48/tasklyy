@@ -13,18 +13,25 @@ export const ADMIN_EMAILS = [
 
 /** Set only after successful Admin Portal password login — prevents session auto-bypass. */
 export const ADMIN_GATE_KEY = "tasskly_admin_gate_verified";
+export const ADMIN_GATE_UID_KEY = "tasskly_admin_gate_uid";
 
-export const isAdminGateVerified = (): boolean => {
+export const isAdminGateVerified = (userId?: string | null): boolean => {
   try {
-    return sessionStorage.getItem(ADMIN_GATE_KEY) === "true";
+    if (sessionStorage.getItem(ADMIN_GATE_KEY) !== "true") return false;
+    if (userId) {
+      const gatedUid = sessionStorage.getItem(ADMIN_GATE_UID_KEY);
+      if (!gatedUid || gatedUid !== userId) return false;
+    }
+    return true;
   } catch {
     return false;
   }
 };
 
-export const markAdminGateVerified = (): void => {
+export const markAdminGateVerified = (userId: string): void => {
   try {
     sessionStorage.setItem(ADMIN_GATE_KEY, "true");
+    sessionStorage.setItem(ADMIN_GATE_UID_KEY, userId);
   } catch {
     /* ignore */
   }
@@ -34,6 +41,7 @@ export const markAdminGateVerified = (): void => {
 export const clearAdminGate = (): void => {
   try {
     sessionStorage.removeItem(ADMIN_GATE_KEY);
+    sessionStorage.removeItem(ADMIN_GATE_UID_KEY);
   } catch {
     /* ignore */
   }
