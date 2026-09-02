@@ -5,7 +5,11 @@ import path from 'path';
 const ADMIN_EMAILS = [
   'karthikmethuku180@gmail.com',
   'shrikarakarapu@gmail.com',
+  'karshikalamvamshi48@gmail.com',
   'karshikalamvamshi34@gmail.com',
+  'tasskly@admin.com',
+  'admin@tasskly.com',
+  'admin@gmail.com',
 ];
 
 function loadEnv() {

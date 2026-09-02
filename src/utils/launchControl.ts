@@ -7,7 +7,11 @@ export const LAUNCH_EVENT = "tasskly_launch_status_changed";
 export const ADMIN_EMAILS = [
   "karthikmethuku180@gmail.com",
   "shrikarakarapu@gmail.com",
+  "karshikalamvamshi48@gmail.com",
   "karshikalamvamshi34@gmail.com",
+  "tasskly@admin.com",
+  "admin@tasskly.com",
+  "admin@gmail.com",
 ] as const;
 
 /** Set only after successful Admin Portal password login. */

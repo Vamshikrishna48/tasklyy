@@ -32,7 +32,11 @@ function loadEnv() {
 const ADMIN_EMAILS = [
   'karthikmethuku180@gmail.com',
   'shrikarakarapu@gmail.com',
+  'karshikalamvamshi48@gmail.com',
   'karshikalamvamshi34@gmail.com',
+  'tasskly@admin.com',
+  'admin@tasskly.com',
+  'admin@gmail.com',
 ];
 
 export default async function handler(req, res) {
