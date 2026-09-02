@@ -31,11 +31,16 @@ const AdminAuth = () => {
       // Wipe any prior admin gate + session so this page cannot auto-enter the panel
       clearAdminGate();
       localStorage.removeItem("demoAdminAuth");
+
       try {
-        await supabase.auth.signOut({ scope: "local" });
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user && !isAdminGateVerified(session.user.id)) {
+          await supabase.auth.signOut({ scope: "local" });
+        }
       } catch {
         /* ignore */
       }
+
       if (!cancelled) setReady(true);
     };
 
@@ -167,7 +172,6 @@ const AdminAuth = () => {
                     id="admin-email"
                     name="admin-email"
                     type="email"
-                    placeholder=""
                     autoComplete="off"
                     autoCorrect="off"
                     autoCapitalize="none"
@@ -188,7 +192,6 @@ const AdminAuth = () => {
                     id="admin-password"
                     name="admin-password"
                     type={showPassword ? "text" : "password"}
-                    placeholder=""
                     autoComplete="new-password"
                     className="pl-10 pr-10 h-11 bg-background/50 border-primary/10 focus:border-primary/40"
                     value={password}

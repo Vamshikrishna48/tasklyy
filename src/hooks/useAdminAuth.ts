@@ -23,8 +23,19 @@ export const useAdminAuth = () => {
 
         const email = session.user.email?.toLowerCase().trim() || "";
 
-        // Require BOTH: allowlisted email AND password gate for this user id
-        if (!isAdminEmail(email) || !isAdminGateVerified(session.user.id)) {
+        // Require BOTH: allowlisted email AND password gate for this user id.
+        // If the user is still carrying an old session without the explicit gate,
+        // clear it immediately so the admin login form remains the only entry point.
+        if (!isAdminEmail(email)) {
+          await supabase.auth.signOut({ scope: "local" });
+          clearAdminGate();
+          setIsAdmin(false);
+          setAdminProfile(null);
+          return;
+        }
+
+        if (!isAdminGateVerified(session.user.id)) {
+          await supabase.auth.signOut({ scope: "local" });
           clearAdminGate();
           setIsAdmin(false);
           setAdminProfile(null);

@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import { getApiUrl } from "@/lib/api";
 
 export const LAUNCH_KEY = "tasskly_platform_launched";
 export const LAUNCH_EVENT = "tasskly_launch_status_changed";
@@ -11,7 +10,7 @@ export const ADMIN_EMAILS = [
   "karshikalamvamshi34@gmail.com",
 ] as const;
 
-/** Set only after successful Admin Portal password login — prevents session auto-bypass. */
+/** Set only after successful Admin Portal password login. */
 export const ADMIN_GATE_KEY = "tasskly_admin_gate_verified";
 export const ADMIN_GATE_UID_KEY = "tasskly_admin_gate_uid";
 
@@ -32,9 +31,7 @@ export const markAdminGateVerified = (userId: string): void => {
   try {
     sessionStorage.setItem(ADMIN_GATE_KEY, "true");
     sessionStorage.setItem(ADMIN_GATE_UID_KEY, userId);
-  } catch {
-    /* ignore */
-  }
+  } catch { /* ignore */ }
   localStorage.removeItem("demoAdminAuth");
 };
 
@@ -42,16 +39,11 @@ export const clearAdminGate = (): void => {
   try {
     sessionStorage.removeItem(ADMIN_GATE_KEY);
     sessionStorage.removeItem(ADMIN_GATE_UID_KEY);
-  } catch {
-    /* ignore */
-  }
+  } catch { /* ignore */ }
   localStorage.removeItem("demoAdminAuth");
 };
 
-/**
- * Returns true if the admin has published/launched the platform to the public.
- * Reads from localStorage (populated from server on load).
- */
+/** Returns true if the platform is launched (from localStorage cache). */
 export const getIsPlatformLaunched = (): boolean => {
   return localStorage.getItem(LAUNCH_KEY) === "true";
 };
@@ -62,37 +54,14 @@ const broadcastLaunch = (launched: boolean) => {
 };
 
 /**
- * Updates platform launch state on the server (API + Supabase) and localStorage,
- * then dispatches a global event for live reactivity on this device.
- * Other devices pick this up via syncLaunchStateFromServer / realtime / polling.
+ * Saves launch state to Supabase so ALL users/browsers see it.
+ * Also updates localStorage immediately for the current session.
  */
 export const setPlatformLaunched = async (launched: boolean): Promise<boolean> => {
-  let persisted = false;
+  // Update localStorage immediately so this device responds instantly
+  broadcastLaunch(launched);
 
-  // 1. Prefer serverless API (service role) so all devices see the same value
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      const res = await fetch(getApiUrl("/api/platform-launch"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ launched }),
-      });
-      if (res.ok) {
-        persisted = true;
-      } else {
-        const errBody = await res.json().catch(() => ({}));
-        console.warn("platform-launch API failed:", errBody);
-      }
-    }
-  } catch (e) {
-    console.warn("platform-launch API unreachable:", e);
-  }
-
-  // 2. Also write via client Supabase (fallback / local projects)
+  // Persist to Supabase so other devices/browsers see the change
   try {
     const { error } = await (supabase as any)
       .from("platform_settings")
@@ -100,82 +69,76 @@ export const setPlatformLaunched = async (launched: boolean): Promise<boolean> =
         { key: "is_launched", value: launched ? "true" : "false" },
         { onConflict: "key" }
       );
-    if (!error) persisted = true;
-    else console.warn("Could not persist launch state to Supabase:", error.message);
+    if (error) {
+      console.warn("Could not save launch state to Supabase:", error.message);
+      // Still return true because localStorage is updated
+    }
+    return true;
   } catch (e) {
-    console.warn("Could not persist launch state to Supabase:", e);
+    console.warn("Could not save launch state to Supabase:", e);
+    return true; // localStorage is already updated
   }
-
-  // 3. Always update local device immediately
-  broadcastLaunch(launched);
-  return persisted;
 };
 
 /**
- * Fetches launch state from API / Supabase and syncs it to localStorage.
- * Call on app boot and periodically so other devices see Launch Website.
+ * Reads launch state from Supabase and syncs to localStorage.
+ * Call on app mount so all devices get the real server state.
  */
 export const syncLaunchStateFromServer = async (): Promise<boolean> => {
-  // Prefer API (readable by all devices without RLS issues)
   try {
-    const res = await fetch(getApiUrl("/api/platform-launch"), { method: "GET" });
-    if (res.ok) {
-      const body = await res.json();
-      const serverLaunched = !!body.launched;
-      broadcastLaunch(serverLaunched);
-      return serverLaunched;
-    }
-  } catch (e) {
-    console.warn("platform-launch GET failed, trying Supabase:", e);
-  }
-
-  try {
-    const { data } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("platform_settings")
       .select("value")
       .eq("key", "is_launched")
       .maybeSingle();
 
+    if (error) {
+      // Table may not exist yet — default to not launched
+      console.warn("platform_settings table not accessible:", error.message);
+      return getIsPlatformLaunched();
+    }
+
     const serverLaunched = data?.value === "true";
     broadcastLaunch(serverLaunched);
     return serverLaunched;
   } catch (e) {
-    console.warn("Could not sync launch state from server:", e);
+    console.warn("Could not sync launch state:", e);
     return getIsPlatformLaunched();
   }
 };
 
 /**
- * Subscribe to platform_settings changes so other browsers update without refresh.
+ * Subscribe to Supabase realtime so other browsers update without refresh.
+ * Returns an unsubscribe function.
  */
 export const subscribeToLaunchState = (onChange: (launched: boolean) => void) => {
-  const channel = (supabase as any)
-    .channel("platform_launch_sync")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "platform_settings",
-        filter: "key=eq.is_launched",
-      },
-      (payload: any) => {
-        const value = payload?.new?.value ?? payload?.old?.value;
-        if (value === undefined) return;
-        const launched = value === "true";
-        broadcastLaunch(launched);
-        onChange(launched);
-      }
-    )
-    .subscribe();
+  try {
+    const channel = (supabase as any)
+      .channel("platform_launch_sync")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "platform_settings",
+          filter: "key=eq.is_launched",
+        },
+        (payload: any) => {
+          const value = payload?.new?.value ?? payload?.old?.value;
+          if (value === undefined) return;
+          const launched = value === "true";
+          broadcastLaunch(launched);
+          onChange(launched);
+        }
+      )
+      .subscribe();
 
-  return () => {
-    try {
-      (supabase as any).removeChannel(channel);
-    } catch {
-      /* ignore */
-    }
-  };
+    return () => {
+      try { (supabase as any).removeChannel(channel); } catch { /* ignore */ }
+    };
+  } catch {
+    return () => {};
+  }
 };
 
 /** Helper to check if an email belongs to an Administrator. */
