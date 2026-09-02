@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   UserCheck, UserX, Shield, Mail, CheckCircle, Clock,
-  AlertTriangle, Eye, X, Check, Briefcase, IndianRupee, ImageOff, Trash2, Loader2
+  AlertTriangle, Eye, X, Check, Briefcase, IndianRupee, ImageOff, Trash2, Loader2, CreditCard
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,6 +27,7 @@ const AdminUsers = () => {
   const [pending, setPending] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [levelFilter, setLevelFilter] = useState<string>("all");
+  const [upiUpdatingId, setUpiUpdatingId] = useState<string | null>(null);
 
   const filteredUsers = users.filter((u) => {
     if (levelFilter === "all") return true;
@@ -41,6 +43,63 @@ const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const handleApproveUpi = async (userId: string) => {
+    setUpiUpdatingId(userId);
+    try {
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({
+          upi_verified: true,
+          upi_verification_status: "verified",
+          upi_verified_at: new Date().toISOString()
+        })
+        .eq("id", userId);
+
+      if (error) throw error;
+      toast.success("UPI ID manually approved! ✅");
+      loadData();
+      if (selectedUser?.id === userId) {
+        setSelectedUser((prev: any) => ({
+          ...prev,
+          upi_verified: true,
+          upi_verification_status: "verified"
+        }));
+      }
+    } catch (e: any) {
+      toast.error("Failed to approve UPI ID: " + e.message);
+    } finally {
+      setUpiUpdatingId(null);
+    }
+  };
+
+  const handleRejectUpi = async (userId: string) => {
+    setUpiUpdatingId(userId);
+    try {
+      const { error } = await (supabase as any)
+        .from("profiles")
+        .update({
+          upi_verified: false,
+          upi_verification_status: "rejected"
+        })
+        .eq("id", userId);
+
+      if (error) throw error;
+      toast.success("UPI ID rejected ❌");
+      loadData();
+      if (selectedUser?.id === userId) {
+        setSelectedUser((prev: any) => ({
+          ...prev,
+          upi_verified: false,
+          upi_verification_status: "rejected"
+        }));
+      }
+    } catch (e: any) {
+      toast.error("Failed to reject UPI ID: " + e.message);
+    } finally {
+      setUpiUpdatingId(null);
+    }
+  };
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
@@ -289,7 +348,27 @@ const AdminUsers = () => {
                         </td>
                         <td className="px-5 py-4">
                           {user.upi_id ? (
-                            <span className="text-xs font-mono text-foreground">{user.upi_id}</span>
+                            <div className="space-y-1">
+                              <span className="text-xs font-mono text-foreground font-semibold">{user.upi_id}</span>
+                              <div>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[8px] font-black uppercase py-0 px-1 ${
+                                    user.upi_verification_status === "verified" || user.upi_verified === true
+                                      ? "bg-green-50 text-green-700 border-green-200"
+                                      : user.upi_verification_status === "rejected"
+                                      ? "bg-red-50 text-red-700 border-red-200"
+                                      : "bg-amber-50 text-amber-700 border-amber-200"
+                                  }`}
+                                >
+                                  {user.upi_verification_status === "verified" || user.upi_verified === true
+                                    ? "Verified ✅"
+                                    : user.upi_verification_status === "rejected"
+                                    ? "Rejected ❌"
+                                    : "Pending Review ⏳"}
+                                </Badge>
+                              </div>
+                            </div>
                           ) : (
                             <span className="text-[10px] text-destructive font-bold">Not set</span>
                           )}
@@ -365,55 +444,46 @@ const AdminUsers = () => {
               </div>
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <Label className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Selfie with ID</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Selfie / Photo</Label>
                   <div className="aspect-[3/2] rounded-xl bg-muted overflow-hidden border flex items-center justify-center">
                     {docUrls?.selfie
                       ? <img src={docUrls.selfie} className="w-full h-full object-contain" alt="Selfie" />
-                      : <div className="flex flex-col items-center gap-2 text-muted-foreground"><ImageOff className="h-8 w-8" /><p className="text-xs">No selfie uploaded</p></div>
+                      : <div className="flex flex-col items-center gap-2 text-muted-foreground"><ImageOff className="h-8 w-8" /><p className="text-xs">No document uploaded</p></div>
                     }
                   </div>
                 </div>
-                <Card className="bg-primary/5 border-primary/20">
-                  <CardContent className="p-4 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-muted-foreground">ID Number:</span>
-                      <span className="text-sm font-black text-foreground">{selectedRequest?.id_number || '—'}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-muted-foreground">ID Type:</span>
-                      <span className="text-sm font-black text-foreground uppercase">{selectedRequest?.id_type?.replace('_', ' ') || '—'}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-muted-foreground">Submitted:</span>
-                      <span className="text-sm font-black text-foreground">{selectedRequest?.created_at ? format(new Date(selectedRequest.created_at), 'dd MMM yyyy') : '—'}</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="p-4 rounded-xl bg-muted/40 space-y-2 text-xs">
+                  <div><span className="text-muted-foreground">ID Type:</span> <strong className="capitalize">{selectedRequest?.id_type?.replace('_', ' ')}</strong></div>
+                  <div><span className="text-muted-foreground">ID Number:</span> <strong className="font-mono">{selectedRequest?.id_number}</strong></div>
+                  <div><span className="text-muted-foreground">Submitted:</span> <span>{selectedRequest?.created_at ? format(new Date(selectedRequest.created_at), 'dd MMM yyyy, hh:mm a') : 'N/A'}</span></div>
+                </div>
               </div>
             </div>
           ) : (
-            <div className="py-8 space-y-4 max-w-md mx-auto text-center">
-              <div className="h-16 w-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
-                <AlertTriangle className="h-8 w-8" />
-              </div>
-              <h3 className="font-bold text-lg">Reject Verification</h3>
-              <p className="text-sm text-muted-foreground">Specify why the documents were rejected. This will be shown to the user.</p>
-              <div className="text-left space-y-2 pt-4">
-                <Label>Rejection Reason</Label>
-                <Input placeholder="e.g. Image blurry, ID expired, Number mismatch" value={adminNote} onChange={(e) => setAdminNote(e.target.value)} autoFocus />
-              </div>
+            <div className="py-4 space-y-3">
+              <Label className="text-sm font-semibold">Reason for Rejection <span className="text-destructive">*</span></Label>
+              <Input
+                value={adminNote}
+                onChange={(e) => setAdminNote(e.target.value)}
+                placeholder="e.g. ID photo is blurry / expired document"
+                className="w-full"
+              />
             </div>
           )}
 
-          <DialogFooter className="flex gap-2">
+          <DialogFooter className="gap-2">
             {!isRejecting ? (
               <>
-                <Button variant="outline" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" /> Reject Request</Button>
-                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApprove()}><Check className="mr-2 h-4 w-4" /> Approve & Verify</Button>
+                <Button variant="outline" className="text-destructive hover:bg-destructive/10" onClick={() => setIsRejecting(true)}>
+                  <X className="h-4 w-4 mr-1" /> Reject
+                </Button>
+                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApprove()}>
+                  <Check className="h-4 w-4 mr-1" /> Approve Verification
+                </Button>
               </>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => setIsRejecting(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setIsRejecting(false)}>Back</Button>
                 <Button variant="destructive" onClick={() => handleReject()}>Confirm Rejection</Button>
               </>
             )}
@@ -422,31 +492,52 @@ const AdminUsers = () => {
       </Dialog>
 
       {/* ── User Detail Modal ── */}
-      <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+      <Dialog open={!!selectedUser && !isDeletingUser} onOpenChange={(open) => { if (!open) setSelectedUser(null); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
-            <DialogDescription>Full profile and project information</DialogDescription>
+            <DialogTitle className="font-display text-lg font-bold flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-primary" />
+              User Profile Details
+            </DialogTitle>
+            <DialogDescription>
+              Detailed marketplace record and payout configuration.
+            </DialogDescription>
           </DialogHeader>
+
           {selectedUser && (
-              <div className="space-y-4 py-2">
-              {/* Avatar + name */}
-              <div className="flex items-center gap-3">
-                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary text-xl">
-                  {selectedUser.full_name?.charAt(0)}
+            <div className="space-y-4 py-2">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg shrink-0">
+                  {selectedUser.avatar_url ? (
+                    <img src={selectedUser.avatar_url} className="h-full w-full rounded-full object-cover" alt="avatar" />
+                  ) : (
+                    (selectedUser.full_name || "U").substring(0, 2).toUpperCase()
+                  )}
                 </div>
-                <div>
-                  <p className="font-bold text-lg text-foreground">{selectedUser.full_name}</p>
-                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
-                  <Badge variant="outline" className="text-[9px] mt-1 capitalize">{selectedUser.role}</Badge>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-foreground truncate">{selectedUser.full_name}</p>
+                  <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                    <Mail className="h-3 w-3 shrink-0" /> {selectedUser.email}
+                  </p>
+                  {selectedUser.phone && (
+                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                      <Phone className="h-3 w-3 shrink-0" /> {selectedUser.phone}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 text-xs">
                 <Card className="bg-muted/30">
                   <CardContent className="p-3">
-                    <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">Verification</p>
-                    <Badge variant="outline" className={`text-[10px] font-black uppercase
+                    <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">Role / Level</p>
+                    <p className="font-bold text-foreground capitalize">{selectedUser.role || 'Member'} • Lvl {selectedUser.level || 1}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-muted/30">
+                  <CardContent className="p-3">
+                    <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">ID Verification</p>
+                    <Badge variant="outline" className={`text-[9px] font-black uppercase
                       ${selectedUser.verification_status === 'verified' ? 'bg-green-50 text-green-700 border-green-200' :
                         selectedUser.verification_status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                         'bg-muted text-muted-foreground'}`}>
@@ -456,17 +547,11 @@ const AdminUsers = () => {
                 </Card>
                 <Card className="bg-muted/30">
                   <CardContent className="p-3">
-                    <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">Wallet Balance</p>
-                    <p className="text-sm font-black text-foreground">₹{selectedUser.wallet_balance?.toLocaleString('en-IN') || 0}</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-muted/30">
-                  <CardContent className="p-3">
                     <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">Jobs Posted</p>
                     <p className="text-sm font-black text-foreground">{selectedUser.total_jobs_posted || 0}</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-muted/30">
+                <Card className="bg-muted/30 col-span-2">
                   <CardContent className="p-3">
                     <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">Jobs Worked</p>
                     <p className="text-sm font-black text-foreground">{selectedUser.total_jobs_worked || 0}</p>
@@ -474,14 +559,66 @@ const AdminUsers = () => {
                 </Card>
               </div>
 
-              <Card className={selectedUser.upi_id ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}>
-                <CardContent className="p-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-[9px] font-black uppercase mb-0.5 text-muted-foreground">UPI ID</p>
-                    <p className={`text-sm font-mono font-bold ${selectedUser.upi_id ? 'text-green-800' : 'text-red-600'}`}>
-                      {selectedUser.upi_id || 'Not set — cannot receive payments'}
-                    </p>
+              {/* UPI ID Card with Manual Verification Action Buttons */}
+              <Card className={
+                selectedUser.upi_verification_status === "verified" || selectedUser.upi_verified === true
+                  ? "bg-green-50/80 border-green-200"
+                  : selectedUser.upi_verification_status === "rejected"
+                  ? "bg-red-50/80 border-red-200"
+                  : selectedUser.upi_id
+                  ? "bg-amber-50/80 border-amber-200"
+                  : "bg-red-50/80 border-red-200"
+              }>
+                <CardContent className="p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div>
+                      <p className="text-[9px] font-black uppercase text-muted-foreground">UPI ID Payout Configuration</p>
+                      <p className="text-sm font-mono font-bold text-foreground">
+                        {selectedUser.upi_id || 'Not set — user has not added UPI'}
+                      </p>
+                    </div>
+                    {selectedUser.upi_id && (
+                      <Badge
+                        variant="outline"
+                        className={`text-[9px] font-black uppercase py-0.5 px-2 ${
+                          selectedUser.upi_verification_status === "verified" || selectedUser.upi_verified === true
+                            ? "bg-green-100 text-green-800 border-green-300"
+                            : selectedUser.upi_verification_status === "rejected"
+                            ? "bg-red-100 text-red-800 border-red-300"
+                            : "bg-amber-100 text-amber-800 border-amber-300"
+                        }`}
+                      >
+                        {selectedUser.upi_verification_status === "verified" || selectedUser.upi_verified === true
+                          ? "Verified ✅"
+                          : selectedUser.upi_verification_status === "rejected"
+                          ? "Rejected ❌"
+                          : "Pending Admin Review ⏳"}
+                      </Badge>
+                    )}
                   </div>
+
+                  {selectedUser.upi_id && (
+                    <div className="flex items-center gap-2 pt-2 border-t border-muted/40">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs h-7 gap-1 font-bold shadow-xs"
+                        disabled={upiUpdatingId === selectedUser.id || selectedUser.upi_verification_status === "verified" || selectedUser.upi_verified === true}
+                        onClick={() => handleApproveUpi(selectedUser.id)}
+                      >
+                        <Check className="h-3.5 w-3.5" /> Approve UPI ID
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 border-red-200 hover:bg-red-50 text-xs h-7 gap-1 font-bold"
+                        disabled={upiUpdatingId === selectedUser.id || selectedUser.upi_verification_status === "rejected"}
+                        onClick={() => handleRejectUpi(selectedUser.id)}
+                      >
+                        <X className="h-3.5 w-3.5" /> Reject UPI ID
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

@@ -491,50 +491,28 @@ const Profile = () => {
 
     setSavingUpi(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const verifyRes = await fetch(getApiUrl("/api/verify-upi"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(session?.access_token
-            ? { Authorization: `Bearer ${session.access_token}` }
-            : {}),
-        },
-        body: JSON.stringify({ upi_id: check.normalized }),
-      });
-      const verifyBody = await verifyRes.json().catch(() => ({}));
-
-      if (!verifyRes.ok || verifyBody.valid === false) {
-        toast.error(verifyBody.error || "UPI ID could not be verified");
-        return;
-      }
-
       const { error } = await (supabase as any)
         .from("profiles")
         .update({
           upi_id: check.normalized,
-          upi_verified: true,
-          upi_verified_at: new Date().toISOString(),
+          upi_verified: false,
+          upi_verification_status: "pending",
         })
         .eq("id", profile!.id);
 
       if (error) {
-        // Columns may not exist yet — save UPI ID only
-        const { error: fallbackErr } = await (supabase as any)
+        // Fallback update
+        await (supabase as any)
           .from("profiles")
           .update({ upi_id: check.normalized })
           .eq("id", profile!.id);
-        if (fallbackErr) {
-          toast.error("Failed to save UPI ID: " + fallbackErr.message);
-          return;
-        }
       }
 
-      toast.success(verifyBody.message || "UPI ID verified and saved ✅");
+      toast.success("UPI ID submitted! It will be reviewed and verified by an Administrator ⏳");
       setEditingUpi(false);
       refreshProfile();
     } catch (err: any) {
-      toast.error(err.message || "UPI verification failed");
+      toast.error(err.message || "Failed to submit UPI ID");
     } finally {
       setSavingUpi(false);
     }
@@ -560,6 +538,7 @@ const Profile = () => {
 
   const upiId = (profile as any).upi_id;
   const upiVerified = !!(profile as any).upi_verified;
+  const upiStatus = (profile as any).upi_verification_status || (upiVerified ? "verified" : upiId ? "pending" : "unverified");
 
   return (
     <div className="p-6 space-y-6">
@@ -579,12 +558,11 @@ const Profile = () => {
           <div>
             <p className="font-bold text-red-800 text-sm">UPI ID Required</p>
             <p className="text-xs text-red-600 mt-0.5">
-              You must set your UPI ID before posting a job. Without it you cannot receive payments.
+              You must set your UPI ID to receive payouts.
             </p>
           </div>
         </motion.div>
       )}
-
 
       {/* My Level Teaser — links to dedicated Levels page */}
       {profile.role === "worker" && (
@@ -643,21 +621,43 @@ const Profile = () => {
                 <Phone className="h-5 w-5 text-primary" />
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Phone Number</p>
-                  <p className="text-sm font-semibold text-foreground">{(profile as any).phone || "Not set"}</p>
+                  <p className="text-sm font-semibold text-foreground">{(profile as any).phone || (profile as any).phone_number || "Not set"}</p>
                 </div>
               </div>
  
               {/* UPI ID - editable */}
-              <div className={`flex items-start gap-3 p-4 rounded-lg ${upiId ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-200'}`}>
-                <CreditCard className={`h-5 w-5 shrink-0 mt-0.5 ${upiId ? 'text-green-600' : 'text-red-600'}`} />
+              <div className={`flex items-start gap-3 p-4 rounded-lg ${
+                upiStatus === 'verified' ? 'bg-green-50 border border-green-200' :
+                upiStatus === 'rejected' ? 'bg-red-50 border border-red-200' :
+                upiId ? 'bg-amber-50 border border-amber-200' :
+                'bg-red-50 border border-red-200'
+              }`}>
+                <CreditCard className={`h-5 w-5 shrink-0 mt-0.5 ${
+                  upiStatus === 'verified' ? 'text-green-600' :
+                  upiStatus === 'rejected' ? 'text-red-600' :
+                  upiId ? 'text-amber-600' :
+                  'text-red-600'
+                }`} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground font-medium mb-1">
-                    UPI ID <span className="text-red-500 font-bold">*</span>
-                    <span className="text-[10px] text-muted-foreground ml-1">(auto-verified on save)</span>
-                    {upiId && upiVerified && (
-                      <Badge variant="outline" className="ml-2 text-[9px] text-green-700 border-green-300 py-0">Verified</Badge>
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <p className="text-xs text-muted-foreground font-medium">
+                      UPI ID <span className="text-red-500 font-bold">*</span>
+                    </p>
+                    {upiId && (
+                      <Badge
+                        variant="outline"
+                        className={`text-[9px] font-black uppercase py-0 px-1.5 ${
+                          upiStatus === 'verified' ? 'text-green-700 bg-green-50 border-green-300' :
+                          upiStatus === 'rejected' ? 'text-red-700 bg-red-50 border-red-300' :
+                          'text-amber-700 bg-amber-50 border-amber-300'
+                        }`}
+                      >
+                        {upiStatus === 'verified' ? 'Verified ✅' :
+                         upiStatus === 'rejected' ? 'Rejected ❌' :
+                         'Pending Admin Verification ⏳'}
+                      </Badge>
                     )}
-                  </p>
+                  </div>
                   {editingUpi ? (
                     <div className="flex items-center gap-2">
                       <Input

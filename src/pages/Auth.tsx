@@ -231,6 +231,8 @@ const Auth = () => {
         safeLocalStorage.setItem("pending_otp_code", code);
         safeLocalStorage.setItem("pending_otp_email", email.trim());
         safeLocalStorage.setItem("pending_otp_type", "signup");
+        safeLocalStorage.setItem("pending_phone", cleanPhone);
+        safeLocalStorage.setItem("pending_name", displayName.trim());
 
         await triggerCustomOtp(email.trim(), code, "signup");
 
@@ -251,18 +253,21 @@ const Auth = () => {
 
         // OTP matches! Check if we are already signed in
         const { data: { session: currentSession } } = await supabase.auth.getSession();
+        let activeUserId = currentSession?.user?.id;
+
         if (!currentSession) {
           const targetPassword = tempPassword || password;
           if (!targetPassword) {
             throw new Error("Temporary login session expired. Please sign in again.");
           }
 
-          const { error: finalSignInErr } = await supabase.auth.signInWithPassword({
+          const { data: signInData, error: finalSignInErr } = await supabase.auth.signInWithPassword({
             email: storedEmail,
             password: targetPassword
           });
 
           if (finalSignInErr) throw finalSignInErr;
+          activeUserId = signInData?.user?.id;
         }
 
         // Set metadata otp_verified to true upon successful OTP match
@@ -271,10 +276,32 @@ const Auth = () => {
         });
         if (updateMetaErr) throw updateMetaErr;
 
+        // Ensure profile row has phone number and name saved
+        if (activeUserId) {
+          const pendingPhone = safeLocalStorage.getItem("pending_phone");
+          const pendingName = safeLocalStorage.getItem("pending_name");
+          if (pendingPhone || pendingName) {
+            try {
+              await (supabase as any)
+                .from("profiles")
+                .upsert({
+                  id: activeUserId,
+                  email: storedEmail,
+                  ...(pendingPhone ? { phone: pendingPhone, phone_number: pendingPhone } : {}),
+                  ...(pendingName ? { full_name: pendingName } : {})
+                }, { onConflict: "id" });
+            } catch {
+              /* ignore */
+            }
+          }
+        }
+
         // Clean up OTP session state
         safeLocalStorage.removeItem("pending_otp_type");
         safeLocalStorage.removeItem("pending_otp_code");
         safeLocalStorage.removeItem("pending_otp_email");
+        safeLocalStorage.removeItem("pending_phone");
+        safeLocalStorage.removeItem("pending_name");
 
         // Authorize this device's dashboard access via the OTP verification gate!
         safeLocalStorage.setItem("tasskly_otp_verified", "true");

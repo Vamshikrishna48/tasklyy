@@ -9,11 +9,12 @@ import { Shield, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide
 import { toast } from "sonner";
 import ColorBends from "@/components/ColorBends";
 import { supabase } from "@/lib/supabase";
-import { isAdminEmail, clearAdminGate, markAdminGateVerified } from "@/utils/launchControl";
+import { isAdminEmail, isAdminGateVerified, clearAdminGate, markAdminGateVerified } from "@/utils/launchControl";
 
 /**
  * Admin login page — always shows the form.
  * Never auto-redirects from an existing Supabase session.
+ * Requires fresh email and password on every visit.
  */
 const AdminAuth = () => {
   const [email, setEmail] = useState("");
@@ -28,15 +29,12 @@ const AdminAuth = () => {
     let cancelled = false;
 
     const reset = async () => {
-      // Wipe any prior admin gate + session so this page cannot auto-enter the panel
+      // Wipe prior admin gate so this page always requires fresh credentials
       clearAdminGate();
       localStorage.removeItem("demoAdminAuth");
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user && !isAdminGateVerified(session.user.id)) {
-          await supabase.auth.signOut({ scope: "local" });
-        }
+        await supabase.auth.signOut({ scope: "local" });
       } catch {
         /* ignore */
       }
