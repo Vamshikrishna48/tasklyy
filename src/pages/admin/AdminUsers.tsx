@@ -17,6 +17,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
 
+import { getApiUrl } from "@/lib/api";
+
 const AdminUsers = () => {
   const {
     fetchAllUsers, fetchPendingVerifications, approveVerification,
@@ -28,6 +30,10 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [levelFilter, setLevelFilter] = useState<string>("all");
   const [upiUpdatingId, setUpiUpdatingId] = useState<string | null>(null);
+
+  // UPI Rejection modal states
+  const [rejectingUpiUser, setRejectingUpiUser] = useState<any>(null);
+  const [upiRejectReason, setUpiRejectReason] = useState("");
 
   const filteredUsers = users.filter((u) => {
     if (levelFilter === "all") return true;
@@ -73,21 +79,46 @@ const AdminUsers = () => {
     }
   };
 
-  const handleRejectUpi = async (userId: string) => {
-    setUpiUpdatingId(userId);
+  const handleConfirmRejectUpi = async () => {
+    if (!rejectingUpiUser) return;
+    const user = rejectingUpiUser;
+    setUpiUpdatingId(user.id);
     try {
+      // 1. Update status in database
       const { error } = await (supabase as any)
         .from("profiles")
         .update({
           upi_verified: false,
           upi_verification_status: "rejected"
         })
-        .eq("id", userId);
+        .eq("id", user.id);
 
       if (error) throw error;
-      toast.success("UPI ID rejected ❌");
+
+      // 2. Dispatch formal email notification to user
+      if (user.email) {
+        try {
+          await fetch(getApiUrl("/api/send-upi-rejection-email"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: user.email.trim(),
+              userName: user.full_name || "Member",
+              upiId: user.upi_id || "",
+              reason: upiRejectReason || "UPI VPA handle could not be verified with banking network or name mismatch."
+            }),
+          });
+        } catch (emailErr) {
+          console.warn("Could not dispatch UPI rejection email:", emailErr);
+        }
+      }
+
+      toast.success(`UPI ID rejected. Formal notification sent to ${user.email} ✉️`);
+      setRejectingUpiUser(null);
+      setUpiRejectReason("");
       loadData();
-      if (selectedUser?.id === userId) {
+
+      if (selectedUser?.id === user.id) {
         setSelectedUser((prev: any) => ({
           ...prev,
           upi_verified: false,
@@ -613,7 +644,10 @@ const AdminUsers = () => {
                         variant="outline"
                         className="text-red-600 border-red-200 hover:bg-red-50 text-xs h-7 gap-1 font-bold"
                         disabled={upiUpdatingId === selectedUser.id || selectedUser.upi_verification_status === "rejected"}
-                        onClick={() => handleRejectUpi(selectedUser.id)}
+                        onClick={() => {
+                          setRejectingUpiUser(selectedUser);
+                          setUpiRejectReason("");
+                        }}
                       >
                         <X className="h-3.5 w-3.5" /> Reject UPI ID
                       </Button>
@@ -657,6 +691,50 @@ const AdminUsers = () => {
               <Trash2 className="h-4 w-4" /> Delete User & History
             </Button>
             <Button variant="outline" onClick={() => setSelectedUser(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Reject UPI ID Modal ── */}
+      <Dialog open={!!rejectingUpiUser} onOpenChange={(open) => !open && setRejectingUpiUser(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive font-bold">
+              <CreditCard className="h-5 w-5 text-destructive" />
+              Reject UPI ID & Send Formal Notice
+            </DialogTitle>
+            <DialogDescription className="pt-1">
+              Reject the submitted UPI ID (<strong className="font-mono text-foreground">{rejectingUpiUser?.upi_id}</strong>) for user <strong>{rejectingUpiUser?.full_name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <Label className="text-xs font-bold text-foreground">Rejection Reason (Emailed to User)</Label>
+            <Input
+              value={upiRejectReason}
+              onChange={(e) => setUpiRejectReason(e.target.value)}
+              placeholder="e.g. Invalid VPA handle / Name mismatch with bank record"
+              className="text-sm"
+              autoFocus
+            />
+            <p className="text-[11px] text-muted-foreground">
+              A formal email notice with instructions to update their UPI ID will be dispatched to <strong className="text-foreground">{rejectingUpiUser?.email}</strong>.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setRejectingUpiUser(null)} disabled={!!upiUpdatingId}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmRejectUpi}
+              disabled={!!upiUpdatingId}
+              className="gap-2 font-bold"
+            >
+              {upiUpdatingId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+              {upiUpdatingId ? "Sending Notice..." : "Confirm & Send Email"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
