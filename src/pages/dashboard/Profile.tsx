@@ -32,7 +32,7 @@ const Profile = () => {
         .update({
           upi_id: check.normalized,
           upi_verified: false,
-          upi_verification_status: "pending",
+          bank_verification_status: "pending",
         })
         .eq("id", profile!.id);
 
@@ -74,7 +74,14 @@ const Profile = () => {
 
   const upiId = (profile as any).upi_id;
   const upiVerified = !!(profile as any).upi_verified;
-  const upiStatus = (profile as any).upi_verification_status || (upiVerified ? "verified" : upiId ? "pending" : "unverified");
+  const bankStatus = (profile as any).bank_verification_status;
+  const upiStatus = (upiVerified || bankStatus === "verified" || (profile as any).upi_verification_status === "verified")
+    ? "verified"
+    : (bankStatus === "rejected" || (profile as any).upi_verification_status === "rejected")
+    ? "rejected"
+    : upiId
+    ? "pending"
+    : "unverified";
 
   return (
     <div className="p-6 space-y-6">

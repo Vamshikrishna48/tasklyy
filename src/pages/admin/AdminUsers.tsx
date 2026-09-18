@@ -19,6 +19,19 @@ import {
 
 import { getApiUrl } from "@/lib/api";
 
+const getUserUpiStatus = (user: any): "verified" | "rejected" | "pending" | "unverified" => {
+  if (user?.upi_verified === true || user?.bank_verification_status === "verified" || user?.upi_verification_status === "verified") {
+    return "verified";
+  }
+  if (user?.bank_verification_status === "rejected" || user?.upi_verification_status === "rejected") {
+    return "rejected";
+  }
+  if (user?.upi_id) {
+    return "pending";
+  }
+  return "unverified";
+};
+
 const AdminUsers = () => {
   const {
     fetchAllUsers, fetchPendingVerifications, approveVerification,
@@ -53,23 +66,36 @@ const AdminUsers = () => {
   const handleApproveUpi = async (userId: string) => {
     setUpiUpdatingId(userId);
     try {
+      const payload: any = {
+        upi_verified: true,
+        upi_verified_at: new Date().toISOString(),
+        bank_verification_status: "verified"
+      };
+
       const { error } = await (supabase as any)
         .from("profiles")
-        .update({
-          upi_verified: true,
-          upi_verification_status: "verified",
-          upi_verified_at: new Date().toISOString()
-        })
+        .update(payload)
         .eq("id", userId);
 
-      if (error) throw error;
+      if (error) {
+        // Fallback update without bank_verification_status if needed
+        const { error: fbErr } = await (supabase as any)
+          .from("profiles")
+          .update({
+            upi_verified: true,
+            upi_verified_at: new Date().toISOString()
+          })
+          .eq("id", userId);
+        if (fbErr) throw fbErr;
+      }
+
       toast.success("UPI ID manually approved! ✅");
       loadData();
       if (selectedUser?.id === userId) {
         setSelectedUser((prev: any) => ({
           ...prev,
           upi_verified: true,
-          upi_verification_status: "verified"
+          bank_verification_status: "verified"
         }));
       }
     } catch (e: any) {
@@ -84,16 +110,24 @@ const AdminUsers = () => {
     const user = rejectingUpiUser;
     setUpiUpdatingId(user.id);
     try {
-      // 1. Update status in database
+      // 1. Update status in database using verified columns
       const { error } = await (supabase as any)
         .from("profiles")
         .update({
           upi_verified: false,
-          upi_verification_status: "rejected"
+          bank_verification_status: "rejected"
         })
         .eq("id", user.id);
 
-      if (error) throw error;
+      if (error) {
+        const { error: fbErr } = await (supabase as any)
+          .from("profiles")
+          .update({
+            upi_verified: false
+          })
+          .eq("id", user.id);
+        if (fbErr) throw fbErr;
+      }
 
       // 2. Dispatch formal email notification to user
       if (user.email) {
@@ -122,7 +156,7 @@ const AdminUsers = () => {
         setSelectedUser((prev: any) => ({
           ...prev,
           upi_verified: false,
-          upi_verification_status: "rejected"
+          bank_verification_status: "rejected"
         }));
       }
     } catch (e: any) {
@@ -382,22 +416,27 @@ const AdminUsers = () => {
                             <div className="space-y-1">
                               <span className="text-xs font-mono text-foreground font-semibold">{user.upi_id}</span>
                               <div>
-                                <Badge
-                                  variant="outline"
-                                  className={`text-[8px] font-black uppercase py-0 px-1 ${
-                                    user.upi_verification_status === "verified" || user.upi_verified === true
-                                      ? "bg-green-50 text-green-700 border-green-200"
-                                      : user.upi_verification_status === "rejected"
-                                      ? "bg-red-50 text-red-700 border-red-200"
-                                      : "bg-amber-50 text-amber-700 border-amber-200"
-                                  }`}
-                                >
-                                  {user.upi_verification_status === "verified" || user.upi_verified === true
-                                    ? "Verified ✅"
-                                    : user.upi_verification_status === "rejected"
-                                    ? "Rejected ❌"
-                                    : "Pending Review ⏳"}
-                                </Badge>
+                                {(() => {
+                                  const uStatus = getUserUpiStatus(user);
+                                  return (
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-[8px] font-black uppercase py-0 px-1 ${
+                                        uStatus === "verified"
+                                          ? "bg-green-50 text-green-700 border-green-200"
+                                          : uStatus === "rejected"
+                                          ? "bg-red-50 text-red-700 border-red-200"
+                                          : "bg-amber-50 text-amber-700 border-amber-200"
+                                      }`}
+                                    >
+                                      {uStatus === "verified"
+                                        ? "Verified ✅"
+                                        : uStatus === "rejected"
+                                        ? "Rejected ❌"
+                                        : "Pending Review ⏳"}
+                                    </Badge>
+                                  );
+                                })()}
                               </div>
                             </div>
                           ) : (
@@ -591,70 +630,75 @@ const AdminUsers = () => {
               </div>
 
               {/* UPI ID Card with Manual Verification Action Buttons */}
-              <Card className={
-                selectedUser.upi_verification_status === "verified" || selectedUser.upi_verified === true
-                  ? "bg-green-50/80 border-green-200"
-                  : selectedUser.upi_verification_status === "rejected"
-                  ? "bg-red-50/80 border-red-200"
-                  : selectedUser.upi_id
-                  ? "bg-amber-50/80 border-amber-200"
-                  : "bg-red-50/80 border-red-200"
-              }>
-                <CardContent className="p-3.5 space-y-2.5">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div>
-                      <p className="text-[9px] font-black uppercase text-muted-foreground">UPI ID Payout Configuration</p>
-                      <p className="text-sm font-mono font-bold text-foreground">
-                        {selectedUser.upi_id || 'Not set — user has not added UPI'}
-                      </p>
-                    </div>
-                    {selectedUser.upi_id && (
-                      <Badge
-                        variant="outline"
-                        className={`text-[9px] font-black uppercase py-0.5 px-2 ${
-                          selectedUser.upi_verification_status === "verified" || selectedUser.upi_verified === true
-                            ? "bg-green-100 text-green-800 border-green-300"
-                            : selectedUser.upi_verification_status === "rejected"
-                            ? "bg-red-100 text-red-800 border-red-300"
-                            : "bg-amber-100 text-amber-800 border-amber-300"
-                        }`}
-                      >
-                        {selectedUser.upi_verification_status === "verified" || selectedUser.upi_verified === true
-                          ? "Verified ✅"
-                          : selectedUser.upi_verification_status === "rejected"
-                          ? "Rejected ❌"
-                          : "Pending Admin Review ⏳"}
-                      </Badge>
-                    )}
-                  </div>
+              {(() => {
+                const selUpiStatus = selectedUser ? getUserUpiStatus(selectedUser) : "unverified";
+                return (
+                  <Card className={
+                    selUpiStatus === "verified"
+                      ? "bg-green-50/80 border-green-200"
+                      : selUpiStatus === "rejected"
+                      ? "bg-red-50/80 border-red-200"
+                      : selectedUser.upi_id
+                      ? "bg-amber-50/80 border-amber-200"
+                      : "bg-red-50/80 border-red-200"
+                  }>
+                    <CardContent className="p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div>
+                          <p className="text-[9px] font-black uppercase text-muted-foreground">UPI ID Payout Configuration</p>
+                          <p className="text-sm font-mono font-bold text-foreground">
+                            {selectedUser.upi_id || 'Not set — user has not added UPI'}
+                          </p>
+                        </div>
+                        {selectedUser.upi_id && (
+                          <Badge
+                            variant="outline"
+                            className={`text-[9px] font-black uppercase py-0.5 px-2 ${
+                              selUpiStatus === "verified"
+                                ? "bg-green-100 text-green-800 border-green-300"
+                                : selUpiStatus === "rejected"
+                                ? "bg-red-100 text-red-800 border-red-300"
+                                : "bg-amber-100 text-amber-800 border-amber-300"
+                            }`}
+                          >
+                            {selUpiStatus === "verified"
+                              ? "Verified ✅"
+                              : selUpiStatus === "rejected"
+                              ? "Rejected ❌"
+                              : "Pending Admin Review ⏳"}
+                          </Badge>
+                        )}
+                      </div>
 
-                  {selectedUser.upi_id && (
-                    <div className="flex items-center gap-2 pt-2 border-t border-muted/40">
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="bg-green-600 hover:bg-green-700 text-white text-xs h-7 gap-1 font-bold shadow-xs"
-                        disabled={upiUpdatingId === selectedUser.id || selectedUser.upi_verification_status === "verified" || selectedUser.upi_verified === true}
-                        onClick={() => handleApproveUpi(selectedUser.id)}
-                      >
-                        <Check className="h-3.5 w-3.5" /> Approve UPI ID
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 border-red-200 hover:bg-red-50 text-xs h-7 gap-1 font-bold"
-                        disabled={upiUpdatingId === selectedUser.id || selectedUser.upi_verification_status === "rejected"}
-                        onClick={() => {
-                          setRejectingUpiUser(selectedUser);
-                          setUpiRejectReason("");
-                        }}
-                      >
-                        <X className="h-3.5 w-3.5" /> Reject UPI ID
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                      {selectedUser.upi_id && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-muted/40">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="bg-green-600 hover:bg-green-700 text-white text-xs h-7 gap-1 font-bold shadow-xs"
+                            disabled={upiUpdatingId === selectedUser.id || selUpiStatus === "verified"}
+                            onClick={() => handleApproveUpi(selectedUser.id)}
+                          >
+                            <Check className="h-3.5 w-3.5" /> Approve UPI ID
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 border-red-200 hover:bg-red-50 text-xs h-7 gap-1 font-bold"
+                            disabled={upiUpdatingId === selectedUser.id || selUpiStatus === "rejected"}
+                            onClick={() => {
+                              setRejectingUpiUser(selectedUser);
+                              setUpiRejectReason("");
+                            }}
+                          >
+                            <X className="h-3.5 w-3.5" /> Reject UPI ID
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })()}
 
               {selectedUser.active_project && (
                 <Card className="bg-blue-50 border-blue-200">
