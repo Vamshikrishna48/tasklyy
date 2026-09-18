@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { job_id } = req.body;
+  const { job_id, action, file_url, file_name, file_type, delivery_message } = req.body;
   if (!job_id) {
     return res.status(400).json({ error: 'Missing required parameter: job_id' });
   }
@@ -103,8 +103,61 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: `Job with ID ${job_id} not found.` });
     }
 
-    // Authorization check: Only Admin or the job Poster can release escrow
     const isPoster = job.poster_id === user.id;
+
+    // ── ACTION: SUBMIT DELIVERABLE (ADMIN OR WORKER) ──
+    if (action === 'submit_deliverable') {
+      const isWorker = job.worker_id === user.id;
+      if (!isAdmin && !isWorker && !isPoster) {
+        return res.status(403).json({ error: 'Not authorized to submit deliverables for this job.' });
+      }
+
+      // If job has no worker assigned, assign worker to the current user
+      let assignedWorkerId = job.worker_id || user.id;
+      if (!job.worker_id) {
+        await supabase.from('jobs').update({ worker_id: assignedWorkerId }).eq('id', job_id);
+      }
+
+      // Insert file record into job_files with service role authority
+      const { error: fileErr } = await supabase.from('job_files').insert({
+        job_id,
+        uploader_id: user.id,
+        file_url: file_url || `submission_${Date.now()}_deliverable.html`,
+        file_name: file_name || 'Deliverable.html',
+        file_type: file_type || 'text/html',
+        is_submission: true,
+        is_watermarked: false,
+      });
+
+      if (fileErr) {
+        console.error("job_files insert error:", fileErr);
+        return res.status(500).json({ error: fileErr.message });
+      }
+
+      // Update job status to 'submitted'
+      const { error: jobUpdateErr } = await supabase
+        .from('jobs')
+        .update({ status: 'submitted' })
+        .eq('id', job_id);
+
+      if (jobUpdateErr) {
+        console.error("jobs update error:", jobUpdateErr);
+        return res.status(500).json({ error: jobUpdateErr.message });
+      }
+
+      // Insert message into messages
+      if (delivery_message) {
+        await supabase.from('messages').insert({
+          job_id,
+          sender_id: user.id,
+          content: delivery_message,
+        }).catch((e) => console.warn("message insert warning:", e));
+      }
+
+      return res.status(200).json({ success: true, message: 'Deliverable submitted successfully' });
+    }
+
+    // Authorization check: Only Admin or the job Poster can release escrow
     if (!isAdmin && !isPoster) {
       console.error(`User ${user.id} is not authorized to release escrow for job ${job_id}`);
       return res.status(403).json({ error: 'You are not authorized to release escrow for this job.' });

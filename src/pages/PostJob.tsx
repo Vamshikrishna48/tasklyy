@@ -35,12 +35,27 @@ const PostJob = () => {
   const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   
-  // New Feature States
+  // Form & Upload States
   const [isOnTimeWork, setIsOnTimeWork] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  // Detailed Presentation States
+  const [pptSlideCount, setPptSlideCount] = useState("8-12 slides");
+  const [pptAudience, setPptAudience] = useState("");
+  const [pptKeyTopics, setPptKeyTopics] = useState("");
+  const [pptTheme, setPptTheme] = useState("Clean Academic / Modern");
+  const [pptSpeakerNotes, setPptSpeakerNotes] = useState(true);
+
+  // Detailed Poster States
+  const [posterType, setPosterType] = useState("College Fest / Cultural Event");
+  const [posterHeadline, setPosterHeadline] = useState("");
+  const [posterDateVenue, setPosterDateVenue] = useState("");
+  const [posterHighlights, setPosterHighlights] = useState("");
+  const [posterTheme, setPosterTheme] = useState("Vibrant Gradient");
+  const [posterContactInfo, setPosterContactInfo] = useState("");
 
   useEffect(() => {
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
@@ -167,9 +182,27 @@ const PostJob = () => {
       return;
     }
 
+    if (category === "Presentation" && !pptKeyTopics.trim() && description.trim().length < 20) {
+      toast.error("Please provide specific outline or topics to cover for your presentation slides.");
+      return;
+    }
+
+    if (category === "Poster Design" && !posterHeadline.trim() && !posterDateVenue.trim() && description.trim().length < 20) {
+      toast.error("Please provide the poster headline and event date/venue details.");
+      return;
+    }
+
+    let finalDescription = description.trim();
+    if (category === "Presentation") {
+      finalDescription += `\n\n--- 📑 DETAILED PRESENTATION (PPT) SPECIFICATIONS ---\n• Required Slide Count: ${pptSlideCount}\n• Target Audience / Setting: ${pptAudience || "Academic Faculty & Peer Evaluators"}\n• Visual & Design Style: ${pptTheme}\n• Speaker Notes: ${pptSpeakerNotes ? "Required for all slides" : "Not needed"}\n• Mandatory Topics & Slide Outline:\n${pptKeyTopics || "Standard comprehensive coverage based on title"}\n----------------------------------------------------`;
+    } else if (category === "Poster Design") {
+      finalDescription += `\n\n--- 🎨 DETAILED POSTER SPECIFICATIONS ---\n• Poster Type / Occasion: ${posterType}\n• Main Headline: ${posterHeadline || title.trim()}\n• Event Date, Time & Venue: ${posterDateVenue || "As specified in brief"}\n• Key Highlights / Features: ${posterHighlights || "High impact visual focal points"}\n• Visual Style & Color Scheme: ${posterTheme}\n• Contact / Registration Details: ${posterContactInfo || "Refer to event brief"}\n-----------------------------------------`;
+    }
+
     const jobPayload = {
       title: title.trim(),
-      description: description.trim(),
+      description: finalDescription,
+      instructions: finalDescription,
       category,
       budget: numericBudget,
       deadline,
@@ -295,6 +328,166 @@ const PostJob = () => {
                       <span>
                         <b>2-Day Guaranteed Delivery:</b> Your {category === "Presentation" ? "presentation slide deck" : "poster design"} will be professionally crafted and delivered strictly adhering to all your instructions within 2 days!
                       </span>
+                    </div>
+                  )}
+
+                  {/* Detailed Presentation Specification Fields */}
+                  {category === "Presentation" && (
+                    <div className="mt-4 p-4 rounded-xl border border-blue-500/25 bg-blue-50/60 dark:bg-blue-950/20 space-y-3.5">
+                      <div className="flex items-center gap-2 text-sm font-bold text-blue-800 dark:text-blue-300">
+                        <Sparkles className="h-4 w-4 text-blue-600" />
+                        <span>Detailed Presentation (PPT) Specifications (Required)</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Please provide in-depth details of your PPT below so our specialist team crafts your slide deck strictly to your requirements within 2 days.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block">Slide Count Target *</label>
+                          <select
+                            value={pptSlideCount}
+                            onChange={(e) => setPptSlideCount(e.target.value)}
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm"
+                          >
+                            <option value="5-7 slides">5 – 7 slides (Concise / Pitch)</option>
+                            <option value="8-12 slides">8 – 12 slides (Standard College Deck)</option>
+                            <option value="13-16 slides">13 – 16 slides (Comprehensive Project)</option>
+                            <option value="17+ slides">17+ slides (In-depth Research / Seminar)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block">Visual & Slide Style *</label>
+                          <select
+                            value={pptTheme}
+                            onChange={(e) => setPptTheme(e.target.value)}
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm"
+                          >
+                            <option value="Clean Academic / Modern">Clean Academic / Modern</option>
+                            <option value="Modern Tech Minimalist">Modern Tech Minimalist</option>
+                            <option value="Corporate Navy & Clean">Corporate Navy & Clean</option>
+                            <option value="Vibrant Creative Gradient">Vibrant Creative Gradient</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block">Target Audience & Presentation Setting</label>
+                        <Input
+                          placeholder="e.g. University Professor, Project Viva, Class Seminar, Hackathon Judges"
+                          value={pptAudience}
+                          onChange={(e) => setPptAudience(e.target.value)}
+                          className="text-xs h-9"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block">Mandatory Topics & Slide Outline (In-Depth) *</label>
+                        <textarea
+                          placeholder="Detail the exact points or topics to cover: e.g. Slide 1 Intro, Slide 2 Problem Statement, Slide 3 Proposed Architecture, Slide 4 Results, Slide 5 Conclusion..."
+                          value={pptKeyTopics}
+                          onChange={(e) => setPptKeyTopics(e.target.value)}
+                          className="flex min-h-[90px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <Checkbox
+                          id="pptNotes"
+                          checked={pptSpeakerNotes}
+                          onCheckedChange={(c) => setPptSpeakerNotes(!!c)}
+                        />
+                        <label htmlFor="pptNotes" className="text-xs font-medium cursor-pointer">
+                          Include comprehensive Speaker Notes for every slide (talking script for the presenter)
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Detailed Poster Specification Fields */}
+                  {category === "Poster Design" && (
+                    <div className="mt-4 p-4 rounded-xl border border-emerald-500/25 bg-emerald-50/60 dark:bg-emerald-950/20 space-y-3.5">
+                      <div className="flex items-center gap-2 text-sm font-bold text-emerald-800 dark:text-emerald-300">
+                        <Sparkles className="h-4 w-4 text-emerald-600" />
+                        <span>Detailed Poster Specifications (Required)</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Please provide in-depth details of your poster below so our designer creates a stunning visual strictly to your requirements within 2 days.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block">Poster Type / Occasion *</label>
+                          <select
+                            value={posterType}
+                            onChange={(e) => setPosterType(e.target.value)}
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm"
+                          >
+                            <option value="College Fest / Cultural Event">College Fest / Cultural Event</option>
+                            <option value="Tech Symposium / Hackathon">Tech Symposium / Hackathon</option>
+                            <option value="Academic Research Conference">Academic Research Conference</option>
+                            <option value="Workshop / Guest Lecture">Workshop / Guest Lecture</option>
+                            <option value="Club Recruitment / Promotional Flyer">Club Recruitment / Promotional Flyer</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block">Color Scheme & Aesthetic *</label>
+                          <select
+                            value={posterTheme}
+                            onChange={(e) => setPosterTheme(e.target.value)}
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm"
+                          >
+                            <option value="Vibrant Gradient">Vibrant Gradient</option>
+                            <option value="Neon Cyberpunk Dark">Neon Cyberpunk Dark</option>
+                            <option value="Clean Academic Minimalist">Clean Academic Minimalist</option>
+                            <option value="Bold Modern High-Contrast">Bold Modern High-Contrast</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block">Main Headline / Event Title *</label>
+                          <Input
+                            placeholder="e.g. INVENTO 2026 / Annual Tech Conclave"
+                            value={posterHeadline}
+                            onChange={(e) => setPosterHeadline(e.target.value)}
+                            className="text-xs h-9"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block">Date, Time & Venue Details *</label>
+                          <Input
+                            placeholder="e.g. Oct 24, 10:00 AM | Campus Main Auditorium"
+                            value={posterDateVenue}
+                            onChange={(e) => setPosterDateVenue(e.target.value)}
+                            className="text-xs h-9"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block">Key Highlights / Features to Display</label>
+                        <textarea
+                          placeholder="e.g. Cash Prizes ₹50,000, Free Food, Certificate of Participation, Guest Speaker Dr. Sharma..."
+                          value={posterHighlights}
+                          onChange={(e) => setPosterHighlights(e.target.value)}
+                          className="flex min-h-[70px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block">Contact / Registration Details to Print on Poster</label>
+                        <Input
+                          placeholder="e.g. Register at tasskly.com/fest | Contact: 9876543210"
+                          value={posterContactInfo}
+                          onChange={(e) => setPosterContactInfo(e.target.value)}
+                          className="text-xs h-9"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

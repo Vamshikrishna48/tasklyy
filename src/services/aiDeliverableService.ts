@@ -4,12 +4,14 @@
  * 
  * STRICT COMPLIANCE RULES:
  * 1. Works related to Presentation (PPT) or Poster must be completed within 2 days.
- * 2. Deliverables must appear 100% human-made (crafted by an expert student freelancer / designer).
- * 3. NO AI markers, no Gemini mentions, no robotic disclaimers.
- * 4. Strictly follow all user requirements, instructions, and topics.
+ * 2. Deeply analyze user description, target audience, topic, constraints, and instructions.
+ * 3. Deliverables must appear 100% human-made (crafted by an expert student freelancer / designer).
+ * 4. NO AI markers, no Gemini mentions, no robotic disclaimers.
+ * 5. Strictly follow all user requirements, instructions, and topics.
  */
 
 import { supabase } from "@/lib/supabase";
+import { getApiUrl } from "@/lib/api";
 
 const GEMINI_API_KEY =
   (import.meta as any).env?.VITE_GEMINI_API_KEY ||
@@ -20,6 +22,16 @@ const GEMINI_MODELS = [
   "gemini-3.6-flash",
   "gemini-flash-latest"
 ];
+
+export interface TaskAnalysis {
+  primaryGoal: string;
+  targetAudience: string;
+  keyThemes: string[];
+  designTone: string;
+  userConstraints: string[];
+  feasibilityRating: string;
+  summary: string;
+}
 
 export interface SlideItem {
   slideNumber: number;
@@ -46,6 +58,7 @@ export interface PresentationDeliverable {
   deliveryMessage: string;
   createdAt: string;
   htmlContent?: string;
+  analysis?: TaskAnalysis;
 }
 
 export interface PosterDeliverable {
@@ -69,6 +82,7 @@ export interface PosterDeliverable {
   deliveryMessage: string;
   createdAt: string;
   htmlContent?: string;
+  analysis?: TaskAnalysis;
 }
 
 export type AIDeliverable = PresentationDeliverable | PosterDeliverable;
@@ -143,6 +157,71 @@ export function getDeliveryTimelineInfo(createdAtStr?: string) {
 }
 
 /**
+ * Deeply analyzes the user description, instructions, topics, constraints, and requirements.
+ */
+export async function analyzeJobRequirements(job: {
+  title: string;
+  description: string;
+  instructions?: string;
+  category?: string;
+  skills?: string[];
+}): Promise<TaskAnalysis> {
+  const prompt = `You are an elite academic project analyst and student task lead on Tasskly.
+Thoroughly analyze the client's project description, requirements, constraints, and instructions:
+
+PROJECT DETAILS:
+- Title: "${job.title}"
+- Category: "${job.category || "Academic/Design"}"
+- Description & Instructions: "${job.instructions || job.description}"
+- Skills/Keywords: ${(job.skills || []).join(", ") || "None specified"}
+
+DEEPLY ANALYZE AND EXTRACT:
+1. primaryGoal: What is the core deliverable, academic objective, or main problem to solve?
+2. targetAudience: Who is evaluating or viewing this (e.g. college faculty, students, seminar delegates, judges)?
+3. keyThemes: Array of 3-5 mandatory topics, sections, or arguments mentioned in the user's brief.
+4. designTone: What visual, academic, or professional style best fits (e.g. Academic Formal, Tech Minimalist, Vibrant Event)?
+5. userConstraints: Array of specific guidelines, date/time, venue, slide counts, or requirements specified by the user.
+6. feasibilityRating: "High - 100% fulfillable within 2-day delivery SLA"
+7. summary: A 2-sentence synthesis of the client's intent and how the deliverable will rigidly fulfill it.
+
+RETURN STRICTLY RAW VALID JSON ONLY with this exact structure, no markdown ticks, no commentary:
+{
+  "primaryGoal": "...",
+  "targetAudience": "...",
+  "keyThemes": ["...", "..."],
+  "designTone": "...",
+  "userConstraints": ["...", "..."],
+  "feasibilityRating": "High - 100% fulfillable within 2-day delivery SLA",
+  "summary": "..."
+}`;
+
+  try {
+    const jsonText = await callGemini(prompt);
+    const cleaned = jsonText.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    return {
+      primaryGoal: parsed.primaryGoal || job.title,
+      targetAudience: parsed.targetAudience || "College professors, evaluators, and peer students",
+      keyThemes: Array.isArray(parsed.keyThemes) && parsed.keyThemes.length > 0 ? parsed.keyThemes : ["Core problem overview", "Tactical methodology", "Key results and conclusions"],
+      designTone: parsed.designTone || "Professional, clean, and high-impact",
+      userConstraints: Array.isArray(parsed.userConstraints) && parsed.userConstraints.length > 0 ? parsed.userConstraints : ["Adhere strictly to client instructions", "2-Day delivery guarantee"],
+      feasibilityRating: parsed.feasibilityRating || "High - 100% fulfillable within 2-day delivery SLA",
+      summary: parsed.summary || "Comprehensive deliverable tailored to all client specifications.",
+    };
+  } catch (err) {
+    return {
+      primaryGoal: job.title,
+      targetAudience: "Academic & Professional Evaluators",
+      keyThemes: ["Project Analysis", "Core Findings", "Practical Implementation"],
+      designTone: "Clean, modern, high-contrast",
+      userConstraints: ["Strict compliance with user instructions", "Delivered within 2 days"],
+      feasibilityRating: "High - 100% fulfillable within 2-day delivery SLA",
+      summary: `In-depth fulfillment of ${job.title} crafted strictly according to provided brief.`,
+    };
+  }
+}
+
+/**
  * Generates an authentic human presentation deliverable strictly adhering to user instructions.
  */
 export async function generatePresentationDeliverable(job: {
@@ -152,22 +231,34 @@ export async function generatePresentationDeliverable(job: {
   instructions?: string;
   skills?: string[];
   budget?: number;
+  category?: string;
 }): Promise<PresentationDeliverable> {
+  // Step 1: Deeply analyze the user's description
+  const analysis = await analyzeJobRequirements(job);
+
   const prompt = `You are an elite, top-scoring university honors student and freelance presentation specialist on Tasskly.
 You have been hired by a client to prepare a full, high-quality, professional presentation slide deck based STRICTLY on their project instructions.
 
-CLIENT REQUIREMENTS:
+CLIENT REQUIREMENTS & DETAILED BRIEF:
 - Project Title: "${job.title}"
-- Instructions & Description: "${job.instructions || job.description}"
+- Category: "${job.category || "Presentation"}"
+- Client Description & Instructions: "${job.instructions || job.description}"
 - Required Skills/Topics: ${(job.skills || []).join(", ") || "Professional presentation design, research, analysis"}
 
+DEEP DESCRIPTION ANALYSIS & MANDATORY CONSTRAINTS:
+- Primary Goal: ${analysis.primaryGoal}
+- Target Audience: ${analysis.targetAudience}
+- Mandatory Themes to Cover: ${analysis.keyThemes.join("; ")}
+- Design Tone: ${analysis.designTone}
+- Specific User Constraints: ${analysis.userConstraints.join("; ")}
+
 STRICT INSTRUCTIONS:
-1. Make sure EVERY specific instruction and requirement requested by the user is addressed in deep detail.
+1. Make sure EVERY specific instruction and requirement requested by the user is addressed in deep detail across the slides.
 2. Produce a complete 8 to 12 slide presentation deck.
 3. For EVERY slide, provide:
    - slideNumber (1, 2, 3, ...)
    - title (Crisp, engaging slide headline)
-   - subtitle (Optional context)
+   - subtitle (Contextual subhead)
    - contentPoints (Array of 3-5 comprehensive, high-value bullet points with bold keywords and specific information, not generic fluff)
    - visualIdea (Concrete recommendation for visual diagram, infographic layout, or chart)
    - speakerNotes (Authentic spoken paragraph for what the presenter should say when presenting this slide)
@@ -213,8 +304,8 @@ RETURN STRICTLY RAW VALID JSON ONLY with this exact structure, no markdown ticks
     type: "presentation",
     jobId: job.id,
     title: parsed.title || job.title,
-    subtitle: parsed.subtitle || "Comprehensive Presentation Deck",
-    theme: parsed.theme || "Modern Academic & Professional",
+    subtitle: parsed.subtitle || analysis.primaryGoal,
+    theme: parsed.theme || analysis.designTone,
     colorPalette: parsed.colorPalette || {
       primary: "#2563eb",
       secondary: "#f59e0b",
@@ -224,6 +315,7 @@ RETURN STRICTLY RAW VALID JSON ONLY with this exact structure, no markdown ticks
     slides: Array.isArray(parsed.slides) && parsed.slides.length > 0 ? parsed.slides : createFallbackPresentation(job).slides,
     deliveryMessage: parsed.deliveryMessage || "Hey! I have finalized your complete presentation deck according to all your instructions. Every slide is structured with key talking points, visual concepts, and full speaker notes. Let me know if you need any adjustments!",
     createdAt: new Date().toISOString(),
+    analysis,
   };
 
   deliverable.htmlContent = renderPresentationHtml(deliverable);
@@ -240,14 +332,26 @@ export async function generatePosterDeliverable(job: {
   instructions?: string;
   skills?: string[];
   budget?: number;
+  category?: string;
 }): Promise<PosterDeliverable> {
+  // Step 1: Deeply analyze the user's description
+  const analysis = await analyzeJobRequirements(job);
+
   const prompt = `You are a talented student graphic designer and illustrator on Tasskly.
 You have been hired to design a stunning, high-impact poster / flyer based STRICTLY on the client instructions.
 
-CLIENT REQUIREMENTS:
+CLIENT REQUIREMENTS & DETAILED BRIEF:
 - Project Title: "${job.title}"
-- Instructions & Description: "${job.instructions || job.description}"
+- Category: "${job.category || "Poster Design"}"
+- Client Description & Instructions: "${job.instructions || job.description}"
 - Required Skills/Topics: ${(job.skills || []).join(", ") || "Graphic design, typography, layout, visual branding"}
+
+DEEP DESCRIPTION ANALYSIS & MANDATORY CONSTRAINTS:
+- Primary Goal: ${analysis.primaryGoal}
+- Target Audience: ${analysis.targetAudience}
+- Mandatory Themes to Feature: ${analysis.keyThemes.join("; ")}
+- Design Tone & Aesthetic: ${analysis.designTone}
+- Specific User Constraints (Dates, Venue, Details): ${analysis.userConstraints.join("; ")}
 
 STRICT INSTRUCTIONS:
 1. Thoroughly fulfill EVERY detail, date, venue, theme, or guideline from the user instructions.
@@ -300,7 +404,7 @@ RETURN STRICTLY RAW VALID JSON ONLY with this exact structure, no markdown ticks
     type: "poster",
     jobId: job.id,
     title: parsed.title || job.title,
-    tagline: parsed.tagline || "Official Event & Task Poster",
+    tagline: parsed.tagline || analysis.primaryGoal,
     categoryType: parsed.categoryType || "Campus Showcase",
     colorScheme: parsed.colorScheme || {
       primary: "#6366f1",
@@ -309,10 +413,11 @@ RETURN STRICTLY RAW VALID JSON ONLY with this exact structure, no markdown ticks
       background: "#0f172a",
     },
     layoutSections: Array.isArray(parsed.layoutSections) && parsed.layoutSections.length > 0 ? parsed.layoutSections : createFallbackPoster(job).layoutSections,
-    visualStyle: parsed.visualStyle || "Modern High-Contrast Vector Design",
+    visualStyle: parsed.visualStyle || analysis.designTone,
     posterSvgMarkup: parsed.posterSvgMarkup || createFallbackPoster(job).posterSvgMarkup,
     deliveryMessage: parsed.deliveryMessage || "Hi! Here is your finalized poster design strictly crafted based on your brief and requirements. Colors, typography hierarchy, and section placements have been optimized for print and high-res digital display. Let me know if you need any adjustments!",
     createdAt: new Date().toISOString(),
+    analysis,
   };
 
   deliverable.htmlContent = renderPosterHtml(deliverable);
@@ -340,13 +445,13 @@ export async function generateAIDeliverable(job: {
 }
 
 /**
- * Saves and submits the deliverable to the job on Supabase.
+ * Saves and submits the deliverable to the job on Supabase with backend service role bypass.
  */
 export async function submitAIDeliverableToJob(
   jobId: string,
   deliverable: AIDeliverable,
   workerId?: string
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
   try {
     const isPresentation = deliverable.type === "presentation";
     const fileName = isPresentation
@@ -360,21 +465,64 @@ export async function submitAIDeliverableToJob(
     const timestamp = Date.now();
     const filePath = `${jobId}/submission_${timestamp}_${fileName}`;
 
-    // Upload to Supabase storage bucket
+    // Upload to Supabase storage bucket (or fallback to data URI)
+    let finalFileUrl = filePath;
     const { error: uploadError } = await supabase.storage
       .from("job-files")
       .upload(filePath, file, { upsert: true });
 
-    let finalFileUrl = filePath;
     if (uploadError) {
-      console.warn("Could not upload to storage directly, using data URI fallback:", uploadError);
+      console.warn("Storage upload note:", uploadError.message);
       finalFileUrl = `data:text/html;charset=utf-8,${encodeURIComponent(fileContent)}`;
     }
 
+    // 1. First priority: Call backend API with Service Role authority to bypass RLS policies
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (token) {
+      try {
+        const response = await fetch(getApiUrl("/api/release-escrow"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            action: "submit_deliverable",
+            job_id: jobId,
+            file_url: finalFileUrl,
+            file_name: fileName,
+            file_type: "text/html",
+            delivery_message: deliverable.deliveryMessage,
+          })
+        });
+
+        const apiResult = await response.json().catch(() => ({}));
+        if (response.ok && apiResult.success) {
+          try {
+            localStorage.setItem(`ai_deliverable_${jobId}`, JSON.stringify(deliverable));
+          } catch {}
+          return { success: true };
+        } else if (apiResult.error) {
+          console.warn("Backend submit deliverable error:", apiResult.error);
+        }
+      } catch (backendErr) {
+        console.warn("Backend submit request failed, attempting direct fallback:", backendErr);
+      }
+    }
+
+    // 2. Direct fallback using active user
+    const { data: { user } } = await supabase.auth.getUser();
+    const effectiveWorkerId = workerId || user?.id;
+
+    if (!effectiveWorkerId) {
+      return { success: false, error: "Please sign in to submit deliverables." };
+    }
+
     // Insert file record into job_files
-    await (supabase as any).from("job_files").insert({
+    const { error: insertError } = await (supabase as any).from("job_files").insert({
       job_id: jobId,
-      uploader_id: workerId || null,
+      uploader_id: effectiveWorkerId,
       file_url: finalFileUrl,
       file_name: fileName,
       file_type: "text/html",
@@ -382,25 +530,40 @@ export async function submitAIDeliverableToJob(
       is_watermarked: false,
     });
 
+    if (insertError) {
+      console.error("Direct job_files insert error:", insertError);
+      return { success: false, error: insertError.message };
+    }
+
     // Update job status to "submitted"
-    await (supabase as any).from("jobs").update({ status: "submitted" }).eq("id", jobId);
+    const { error: jobUpdateError } = await (supabase as any)
+      .from("jobs")
+      .update({ status: "submitted", worker_id: effectiveWorkerId })
+      .eq("id", jobId);
+
+    if (jobUpdateError) {
+      console.error("Direct jobs update error:", jobUpdateError);
+      return { success: false, error: jobUpdateError.message };
+    }
 
     // Post authentic freelancer message
-    await (supabase as any).from("messages").insert({
-      job_id: jobId,
-      sender_id: workerId || "00000000-0000-0000-0000-000000000000",
-      content: deliverable.deliveryMessage,
-    }).catch(() => {});
+    if (deliverable.deliveryMessage) {
+      await (supabase as any).from("messages").insert({
+        job_id: jobId,
+        sender_id: effectiveWorkerId,
+        content: deliverable.deliveryMessage,
+      }).catch(() => {});
+    }
 
     // Save locally for instant preview
     try {
       localStorage.setItem(`ai_deliverable_${jobId}`, JSON.stringify(deliverable));
     } catch {}
 
-    return true;
-  } catch (err) {
+    return { success: true };
+  } catch (err: any) {
     console.error("Failed to submit deliverable:", err);
-    return false;
+    return { success: false, error: err.message || "Unknown error during submission" };
   }
 }
 
