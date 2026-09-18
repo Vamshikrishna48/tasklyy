@@ -78,10 +78,10 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid or expired session token. Please sign in again.' });
     }
 
-    // Get the user's profile and bank account details
+    // Get the user's profile and payout details
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('wallet_balance, bank_name, bank_account_number, bank_ifsc_code, bank_account_holder_name, bank_verification_status')
+      .select('wallet_balance, upi_id, full_name')
       .eq('id', user.id)
       .single();
 
@@ -90,18 +90,10 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'User profile not found.' });
     }
 
-    // Check if bank account has been verified by the backend
-    if (profile.bank_verification_status !== 'verified') {
+    // Check if UPI ID is set
+    if (!profile.upi_id) {
       return res.status(400).json({ 
-        error: 'Your bank account details have not been verified by the backend. Please add and automatically verify them in your profile settings.' 
-      });
-    }
-
-    // Check if bank account details are filled
-    const { bank_name, bank_account_number, bank_ifsc_code, bank_account_holder_name } = profile;
-    if (!bank_name || !bank_account_number || !bank_ifsc_code || !bank_account_holder_name) {
-      return res.status(400).json({ 
-        error: 'Please configure your bank account details in your profile first before requesting a withdrawal.' 
+        error: 'Please configure your UPI ID in your profile settings before requesting a withdrawal.' 
       });
     }
 
@@ -125,17 +117,20 @@ export default async function handler(req, res) {
       throw new Error("Failed to deduct amount from wallet balance");
     }
 
-    // 2. Create the pending withdrawal record
+    // 2. Create the pending withdrawal record with UPI destination
+    const payoutUpi = profile.upi_id;
+    const payoutHolder = profile.full_name || 'UPI Holder';
+
     const { error: withdrawalErr } = await supabase
       .from('withdrawals')
       .insert({
         user_id: user.id,
         amount: withdrawalAmount,
         status: 'pending',
-        bank_name,
-        bank_account_number,
-        bank_ifsc_code,
-        bank_account_holder_name
+        bank_name: 'UPI Payout',
+        bank_account_number: payoutUpi,
+        bank_ifsc_code: 'UPI0000000',
+        bank_account_holder_name: payoutHolder
       });
 
     if (withdrawalErr) {

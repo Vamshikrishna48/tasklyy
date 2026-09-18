@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useCallback } from "react"
+import { useEffect, useRef, useCallback, useState } from "react"
 import createGlobe from "cobe"
 
 export interface BarMarker {
@@ -14,6 +14,7 @@ export interface GlobeBarsProps {
   markers?: BarMarker[]
   className?: string
   speed?: number
+  initialScale?: number
 }
 
 const defaultMarkers: BarMarker[] = [
@@ -30,6 +31,7 @@ export function GlobeBars({
   markers = defaultMarkers,
   className = "",
   speed = 0.003,
+  initialScale = 1,
 }: GlobeBarsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pointerInteracting = useRef<{ x: number; y: number } | null>(null)
@@ -37,6 +39,8 @@ export function GlobeBars({
   const phiOffsetRef = useRef(0)
   const thetaOffsetRef = useRef(0)
   const isPausedRef = useRef(false)
+  const scaleRef = useRef(initialScale)
+  const [displayScale, setDisplayScale] = useState(Math.round(initialScale * 100))
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     pointerInteracting.current = { x: e.clientX, y: e.clientY }
@@ -53,6 +57,23 @@ export function GlobeBars({
     pointerInteracting.current = null
     if (canvasRef.current) canvasRef.current.style.cursor = "grab"
     isPausedRef.current = false
+  }, [])
+
+  const zoomIn = useCallback(() => {
+    const next = Math.min(scaleRef.current * 1.2, 2.5)
+    scaleRef.current = next
+    setDisplayScale(Math.round(next * 100))
+  }, [])
+
+  const zoomOut = useCallback(() => {
+    const next = Math.max(scaleRef.current * 0.82, 0.65)
+    scaleRef.current = next
+    setDisplayScale(Math.round(next * 100))
+  }, [])
+
+  const resetZoom = useCallback(() => {
+    scaleRef.current = 1
+    setDisplayScale(100)
   }, [])
 
   useEffect(() => {
@@ -89,6 +110,7 @@ export function GlobeBars({
         height: width,
         phi: 1.35,
         theta: 0.3,
+        scale: scaleRef.current,
         dark: 0,
         diffuse: 1.5,
         mapSamples: 16000,
@@ -111,6 +133,7 @@ export function GlobeBars({
         globe!.update({
           phi: phi + phiOffsetRef.current + dragOffset.current.phi,
           theta: 0.3 + thetaOffsetRef.current + dragOffset.current.theta,
+          scale: scaleRef.current,
         })
         animationId = requestAnimationFrame(animate)
       }
@@ -131,9 +154,53 @@ export function GlobeBars({
       ro.observe(canvas)
     }
 
+    // Mouse wheel zoom listener
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const factor = e.deltaY < 0 ? 1.08 : 0.92
+      const next = Math.min(Math.max(scaleRef.current * factor, 0.65), 2.5)
+      scaleRef.current = next
+      setDisplayScale(Math.round(next * 100))
+    }
+
+    // Touch pinch-to-zoom listener
+    let initialTouchDist = 0
+    let initialTouchScale = 1
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        initialTouchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
+        initialTouchScale = scaleRef.current
+      }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && initialTouchDist > 0) {
+        e.preventDefault()
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
+        const factor = dist / initialTouchDist
+        const next = Math.min(Math.max(initialTouchScale * factor, 0.65), 2.5)
+        scaleRef.current = next
+        setDisplayScale(Math.round(next * 100))
+      }
+    }
+
+    canvas.addEventListener("wheel", handleWheel, { passive: false })
+    canvas.addEventListener("touchstart", handleTouchStart, { passive: true })
+    canvas.addEventListener("touchmove", handleTouchMove, { passive: false })
+
     return () => {
       if (animationId) cancelAnimationFrame(animationId)
       if (globe) globe.destroy()
+      canvas.removeEventListener("wheel", handleWheel)
+      canvas.removeEventListener("touchstart", handleTouchStart)
+      canvas.removeEventListener("touchmove", handleTouchMove)
     }
   }, [markers, speed])
 
@@ -142,6 +209,35 @@ export function GlobeBars({
       <style>{`
         @keyframes bar-fill { from { width: 0; } to { width: var(--value, 0%); } }
       `}</style>
+
+      {/* Floating Interactive Zoom Toolbar */}
+      <div className="absolute top-2 right-2 z-30 flex flex-col gap-1 bg-white/95 backdrop-blur-md p-1 rounded-xl border border-slate-200/80 shadow-md pointer-events-auto">
+        <button
+          type="button"
+          onClick={zoomIn}
+          title="Zoom in (or use mouse scroll)"
+          className="h-6 w-6 rounded-md hover:bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-sm active:scale-90 transition-all select-none"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          onClick={zoomOut}
+          title="Zoom out (or use mouse scroll)"
+          className="h-6 w-6 rounded-md hover:bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-sm active:scale-90 transition-all select-none"
+        >
+          −
+        </button>
+        <button
+          type="button"
+          onClick={resetZoom}
+          title="Reset Zoom"
+          className="h-6 w-6 rounded-md hover:bg-slate-100 flex items-center justify-center text-[9px] text-slate-500 font-bold active:scale-90 transition-all select-none"
+        >
+          {displayScale}%
+        </button>
+      </div>
+
       <canvas
         ref={canvasRef}
         onPointerDown={handlePointerDown}

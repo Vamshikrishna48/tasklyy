@@ -52,7 +52,7 @@ export default function AIChatBot() {
     }
 
     if (q.includes("withdraw") || q.includes("wallet") || q.includes("upi") || q.includes("bank") || q.includes("transfer") || q.includes("money")) {
-      return "To request a withdrawal:\n1. Go to your Profile Dashboard and add your UPI ID and Bank Account details.\n2. Once verified, go to 'Earnings' tab and click 'Request Payout'.\n3. The admin will review and process the transfer to your account within 24 hours. 💸";
+      return "To request a withdrawal:\n1. Go to your Profile Dashboard and add your UPI ID.\n2. Once verified, go to 'Earnings' tab and click 'Request Payout'.\n3. The admin will review and process the transfer to your UPI account within 24 hours. 💸";
     }
 
     if (q.includes("level") || q.includes("tier") || q.includes("expert") || q.includes("elite")) {

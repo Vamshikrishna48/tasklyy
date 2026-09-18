@@ -28,7 +28,9 @@ import {
   CheckCircle2,
   XCircle,
   Wallet,
-  Clock
+  Clock,
+  CreditCard,
+  Copy
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -344,30 +346,62 @@ const AdminWithdrawals = () => {
                         </div>
                       </div>
 
-                      {/* Bank account details card */}
-                      <div className="bg-slate-50 border rounded-lg p-3 max-w-xl text-xs space-y-1.5">
-                        <div className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b">
-                          <Landmark className="h-3.5 w-3.5" /> Bank Payout Details
+                      {/* Payout destination details card */}
+                      {w.bank_name?.includes("UPI") ? (
+                        <div className="bg-purple-50/80 border border-purple-200 rounded-lg p-3 max-w-xl text-xs space-y-1.5">
+                          <div className="font-bold text-[10px] text-purple-700 uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-purple-200">
+                            <CreditCard className="h-3.5 w-3.5" /> UPI Payout Details
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-1 text-slate-700">
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">Recipient Name</span>
+                              <span className="font-semibold text-slate-900">{w.bank_account_holder_name || w.profile?.full_name || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">UPI ID</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-purple-800 font-mono text-xs">{w.bank_account_number}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 text-purple-600 hover:text-purple-800 p-0"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(w.bank_account_number);
+                                    toast.success("UPI ID copied to clipboard! 📋");
+                                  }}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-1 text-slate-700">
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">Account Holder Name</span>
-                            <span className="font-semibold text-slate-900">{w.bank_account_holder_name}</span>
+                      ) : (
+                        <div className="bg-slate-50 border rounded-lg p-3 max-w-xl text-xs space-y-1.5">
+                          <div className="font-bold text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b">
+                            <Landmark className="h-3.5 w-3.5" /> Bank Payout Details
                           </div>
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">Bank Name</span>
-                            <span className="font-semibold text-slate-900">{w.bank_name}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">Account Number</span>
-                            <span className="font-semibold text-slate-900 font-mono tracking-wider">{w.bank_account_number}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">IFSC Code</span>
-                            <span className="font-semibold text-slate-900 font-mono">{w.bank_ifsc_code}</span>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-1 text-slate-700">
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">Account Holder Name</span>
+                              <span className="font-semibold text-slate-900">{w.bank_account_holder_name}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">Bank Name</span>
+                              <span className="font-semibold text-slate-900">{w.bank_name}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">Account Number</span>
+                              <span className="font-semibold text-slate-900 font-mono tracking-wider">{w.bank_account_number}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">IFSC Code</span>
+                              <span className="font-semibold text-slate-900 font-mono">{w.bank_ifsc_code}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* Request metadata (Dates, notes) */}
                       <div className="flex flex-col gap-1 text-[11px] text-muted-foreground">
@@ -444,7 +478,7 @@ const AdminWithdrawals = () => {
               Approve Withdrawal
             </DialogTitle>
             <DialogDescription>
-              Confirm that you have transferred ₹{approvalTarget?.amount.toLocaleString("en-IN")} to the bank account of {approvalTarget?.bank_account_holder_name}.
+              Confirm that you have transferred ₹{approvalTarget?.amount.toLocaleString("en-IN")} to {approvalTarget?.bank_account_holder_name} (Destination: {approvalTarget?.bank_account_number}).
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-3">
@@ -452,7 +486,7 @@ const AdminWithdrawals = () => {
               <Label htmlFor="approve-note" className="text-xs font-bold text-slate-700">Admin Note / Reference ID</Label>
               <Input
                 id="approve-note"
-                placeholder="e.g. Bank IMPS Ref No: 61920381923"
+                placeholder="e.g. UPI UTR / Ref No: 42190381923"
                 value={approveNote}
                 onChange={(e) => setApproveNote(e.target.value)}
               />
@@ -495,7 +529,7 @@ const AdminWithdrawals = () => {
               <Label htmlFor="reject-reason" className="text-xs font-bold text-slate-700">Rejection Reason</Label>
               <Input
                 id="reject-reason"
-                placeholder="e.g. Invalid IFSC Code or Bank Account Number"
+                placeholder="e.g. Invalid or inactive UPI ID"
                 value={rejectNote}
                 onChange={(e) => setRejectNote(e.target.value)}
               />

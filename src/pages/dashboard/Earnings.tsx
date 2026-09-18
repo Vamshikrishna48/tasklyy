@@ -283,7 +283,9 @@ const Earnings = () => {
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-foreground">
-                        Withdrawal to {w.bank_name} (Acct: ******{w.bank_account_number.slice(-4)})
+                        {w.bank_name?.includes("UPI")
+                          ? `Withdrawal via UPI (${w.bank_account_number})`
+                          : `Withdrawal to ${w.bank_name} (${w.bank_account_number})`}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         Requested: {new Date(w.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
@@ -325,27 +327,15 @@ const Earnings = () => {
           <DialogHeader>
             <DialogTitle>Withdraw Funds</DialogTitle>
             <DialogDescription>
-              Submit a request to transfer funds from your wallet balance to your bank account.
+              Submit a request to transfer funds from your wallet balance to your verified UPI ID.
             </DialogDescription>
           </DialogHeader>
 
-          {!(profile as any)?.bank_account_number ? (
+          {!(profile as any)?.upi_id ? (
             <div className="py-4 text-center space-y-3">
-              <p className="text-sm text-amber-600 font-semibold">Bank Details Missing ⚠️</p>
+              <p className="text-sm text-amber-600 font-semibold">UPI ID Missing ⚠️</p>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                You must configure your bank account details in your profile before requesting a withdrawal.
-              </p>
-              <Link to="/dashboard/profile" onClick={() => setIsWithdrawOpen(false)}>
-                <Button variant="hero" size="sm">
-                  Go to Profile Settings
-                </Button>
-              </Link>
-            </div>
-          ) : (profile as any)?.bank_verification_status !== 'verified' ? (
-            <div className="py-4 text-center space-y-3">
-              <p className="text-sm text-amber-600 font-semibold">Bank Details Unverified ⚠️</p>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                Your bank details must be verified automatically by the backend before you can request a withdrawal.
+                You must configure your UPI ID in your profile before requesting a withdrawal.
               </p>
               <Link to="/dashboard/profile" onClick={() => setIsWithdrawOpen(false)}>
                 <Button variant="hero" size="sm">
@@ -355,12 +345,18 @@ const Earnings = () => {
             </div>
           ) : (
             <div className="space-y-4 py-2">
-              <div className="p-3 bg-slate-50 border rounded-xl space-y-1 text-xs text-slate-600">
-                <p className="font-bold text-slate-700 mb-1">Bank Payout Destination:</p>
-                <p><strong>Account Holder:</strong> {(profile as any).bank_account_holder_name}</p>
-                <p><strong>Bank Name:</strong> {(profile as any).bank_name}</p>
-                <p><strong>Account Number:</strong> ******{(profile as any).bank_account_number.slice(-4)}</p>
-                <p><strong>IFSC Code:</strong> {(profile as any).bank_ifsc_code}</p>
+              <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl space-y-1.5 text-xs text-slate-700">
+                <p className="font-bold text-purple-900 mb-1 flex items-center gap-1.5">
+                  <span>⚡ Payout Destination:</span>
+                </p>
+                <div className="flex justify-between items-center py-0.5 border-b border-purple-100">
+                  <span className="text-muted-foreground">UPI ID:</span>
+                  <span className="font-mono font-bold text-primary">{(profile as any).upi_id}</span>
+                </div>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="text-muted-foreground">Account Name:</span>
+                  <span className="font-semibold text-slate-900">{profile?.full_name || "Account Holder"}</span>
+                </div>
               </div>
               
               <div className="space-y-1.5">
