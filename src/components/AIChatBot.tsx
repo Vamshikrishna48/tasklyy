@@ -2,15 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, X, Send, Bot, User, Sparkles } from "lucide-react";
+import { MessageSquare, X, Send, Bot, User, Sparkles, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { sendChatMessage, ChatMessage } from "@/services/aiChatService";
 
-interface Message {
-  id: string;
-  sender: "user" | "ai";
-  text: string;
-  timestamp: Date;
-}
+type Message = ChatMessage;
 
 const suggestionChips = [
   { label: "How do I place a bid? 🙋‍♂️", q: "How do I place a bid on a job?" },
@@ -25,7 +21,7 @@ export default function AIChatBot() {
     {
       id: "welcome",
       sender: "ai",
-      text: "Hi there! I'm Tasskly's AI Assistant. Ask me anything about how the marketplace, bidding, payments, or levels work!",
+      text: "Hi there! I'm Tasskly's AI Assistant powered by Google Gemini ✨. Ask me anything about posting tasks, bidding, escrow security, levels, or UPI withdrawals!",
       timestamp: new Date()
     }
   ]);
@@ -40,38 +36,8 @@ export default function AIChatBot() {
     }
   }, [messages, isTyping]);
 
-  const getAIResponse = (input: string): string => {
-    const q = input.toLowerCase();
-
-    if (q.includes("bid") || q.includes("apply") || q.includes("work")) {
-      return "To place a bid: \n1. Go to 'Browse Jobs' and click on a job you like.\n2. In the job details, enter your bid amount, write a friendly proposal message, and choose your delivery time.\n3. Click 'Place Bid'. The job poster will be notified instantly! 🔔";
-    }
-    
-    if (q.includes("escrow") || q.includes("payment") || q.includes("pay") || q.includes("fee") || q.includes("commission")) {
-      return "Tasskly uses a secure Escrow System:\n1. When an employer accepts a bid, they pay the amount to the platform.\n2. Tasskly holds this payment safely in escrow.\n3. The platform keeps a fee based on the worker's level (Level 1: 30% fee, Level 2: 20% fee, Level 3: 10% fee) and holds the rest for the worker.\n4. Once the worker submits the task and it is verified, the admin releases the escrow funds directly to the worker's wallet.";
-    }
-
-    if (q.includes("withdraw") || q.includes("wallet") || q.includes("upi") || q.includes("bank") || q.includes("transfer") || q.includes("money")) {
-      return "To request a withdrawal:\n1. Go to your Profile Dashboard and add your UPI ID.\n2. Once verified, go to 'Earnings' tab and click 'Request Payout'.\n3. The admin will review and process the transfer to your UPI account within 24 hours. 💸";
-    }
-
-    if (q.includes("level") || q.includes("tier") || q.includes("expert") || q.includes("elite")) {
-      return "Tasskly has 3 worker levels based on your performance:\n- **Level 1 (Starter)**: 70% payout, 30% platform fee.\n- **Level 2 (Expert)**: 80% payout (Requires 10 completed jobs).\n- **Level 3 (Elite)**: 90% payout (Requires 25 completed jobs historically). Higher levels get priority matching and reduced fees!";
-    }
-
-    if (q.includes("urgent") || q.includes("quick") || q.includes("time") || q.includes("10 min")) {
-      return "Look out for special tags on job cards:\n- ⚡ **10 Min Task**: Quick tasks you can finish immediately.\n- 🚨 **Urgent**: Needs completion on a short timeline.\n- 🎓 **Campus Only**: Restricts applications to students inside that specific campus.";
-    }
-
-    if (q.includes("hello") || q.includes("hi") || q.includes("hey") || q.includes("greet")) {
-      return "Hello! How can I help you today? You can ask me about placing bids, payment flows, levels, or withdraw processes. 😊";
-    }
-
-    return "I understand your doubt. Tasskly is a secure student marketplace. You can search tasks, place bids, upload deliverables, and get paid securely.\n\nIf your query is still not solved, you can directly chat with us on WhatsApp for personal assistance: https://wa.me/919640008684";
-  };
-
-  const handleSendMessage = (textToSend: string) => {
-    if (!textToSend.trim()) return;
+  const handleSendMessage = async (textToSend: string) => {
+    if (!textToSend.trim() || isTyping) return;
 
     const userMsg: Message = {
       id: `msg-${Date.now()}`,
@@ -80,13 +46,13 @@ export default function AIChatBot() {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    const updatedHistory = [...messages, userMsg];
+    setMessages(updatedHistory);
     setInputValue("");
     setIsTyping(true);
 
-    // Simulate AI thinking and response
-    setTimeout(() => {
-      const responseText = getAIResponse(textToSend);
+    try {
+      const responseText = await sendChatMessage(updatedHistory, textToSend);
       const aiMsg: Message = {
         id: `msg-ai-${Date.now()}`,
         sender: "ai",
@@ -94,8 +60,62 @@ export default function AIChatBot() {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiMsg]);
+    } catch (err) {
+      const errorMsg: Message = {
+        id: `msg-ai-${Date.now()}`,
+        sender: "ai",
+        text: "I ran into a temporary connection issue. You can ask again, or chat with us directly on WhatsApp for personal assistance: https://wa.me/919640008684",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsTyping(false);
-    }, 900);
+    }
+  };
+
+  const handleClearChat = () => {
+    setMessages([
+      {
+        id: `welcome-${Date.now()}`,
+        sender: "ai",
+        text: "Conversation refreshed! Ask me anything about Tasskly, bidding, tasks, or payouts.",
+        timestamp: new Date()
+      }
+    ]);
+  };
+
+  const formatMarkdown = (content: string) => {
+    const parts = content.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={index} className="font-bold">{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
+  const renderMessageText = (text: string) => {
+    if (text.includes("https://wa.me/")) {
+      const parts = text.split("https://wa.me/919640008684");
+      return (
+        <div className="space-y-2">
+          <div className="whitespace-pre-line">{formatMarkdown(parts[0])}</div>
+          <a
+            href="https://wa.me/919640008684"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg shadow-sm transition-all text-[11px]"
+          >
+            <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.725 1.45h.005c5.422 0 9.832-4.41 9.835-9.83.001-2.624-1.02-5.09-2.873-6.944C16.483 1.975 14.022 1.96 12.012 1.96c-5.424 0-9.83 4.407-9.834 9.829-.001 1.742.453 3.442 1.316 4.96L2.502 21.2l4.145-1.046zm11.082-7.46c-.287-.143-1.697-.838-1.959-.933-.262-.096-.452-.143-.642.143-.19.285-.733.933-.899 1.123-.166.19-.332.214-.618.072-.287-.143-1.21-.446-2.305-1.424-.853-.76-1.429-1.698-1.597-1.983-.167-.285-.018-.44.125-.581.13-.127.287-.333.43-.5.143-.166.19-.285.286-.476.095-.19.048-.357-.024-.5-.071-.143-.642-1.548-.88-2.119-.232-.56-.47-.482-.642-.49-.166-.008-.357-.01-.548-.01-.19 0-.5.072-.762.357-.262.285-1.002.977-1.002 2.38 0 1.403 1.022 2.757 1.164 2.948.143.19 2.01 3.07 4.872 4.312.68.297 1.213.474 1.627.605.684.218 1.306.187 1.8.113.548-.083 1.697-.69 1.936-1.357.238-.667.238-1.238.166-1.357-.07-.12-.262-.19-.548-.332z" />
+            </svg>
+            Chat on WhatsApp
+          </a>
+          {parts[1] && <div className="whitespace-pre-line">{formatMarkdown(parts[1])}</div>}
+        </div>
+      );
+    }
+    return <div className="whitespace-pre-line">{formatMarkdown(text)}</div>;
   };
 
   return (
@@ -141,17 +161,28 @@ export default function AIChatBot() {
                   <CardTitle className="text-sm font-black tracking-tight flex items-center gap-1.5">
                     Tasskly Assistant <Sparkles className="h-3 w-3 text-pink-300 fill-pink-300" />
                   </CardTitle>
-                  <p className="text-[10px] text-indigo-100 font-medium">Ready to clear your doubts • Online</p>
+                  <p className="text-[10px] text-indigo-100 font-medium">Powered by Gemini AI • Online</p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(false)}
-                className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10 rounded-full"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClearChat}
+                  title="Clear conversation"
+                  className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10 rounded-full"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsOpen(false)}
+                  className="h-7 w-7 text-white/80 hover:text-white hover:bg-white/10 rounded-full"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
 
             {/* Chat Messages */}
@@ -180,24 +211,7 @@ export default function AIChatBot() {
                           : "bg-white text-slate-800 border-slate-100 rounded-tl-none"
                       }`}
                     >
-                      {msg.text.includes("https://wa.me/") ? (
-                        <div>
-                          <p>{msg.text.split("https://wa.me/")[0]}</p>
-                          <a
-                            href="https://wa.me/919640008684"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg mt-2.5 shadow-sm transition-all text-[11px]"
-                          >
-                            <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
-                              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.725 1.45h.005c5.422 0 9.832-4.41 9.835-9.83.001-2.624-1.02-5.09-2.873-6.944C16.483 1.975 14.022 1.96 12.012 1.96c-5.424 0-9.83 4.407-9.834 9.829-.001 1.742.453 3.442 1.316 4.96L2.502 21.2l4.145-1.046zm11.082-7.46c-.287-.143-1.697-.838-1.959-.933-.262-.096-.452-.143-.642.143-.19.285-.733.933-.899 1.123-.166.19-.332.214-.618.072-.287-.143-1.21-.446-2.305-1.424-.853-.76-1.429-1.698-1.597-1.983-.167-.285-.018-.44.125-.581.13-.127.287-.333.43-.5.143-.166.19-.285.286-.476.095-.19.048-.357-.024-.5-.071-.143-.642-1.548-.88-2.119-.232-.56-.47-.482-.642-.49-.166-.008-.357-.01-.548-.01-.19 0-.5.072-.762.357-.262.285-1.002.977-1.002 2.38 0 1.403 1.022 2.757 1.164 2.948.143.19 2.01 3.07 4.872 4.312.68.297 1.213.474 1.627.605.684.218 1.306.187 1.8.113.548-.083 1.697-.69 1.936-1.357.238-.667.238-1.238.166-1.357-.07-.12-.262-.19-.548-.332z" />
-                            </svg>
-                            Chat on WhatsApp
-                          </a>
-                        </div>
-                      ) : (
-                        msg.text
-                      )}
+                      {renderMessageText(msg.text)}
                     </div>
                     <span className="text-[8px] text-muted-foreground block px-1">
                       {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
