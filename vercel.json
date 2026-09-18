@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/verify-upi",
+      "destination": "/api/verify-bank"
+    },
+    {
+      "source": "/api/send-upi-rejection-email",
+      "destination": "/api/send-deletion-email"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

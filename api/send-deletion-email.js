@@ -19,48 +19,104 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email, userName } = req.body;
+  const { email, userName, upiId, reason, type } = req.body;
   if (!email) {
     return res.status(400).json({ error: 'User email is required' });
   }
 
-  const formattedName = userName || 'Valued User';
+  const formattedName = userName || 'Valued Member';
+  const isUpiRejection = upiId || reason || type === 'upi_rejection';
 
-  const htmlContent = `
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 580px; margin: 0 auto; padding: 32px; border-radius: 20px; background-color: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
-      <div style="text-align: center; margin-bottom: 28px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px;">
-        <h1 style="color: #4f46e5; margin: 0; font-size: 30px; font-weight: 900; letter-spacing: -0.02em;">Tasskly</h1>
-        <p style="color: #64748b; font-size: 12px; margin: 4px 0 0 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Official Administration Notice</p>
-      </div>
+  let subject = '';
+  let htmlContent = '';
 
-      <div style="padding: 24px; border-radius: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 24px;">
-        <h3 style="color: #0f172a; margin: 0 0 16px 0; font-size: 18px; font-weight: 700;">Notification of Account & Data Deletion</h3>
-        <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
-          Dear <strong>${formattedName}</strong>,
-        </p>
-        <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
-          This email serves as formal notification that your Tasskly account (<strong style="color: #4f46e5;">${email}</strong>) and all associated platform records have been officially deleted from our system database by the platform administrator.
-        </p>
-        <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 12px 0; font-weight: 600;">
-          The following user data and records have been permanently erased:
-        </p>
-        <ul style="color: #475569; font-size: 13px; line-height: 1.8; margin: 0 0 20px 0; padding-left: 20px;">
-          <li>Account Profile and Login Credentials</li>
-          <li>All Posted Tasks and Bid Submissions</li>
-          <li>Verification Documents and Uploaded Attachments</li>
-          <li>Transaction Logs, Wallet Entries, and Activity History</li>
-        </ul>
-        <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 0;">
-          If you have questions regarding this deletion or believe this action was taken in error, please contact our administrative support team at <a href="mailto:support@tasskly.com" style="color: #4f46e5; text-decoration: none; font-weight: 600;">support@tasskly.com</a>.
-        </p>
-      </div>
+  if (isUpiRejection) {
+    const displayUpi = upiId || 'Submitted UPI ID';
+    const rejectionReason = reason?.trim() || 'UPI VPA handle could not be verified with banking network or name mismatch.';
+    subject = 'Notice: UPI ID Verification Update';
 
-      <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center;">
-        <p style="color: #94a3b8; font-size: 12px; margin: 0 0 4px 0; font-weight: 600;">Tasskly Administration Team</p>
-        <p style="color: #cbd5e1; font-size: 11px; margin: 0;">&copy; 2026 Tasskly • India's Student Marketplace. All rights reserved.</p>
+    htmlContent = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 580px; margin: 0 auto; padding: 32px; border-radius: 20px; background-color: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
+        <div style="text-align: center; margin-bottom: 28px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px;">
+          <h1 style="color: #4f46e5; margin: 0; font-size: 30px; font-weight: 900; letter-spacing: -0.02em;">Tasskly</h1>
+          <p style="color: #64748b; font-size: 12px; margin: 4px 0 0 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Official Administration Notice</p>
+        </div>
+
+        <div style="padding: 24px; border-radius: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+          <h3 style="color: #0f172a; margin: 0 0 16px 0; font-size: 18px; font-weight: 700;">Notice: UPI ID Verification Update</h3>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+            Dear <strong>${formattedName}</strong>,
+          </p>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+            During our administrative payout verification review, the UPI ID associated with your account (<strong style="color: #dc2626; font-family: monospace;">${displayUpi}</strong>) could not be approved.
+          </p>
+          
+          <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin-bottom: 18px;">
+            <p style="color: #991b1b; font-size: 12px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Administrative Review Note:</p>
+            <p style="color: #7f1d1d; font-size: 14px; margin: 0; line-height: 1.5; font-weight: 500;">
+              ${rejectionReason}
+            </p>
+          </div>
+
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 12px 0; font-weight: 600;">
+            What you need to do next:
+          </p>
+          <ol style="color: #475569; font-size: 13px; line-height: 1.8; margin: 0 0 20px 0; padding-left: 20px;">
+            <li>Log in to your Tasskly dashboard.</li>
+            <li>Navigate to your <strong>Profile & Payout Settings</strong>.</li>
+            <li>Re-enter your valid active UPI ID (e.g., <em>yourname@okhdfcbank</em> or <em>mobilenumber@paytm</em>).</li>
+            <li>Save the updated details so our team can re-verify your payout configuration.</li>
+          </ol>
+
+          <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 0;">
+            If you need any assistance, please reach out to our administration support team at <a href="mailto:support@tasskly.com" style="color: #4f46e5; text-decoration: none; font-weight: 600;">support@tasskly.com</a>.
+          </p>
+        </div>
+
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center;">
+          <p style="color: #94a3b8; font-size: 12px; margin: 0 0 4px 0; font-weight: 600;">Tasskly Administration & Payout Team</p>
+          <p style="color: #cbd5e1; font-size: 11px; margin: 0;">&copy; 2026 Tasskly • India's Student Marketplace. All rights reserved.</p>
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  } else {
+    subject = 'Formal Notice: Tasskly Account Deletion';
+    htmlContent = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 580px; margin: 0 auto; padding: 32px; border-radius: 20px; background-color: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
+        <div style="text-align: center; margin-bottom: 28px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px;">
+          <h1 style="color: #4f46e5; margin: 0; font-size: 30px; font-weight: 900; letter-spacing: -0.02em;">Tasskly</h1>
+          <p style="color: #64748b; font-size: 12px; margin: 4px 0 0 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Official Administration Notice</p>
+        </div>
+
+        <div style="padding: 24px; border-radius: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+          <h3 style="color: #0f172a; margin: 0 0 16px 0; font-size: 18px; font-weight: 700;">Notification of Account & Data Deletion</h3>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+            Dear <strong>${formattedName}</strong>,
+          </p>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+            This email serves as formal notification that your Tasskly account (<strong style="color: #4f46e5;">${email}</strong>) and all associated platform records have been officially deleted from our system database by the platform administrator.
+          </p>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 12px 0; font-weight: 600;">
+            The following user data and records have been permanently erased:
+          </p>
+          <ul style="color: #475569; font-size: 13px; line-height: 1.8; margin: 0 0 20px 0; padding-left: 20px;">
+            <li>Account Profile and Login Credentials</li>
+            <li>All Posted Tasks and Bid Submissions</li>
+            <li>Verification Documents and Uploaded Attachments</li>
+            <li>Transaction Logs, Wallet Entries, and Activity History</li>
+          </ul>
+          <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 0;">
+            If you have questions regarding this deletion or believe this action was taken in error, please contact our administrative support team at <a href="mailto:support@tasskly.com" style="color: #4f46e5; text-decoration: none; font-weight: 600;">support@tasskly.com</a>.
+          </p>
+        </div>
+
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center;">
+          <p style="color: #94a3b8; font-size: 12px; margin: 0 0 4px 0; font-weight: 600;">Tasskly Administration Team</p>
+          <p style="color: #cbd5e1; font-size: 11px; margin: 0;">&copy; 2026 Tasskly • India's Student Marketplace. All rights reserved.</p>
+        </div>
+      </div>
+    `;
+  }
 
   // 1. Try Resend if configured
   const resendApiKey = process.env.RESEND_API_KEY;
@@ -75,7 +131,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           from: 'Tasskly Admin <info@tasskly.com>',
           to: [email],
-          subject: 'Formal Notice: Tasskly Account Deletion',
+          subject: subject,
           html: htmlContent
         })
       });
@@ -110,7 +166,7 @@ export default async function handler(req, res) {
       await transporter.sendMail({
         from: `"Tasskly Admin" <${smtpUser}>`,
         to: email,
-        subject: 'Formal Notice: Tasskly Account Deletion',
+        subject: subject,
         html: htmlContent,
       });
 
