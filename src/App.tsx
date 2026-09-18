@@ -45,6 +45,7 @@ import ColorBends from "./components/ColorBends";
 import AIChatBot from "./components/AIChatBot";
 import UnderDevelopmentModal from "./components/UnderDevelopmentModal";
 import { syncLaunchStateFromServer } from "./utils/launchControl";
+import GlobeBarsDemo from "@/components/ui/demo";
 
 const NotificationGate = ({ children }: { children: React.ReactNode }) => {
   useNotificationPermission();
@@ -291,6 +292,8 @@ const App = () => {
               ) : (
                 <>
                   <Routes>
+                    <Route path="/globe" element={<GlobeBarsDemo />} />
+                    <Route path="/demo" element={<GlobeBarsDemo />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/" element={<Index />} />
                     <Route path="/jobs" element={<BrowseJobs />} />
