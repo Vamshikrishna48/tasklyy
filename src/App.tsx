@@ -224,7 +224,7 @@ const queryClient = new QueryClient();
 import { safeLocalStorage } from "@/utils/safeStorage";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, authLoading } = useApp();
+  const { session, profile, authLoading } = useApp();
   const location = useLocation();
 
   if (authLoading) {
@@ -235,7 +235,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!session) {
+  if (!session || !profile) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 

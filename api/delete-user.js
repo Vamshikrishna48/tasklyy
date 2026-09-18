@@ -146,6 +146,21 @@ export default async function handler(req, res) {
       });
     }
 
+    try {
+      const monitorChannel = supabase.channel(`user-account-monitor-${userId}`);
+      monitorChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          monitorChannel.send({
+            type: 'broadcast',
+            event: 'ACCOUNT_DELETED',
+            payload: { userId },
+          }).then(() => {
+            supabase.removeChannel(monitorChannel);
+          }).catch(() => {});
+        }
+      });
+    } catch (_) {}
+
     return res.status(200).json({
       success: true,
       message: 'User permanently deleted from database and Auth',

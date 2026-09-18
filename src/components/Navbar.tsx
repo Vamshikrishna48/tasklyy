@@ -23,7 +23,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { session, profile } = useApp();
-  const isAuthenticated = !!session;
+  const isAuthenticated = !!(session && profile);
   const [isLaunched, setIsLaunched] = useState(() => getIsPlatformLaunched());
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { sendBidNotification, sendJobAcceptedAlarm } from "@/hooks/useNotificationPermission";
 import { useJobs } from "@/hooks/useJobs";
 import { isAdminEmail } from "@/utils/launchControl";
+import { safeLocalStorage } from "@/utils/safeStorage";
 
 export interface UserBid extends Bid {
   status: "pending" | "accepted" | "rejected";
@@ -99,6 +100,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Track the logged-in user ID to prevent background token refreshes from wiping out dashboard states
   const lastUserIdRef = React.useRef<string | null>(null);
 
+  // Evict deleted / deactivated user immediately
+  const evictAccount = useCallback(async (customMessage?: string) => {
+    try {
+      await supabase.auth.signOut();
+    } catch (_) {}
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setMyPostedJobs([]);
+    setMyWorkingJobs([]);
+    setMyBids([]);
+    setPayments([]);
+    lastUserIdRef.current = null;
+    safeLocalStorage.removeItem("tasskly_otp_verified");
+    safeLocalStorage.removeItem("tasskly_session");
+    safeLocalStorage.removeItem("demoUserEmail");
+    safeLocalStorage.removeItem("demoAdminAuth");
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        Object.keys(localStorage).forEach((k) => {
+          if (k.includes('supabase') || k.includes('tasskly') || k.includes('sb-')) {
+            localStorage.removeItem(k);
+          }
+        });
+      }
+    } catch (_) {}
+    toast.error(customMessage || "Your account has been deleted by an administrator.");
+    if (typeof window !== "undefined" && window.location.pathname !== "/auth") {
+      window.location.replace("/auth");
+    }
+  }, []);
+
   // Fetch profile row from Supabase when user changes
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await (supabase
@@ -111,33 +144,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error('Error fetching profile:', error);
       setProfile(null);
     } else if (!data) {
-      // Safety net: Create profile if missing
-      console.log('Profile missing, creating default...');
-      const { data: user } = await supabase.auth.getUser();
-      if (user?.user) {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        let randId = "TSY-";
-        for (let i = 0; i < 6; i++) {
-          randId += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        const { data: newProfile, error: createError } = await (supabase
-          .from('profiles') as any)
-          .upsert({
-            id: userId,
-            email: user.user.email || '',
-            full_name: user.user.user_metadata?.full_name || 'User',
-            role: (isAdminEmail(user.user.email) ? 'admin' : 'worker') as const,
-            wallet_balance: 0,
-            is_verified: false,
-            verification_status: 'unverified' as const,
-            tasskly_id: randId
-          })
-          .select()
-          .limit(1)
-          .maybeSingle();
-        
-        if (!createError) setProfile(newProfile as Profile);
-      }
+      console.warn('Profile not found in database. Account deleted or deactivated.');
+      await evictAccount("Your account has been deleted by an administrator.");
+      return;
     } else {
       // Auto-generate tasskly_id if not present or in old format TSK-
       if (!data.tasskly_id || data.tasskly_id.startsWith("TSK-")) {
@@ -177,7 +186,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       setProfile(data);
     }
-  }, []);
+  }, [evictAccount]);
 
   // On mount: restore session and listen for auth changes
   useEffect(() => {
@@ -222,6 +231,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
+
+  // Realtime eviction listener: detect if current user account is deleted by an admin
+  useEffect(() => {
+    if (!user?.id) return;
+    const currentUserId = user.id;
+
+    // 1. Broadcast channel
+    const broadcastChannel = supabase.channel(`user-account-monitor-${currentUserId}`)
+      .on('broadcast', { event: 'ACCOUNT_DELETED' }, () => {
+        evictAccount("Your account has been deleted by an administrator.");
+      })
+      .subscribe();
+
+    // 2. Postgres change listener on profiles DELETE for this user
+    const dbChannel = supabase.channel(`profile-delete-${currentUserId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${currentUserId}`,
+        },
+        () => {
+          evictAccount("Your account has been deleted by an administrator.");
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(broadcastChannel);
+      supabase.removeChannel(dbChannel);
+    };
+  }, [user?.id, evictAccount]);
 
   // === Real Supabase hooks ===
   const { postJob: supabasePostJob, acceptJob: supabaseAcceptJob, releaseEscrow: supabaseReleaseEscrow, submitWork: supabaseSubmitWork, fetchJobs: supabaseFetchJobs, fetchMyJobs: supabaseFetchMyJobs } = useJobs();

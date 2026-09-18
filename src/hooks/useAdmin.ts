@@ -544,6 +544,23 @@ export const useAdmin = () => {
         throw new Error("Could not delete user profile: " + profileErr.message);
       }
 
+      // Broadcast account deletion event so active client tab terminates session immediately
+      try {
+        const channel = supabase.channel(`user-account-monitor-${userId}`);
+        channel.subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.send({
+              type: 'broadcast',
+              event: 'ACCOUNT_DELETED',
+              payload: { userId },
+            });
+            supabase.removeChannel(channel);
+          }
+        });
+      } catch (broadcastErr) {
+        console.warn("Could not broadcast account deletion:", broadcastErr);
+      }
+
       // 7. Try to delete the Auth user via server API (bonus — needs service role key on Vercel)
       try {
         const { data: { session } } = await supabase.auth.getSession();
