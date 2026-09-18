@@ -25,15 +25,58 @@ export default async function handler(req, res) {
   }
 
   const formattedName = userName || 'Valued Member';
-  const isUpiRejection = upiId || reason || type === 'upi_rejection';
+  const isUpiApproval = type === 'upi_verified' || type === 'upi_approval' || type === 'upi_approved';
+  const isUpiRejection = !isUpiApproval && (reason || type === 'upi_rejection' || type === 'upi_rejected');
 
   let subject = '';
   let htmlContent = '';
 
-  if (isUpiRejection) {
+  if (isUpiApproval) {
+    const displayUpi = upiId || 'Submitted UPI ID';
+    subject = '🎉 Congratulations! Your UPI ID is Verified - Tasskly';
+    htmlContent = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 580px; margin: 0 auto; padding: 32px; border-radius: 20px; background-color: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
+        <div style="text-align: center; margin-bottom: 28px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px;">
+          <h1 style="color: #4f46e5; margin: 0; font-size: 30px; font-weight: 900; letter-spacing: -0.02em;">Tasskly</h1>
+          <p style="color: #64748b; font-size: 12px; margin: 4px 0 0 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Official Administration Notice</p>
+        </div>
+
+        <div style="padding: 24px; border-radius: 16px; background-color: #f0fdf4; border: 1px solid #bbf7d0; margin-bottom: 24px;">
+          <div style="display: inline-block; padding: 6px 14px; background-color: #dcfce7; border-radius: 20px; color: #15803d; font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 14px;">
+            ✅ UPI Payout Verified
+          </div>
+          <h3 style="color: #0f172a; margin: 0 0 16px 0; font-size: 20px; font-weight: 800;">Your UPI ID has been approved!</h3>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+            Dear <strong>${formattedName}</strong>,
+          </p>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+            Great news! Your payout UPI ID (<strong style="color: #15803d; font-family: monospace;">${displayUpi}</strong>) has been officially reviewed and approved by the Tasskly administrative team.
+          </p>
+          
+          <div style="background-color: #ffffff; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; margin-bottom: 18px;">
+            <p style="color: #166534; font-size: 13px; font-weight: 700; margin: 0 0 10px 0;">✨ Features Unlocked:</p>
+            <ul style="color: #334155; font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
+              <li><strong>Instant Withdrawals:</strong> Request your task earnings directly to your bank account anytime.</li>
+              <li><strong>Direct Escrow Payouts:</strong> Automated payout processing upon task completion.</li>
+              <li><strong>Verified Member Badge:</strong> Full trust status across the platform.</li>
+            </ul>
+          </div>
+
+          <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 0;">
+            You can verify your payout status anytime in your dashboard under <strong>Earnings & Withdrawals</strong>.
+          </p>
+        </div>
+
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center;">
+          <p style="color: #94a3b8; font-size: 12px; margin: 0 0 4px 0; font-weight: 600;">Tasskly Administration & Payout Team</p>
+          <p style="color: #cbd5e1; font-size: 11px; margin: 0;">&copy; 2026 Tasskly • India's Student Marketplace. All rights reserved.</p>
+        </div>
+      </div>
+    `;
+  } else if (isUpiRejection) {
     const displayUpi = upiId || 'Submitted UPI ID';
     const rejectionReason = reason?.trim() || 'UPI VPA handle could not be verified with banking network or name mismatch.';
-    subject = 'Notice: UPI ID Verification Update';
+    subject = '⚠️ Action Required: UPI ID Verification Update - Tasskly';
 
     htmlContent = `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 580px; margin: 0 auto; padding: 32px; border-radius: 20px; background-color: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">

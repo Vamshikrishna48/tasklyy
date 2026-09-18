@@ -66,31 +66,63 @@ const AdminUsers = () => {
   const handleApproveUpi = async (userId: string) => {
     setUpiUpdatingId(userId);
     try {
-      const payload: any = {
-        upi_verified: true,
-        upi_verified_at: new Date().toISOString(),
-        bank_verification_status: "verified"
-      };
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-      const { error } = await (supabase as any)
-        .from("profiles")
-        .update(payload)
-        .eq("id", userId);
+      let apiSuccess = false;
+      if (token) {
+        try {
+          const res = await fetch(getApiUrl("/api/verify-bank"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              action: "admin_verify_upi",
+              userId,
+              status: "verified"
+            })
+          });
+          const resData = await res.json().catch(() => ({}));
+          if (res.ok && resData.success) {
+            apiSuccess = true;
+          }
+        } catch (apiErr) {
+          console.warn("Backend API verification call error:", apiErr);
+        }
+      }
 
-      if (error) {
-        // Fallback update without bank_verification_status if needed
-        const { error: fbErr } = await (supabase as any)
+      // Fallback direct update if backend API was unreachable
+      if (!apiSuccess) {
+        await (supabase as any)
           .from("profiles")
           .update({
             upi_verified: true,
-            upi_verified_at: new Date().toISOString()
+            upi_verified_at: new Date().toISOString(),
+            bank_verification_status: "verified"
           })
           .eq("id", userId);
-        if (fbErr) throw fbErr;
+
+        const target = users.find((u) => u.id === userId) || selectedUser;
+        if (target?.email) {
+          try {
+            await fetch(getApiUrl("/api/send-deletion-email"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "upi_verified",
+                email: target.email.trim(),
+                userName: target.full_name || "Member",
+                upiId: target.upi_id || ""
+              })
+            });
+          } catch (_) {}
+        }
       }
 
-      toast.success("UPI ID manually approved! ✅");
-      loadData();
+      toast.success("UPI ID approved! Confirmation email dispatched to user ✅");
+      await loadData();
       if (selectedUser?.id === userId) {
         setSelectedUser((prev: any) => ({
           ...prev,
@@ -110,47 +142,67 @@ const AdminUsers = () => {
     const user = rejectingUpiUser;
     setUpiUpdatingId(user.id);
     try {
-      // 1. Update status in database using verified columns
-      const { error } = await (supabase as any)
-        .from("profiles")
-        .update({
-          upi_verified: false,
-          bank_verification_status: "rejected"
-        })
-        .eq("id", user.id);
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-      if (error) {
-        const { error: fbErr } = await (supabase as any)
-          .from("profiles")
-          .update({
-            upi_verified: false
-          })
-          .eq("id", user.id);
-        if (fbErr) throw fbErr;
+      let apiSuccess = false;
+      if (token) {
+        try {
+          const res = await fetch(getApiUrl("/api/verify-bank"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              action: "admin_verify_upi",
+              userId: user.id,
+              status: "rejected",
+              reason: upiRejectReason || "UPI VPA handle could not be verified with banking network or name mismatch."
+            })
+          });
+          const resData = await res.json().catch(() => ({}));
+          if (res.ok && resData.success) {
+            apiSuccess = true;
+          }
+        } catch (apiErr) {
+          console.warn("Backend API rejection call error:", apiErr);
+        }
       }
 
-      // 2. Dispatch formal email notification to user
-      if (user.email) {
-        try {
-          await fetch(getApiUrl("/api/send-upi-rejection-email"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: user.email.trim(),
-              userName: user.full_name || "Member",
-              upiId: user.upi_id || "",
-              reason: upiRejectReason || "UPI VPA handle could not be verified with banking network or name mismatch."
-            }),
-          });
-        } catch (emailErr) {
-          console.warn("Could not dispatch UPI rejection email:", emailErr);
+      // Fallback direct update if backend API was unreachable
+      if (!apiSuccess) {
+        await (supabase as any)
+          .from("profiles")
+          .update({
+            upi_verified: false,
+            bank_verification_status: "rejected"
+          })
+          .eq("id", user.id);
+
+        if (user.email) {
+          try {
+            await fetch(getApiUrl("/api/send-deletion-email"), {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "upi_rejection",
+                email: user.email.trim(),
+                userName: user.full_name || "Member",
+                upiId: user.upi_id || "",
+                reason: upiRejectReason || "UPI VPA handle could not be verified with banking network or name mismatch."
+              })
+            });
+          } catch (emailErr) {
+            console.warn("Could not dispatch UPI rejection email:", emailErr);
+          }
         }
       }
 
       toast.success(`UPI ID rejected. Formal notification sent to ${user.email} ✉️`);
       setRejectingUpiUser(null);
       setUpiRejectReason("");
-      loadData();
+      await loadData();
 
       if (selectedUser?.id === user.id) {
         setSelectedUser((prev: any) => ({

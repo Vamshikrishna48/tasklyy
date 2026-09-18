@@ -242,10 +242,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .on('broadcast', { event: 'ACCOUNT_DELETED' }, () => {
         evictAccount("Your account has been deleted by an administrator.");
       })
+      .on('broadcast', { event: 'UPI_STATUS_UPDATED' }, () => {
+        fetchProfile(currentUserId);
+      })
       .subscribe();
 
-    // 2. Postgres change listener on profiles DELETE for this user
-    const dbChannel = supabase.channel(`profile-delete-${currentUserId}`)
+    // 2. Postgres change listener on profiles DELETE & UPDATE for this user
+    const dbChannel = supabase.channel(`profile-changes-${currentUserId}`)
       .on(
         'postgres_changes',
         {
@@ -258,13 +261,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
           evictAccount("Your account has been deleted by an administrator.");
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${currentUserId}`,
+        },
+        () => {
+          fetchProfile(currentUserId);
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(broadcastChannel);
       supabase.removeChannel(dbChannel);
     };
-  }, [user?.id, evictAccount]);
+  }, [user?.id, evictAccount, fetchProfile]);
 
   // === Real Supabase hooks ===
   const { postJob: supabasePostJob, acceptJob: supabaseAcceptJob, releaseEscrow: supabaseReleaseEscrow, submitWork: supabaseSubmitWork, fetchJobs: supabaseFetchJobs, fetchMyJobs: supabaseFetchMyJobs } = useJobs();

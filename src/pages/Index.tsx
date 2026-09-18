@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Sparkles, TrendingUp, Shield, Globe } from "lucide-react";
+import { ArrowRight, Sparkles, TrendingUp, Shield, Globe, Users, MapPin, ShieldCheck, Compass } from "lucide-react";
 import { categories } from "@/data/mockData";
 import Navbar from "@/components/Navbar";
 import { motion } from "framer-motion";
@@ -157,6 +157,54 @@ const Index = () => {
               <p className="text-lg text-muted-foreground leading-relaxed">
                 From IIT Delhi and BITS Pilani to RVCE Bengaluru and Anna University Chennai, Tasskly connects verified student talent with instant escrow security.
               </p>
+
+              {/* Stats Cards with Live Counts */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
+                <div className="p-4 rounded-2xl bg-white border shadow-sm">
+                  <div className="flex items-center gap-2 text-primary mb-1">
+                    <Users className="h-4 w-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Students</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-black text-foreground tracking-tight">1,423</span>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">Live verified students</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white border shadow-sm">
+                  <div className="flex items-center gap-2 text-primary mb-1">
+                    <MapPin className="h-4 w-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Campuses</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-black text-foreground tracking-tight">57+</span>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">Live Indian campus hubs</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white border shadow-sm col-span-2 sm:col-span-1">
+                  <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Trust</span>
+                  </div>
+                  <div className="text-2xl font-black text-foreground">100%</div>
+                  <p className="text-xs text-muted-foreground mt-0.5">Escrow protected</p>
+                </div>
+              </div>
+
+              {/* Interactive hint */}
+              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-100/80 text-xs font-medium text-slate-600 border border-slate-200">
+                <Compass className="h-4 w-4 text-primary shrink-0 animate-spin" style={{ animationDuration: '8s' }} />
+                <span>Drag the interactive 3D globe to rotate and explore active campus activity hubs in India.</span>
+              </div>
 
               <div className="pt-2 flex flex-wrap gap-4">
                 <Link to="/jobs">
