@@ -520,6 +520,23 @@ const SubmittedWork = () => {
                                         </button>
                                       </div>
                                     )}
+                                    {/* Inline Interactive Presentation / Poster link */}
+                                    {(job.status === "submitted" || isCompleted) && f.downloadUrl && (f.file_type === "text/html" || f.file_name.endsWith(".html")) && (
+                                      <div className="mt-1.5">
+                                        <button 
+                                          onClick={() => setPreviewFile({
+                                            url: f.downloadUrl || "",
+                                            name: f.file_name,
+                                            type: f.file_type,
+                                            jobTitle: job.title,
+                                            budget: job.budget
+                                          })}
+                                          className="text-xs text-primary underline font-semibold hover:text-primary-hover flex items-center gap-1"
+                                        >
+                                          {f.file_name.toLowerCase().includes("presentation") ? "📑 Open Presentation Slide Deck" : "🎨 Open High-Res Poster"}
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
  

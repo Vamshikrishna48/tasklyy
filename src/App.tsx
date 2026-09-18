@@ -20,6 +20,7 @@ import AdminWithdrawals from "./pages/admin/AdminWithdrawals.tsx";
 import AdminAuth from "./pages/admin/AdminAuth.tsx";
 import AdminGuard from "./components/AdminGuard.tsx";
 import AdminBestMatch from "./pages/admin/AdminBestMatch.tsx";
+import AdminDeliverables from "./pages/admin/AdminDeliverables.tsx";
 import Index from "./pages/Index.tsx";
 import BrowseJobs from "./pages/BrowseJobs.tsx";
 import JobDetail from "./pages/JobDetail.tsx";
@@ -315,6 +316,7 @@ const App = () => {
                     <Route path="/admin/auth" element={<Navigate to="/admin-login" replace />} />
                     <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
                       <Route index element={<AdminOverview />} />
+                      <Route path="ai-works" element={<AdminDeliverables />} />
                       <Route path="escrow" element={<AdminEscrow />} />
                       <Route path="ledger" element={<AdminLedger />} />
                       <Route path="users" element={<AdminUsers />} />

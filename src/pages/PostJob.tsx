@@ -289,6 +289,14 @@ const PostJob = () => {
                       </Badge>
                     ))}
                   </div>
+                  {(category === "Presentation" || category === "Poster Design") && (
+                    <div className="mt-3 p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-xl flex items-center gap-2.5 text-xs text-emerald-800 dark:text-emerald-300">
+                      <Sparkles className="h-4 w-4 shrink-0 text-emerald-600" />
+                      <span>
+                        <b>2-Day Guaranteed Delivery:</b> Your {category === "Presentation" ? "presentation slide deck" : "poster design"} will be professionally crafted and delivered strictly adhering to all your instructions within 2 days!
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 

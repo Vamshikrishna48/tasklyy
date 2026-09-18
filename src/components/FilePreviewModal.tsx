@@ -51,10 +51,11 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
   const fileExt = fileName.split(".").pop()?.toLowerCase() || "";
 
   // 1. Detect category of the file
+  const isHtmlDeliverable = fileExt === "html" || fileType === "text/html";
   const isImage = ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(fileExt) || fileType.startsWith("image/");
   const isPdf = fileExt === "pdf" || fileType === "application/pdf";
   const isText = ["txt", "csv", "log", "md"].includes(fileExt) || fileType.startsWith("text/");
-  const isCode = ["js", "ts", "tsx", "jsx", "html", "css", "py", "java", "cpp", "c", "cs", "json", "sh", "sql"].includes(fileExt);
+  const isCode = !isHtmlDeliverable && ["js", "ts", "tsx", "jsx", "css", "py", "java", "cpp", "c", "cs", "json", "sh", "sql"].includes(fileExt);
   const isWordDoc = ["docx", "doc"].includes(fileExt);
   const isExcelDoc = ["xlsx", "xls"].includes(fileExt);
   const isPptDoc = ["pptx", "ppt"].includes(fileExt);
@@ -64,15 +65,24 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
 
   // 2. Fetch text content if applicable
   useEffect(() => {
-    if (isOpen && (isText || isCode) && fileUrl) {
+    if (isOpen && (isText || isCode || isHtmlDeliverable) && fileUrl) {
       setTextLoading(true);
+      if (fileUrl.startsWith("data:text/html")) {
+        try {
+          const parts = fileUrl.split(",");
+          const decoded = decodeURIComponent(parts[1] || "");
+          setTextContent(decoded);
+          setTextLoading(false);
+          return;
+        } catch {}
+      }
       fetch(fileUrl)
         .then((res) => {
           if (!res.ok) throw new Error("Failed to fetch content");
           return res.text();
         })
         .then((text) => {
-          setTextContent(text.substring(0, 10000)); // cap at 10k chars
+          setTextContent(isHtmlDeliverable ? text : text.substring(0, 10000));
           setTextLoading(false);
         })
         .catch((err) => {
@@ -83,7 +93,7 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
     } else {
       setTextContent(null);
     }
-  }, [isOpen, fileUrl, isText, isCode]);
+  }, [isOpen, fileUrl, isText, isCode, isHtmlDeliverable]);
 
   // 3. Security: Print Screen block and Window focus/blur tracking
   useEffect(() => {
@@ -218,6 +228,40 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
                     <div className="absolute bottom-4 right-4 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2 text-xs font-bold text-slate-300 shadow-lg pointer-events-none">
                       <Lock className="h-3.5 w-3.5 text-violet-400" />
                       Locked for Download
+                    </div>
+                  </div>
+                )}
+
+                {/* 2.5. HTML PRESENTATION / POSTER DELIVERABLE PREVIEW */}
+                {isHtmlDeliverable && (
+                  <div className="w-full h-full flex flex-col bg-slate-900 border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+                    <div className="px-4 py-2.5 bg-slate-800 border-b border-white/10 flex items-center justify-between">
+                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                        {fileName.toLowerCase().includes("presentation") ? "📑 Interactive Presentation Deck" : "🎨 High-Res Poster Design"}
+                      </span>
+                      {fileUrl && (
+                        <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" variant="outline" className="text-xs h-7 text-primary border-primary/30">
+                            Launch Full Screen
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex-1 w-full h-full bg-slate-950 min-h-[450px]">
+                      {textLoading ? (
+                        <div className="h-full flex items-center justify-center text-slate-400 gap-2">
+                          <div className="h-4 w-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                          Loading interactive deliverable...
+                        </div>
+                      ) : (
+                        <iframe
+                          src={fileUrl?.startsWith("data:") ? undefined : fileUrl}
+                          srcDoc={textContent || undefined}
+                          title={fileName}
+                          className="w-full h-full border-0 min-h-[450px]"
+                          sandbox="allow-scripts allow-same-origin allow-popups"
+                        />
+                      )}
                     </div>
                   </div>
                 )}

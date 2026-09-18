@@ -19,6 +19,7 @@ import { useJobFiles } from "@/hooks/useJobFiles";
 import { NoScreenshotWrapper } from "@/components/NoScreenshotWrapper";
 import { getApiUrl } from "@/lib/api";
 import { validateUpiId } from "@/utils/upiValidation";
+import { detectWorkType } from "@/services/aiDeliverableService";
  
 const JobDetail = () => {
   const { id } = useParams();
@@ -464,6 +465,11 @@ const JobDetail = () => {
                 {job.status === "in_progress" && <Badge className="bg-green-500">In Progress</Badge>}
                 {job.status === "submitted" && <Badge className="bg-blue-500">Work Submitted</Badge>}
                 {job.status === "completed" && <Badge className="bg-primary">Completed</Badge>}
+                {detectWorkType(job) && (
+                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-semibold gap-1">
+                    <Sparkles className="h-3 w-3" /> 2-Day Delivery Guaranteed
+                  </Badge>
+                )}
               </div>
 
               <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">{job.title}</h1>

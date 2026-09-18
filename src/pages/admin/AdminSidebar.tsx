@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 
 const menuItems = [
   { title: "Overview", url: "/admin", icon: LayoutDashboard },
+  { title: "AI Works (PPT & Posters)", url: "/admin/ai-works", icon: Sparkles },
   { title: "Best Match", url: "/admin/best-match", icon: Sparkles },
   { title: "Escrow Payments", url: "/admin/escrow", icon: Shield },
   { title: "Financial Ledger", url: "/admin/ledger", icon: BookOpen },

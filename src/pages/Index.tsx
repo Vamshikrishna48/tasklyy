@@ -96,19 +96,6 @@ const Index = () => {
               </Link>
             </div>
 
-            <div className="mt-8 flex justify-center">
-              <a 
-                href="#global-network" 
-                className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/90 hover:bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:text-primary transition-all hover:scale-105 shadow-md shadow-slate-200/50 cursor-pointer"
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span>50+ Campus Hubs Worldwide — Explore 3D Globe</span>
-                <ArrowRight className="h-3.5 w-3.5 text-primary" />
-              </a>
-            </div>
           </motion.div>
         </div>
       </section>
