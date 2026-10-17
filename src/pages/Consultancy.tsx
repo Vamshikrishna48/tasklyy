@@ -526,23 +526,23 @@ export const Consultancy: React.FC = () => {
       {/* ─────────────────────────────────────────────────────────────
          FIXED TOP BAR WITH "BOOK CONSULTANCY SERVICE" IN TOP RIGHT
          ───────────────────────────────────────────────────────────── */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-3.5 flex items-center justify-between bg-[#040612]/70 backdrop-blur-xl border-b border-emerald-500/20">
+      <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-3.5 flex items-center justify-between bg-[#020817]/75 backdrop-blur-xl border-b border-sky-500/20">
         <div className="flex items-center gap-3">
           <Link to={isInsideDashboard ? "/dashboard" : "/"}>
             <Button
               variant="ghost"
               size="sm"
-              className="gap-2 text-slate-300 hover:text-white hover:bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs"
+              className="gap-2 text-slate-300 hover:text-white hover:bg-sky-500/10 border border-sky-500/20 rounded-xl text-xs"
             >
-              <ArrowLeft className="h-4 w-4 text-emerald-400" />
+              <ArrowLeft className="h-4 w-4 text-sky-400" />
               <span>{isInsideDashboard ? "Dashboard" : "Home"}</span>
             </Button>
           </Link>
 
           <div className="hidden sm:flex items-center gap-2">
             <span className="h-4 w-[1px] bg-slate-800" />
-            <span className="text-[11px] font-mono tracking-widest text-emerald-400 uppercase flex items-center gap-1.5 font-bold">
-              <Sparkles className="h-3.5 w-3.5 animate-pulse" /> 3D DIMENSION
+            <span className="text-[11px] font-mono tracking-widest text-sky-400 uppercase flex items-center gap-1.5 font-bold">
+              <Sparkles className="h-3.5 w-3.5 animate-pulse text-sky-400" /> 3D DIMENSION
             </span>
           </div>
         </div>
@@ -550,15 +550,15 @@ export const Consultancy: React.FC = () => {
         {/* TOP RIGHT CORNER: BOOK CONSULTANCY SERVICE BUTTON */}
         <div className="flex items-center gap-3">
           {portalUser && (
-            <div className="hidden lg:flex items-center gap-2 mr-2 px-3 py-1 rounded-xl bg-black/40 border border-emerald-500/20 text-xs">
+            <div className="hidden lg:flex items-center gap-2 mr-2 px-3 py-1 rounded-xl bg-black/40 border border-sky-500/20 text-xs">
               <span className="text-slate-400">Logged in as:</span>
-              <strong className="text-emerald-400 font-mono">{portalUser.tasskly_id}</strong>
+              <strong className="text-sky-400 font-mono">{portalUser.tasskly_id}</strong>
             </div>
           )}
 
           <Button
             onClick={() => openBookingModal()}
-            className="relative group overflow-hidden bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs md:text-sm px-4 md:px-5 h-10 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.5)] border border-emerald-300/40 transition-all hover:scale-105 active:scale-95"
+            className="relative group overflow-hidden bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-slate-950 font-black text-xs md:text-sm px-4 md:px-5 h-10 rounded-xl shadow-[0_0_30px_rgba(56,189,248,0.5)] border border-sky-300/40 transition-all hover:scale-105 active:scale-95"
           >
             <span className="relative z-10 flex items-center gap-2">
               <Zap className="h-4 w-4 fill-slate-950" />
@@ -599,17 +599,17 @@ export const Consultancy: React.FC = () => {
             className="w-full max-w-md"
           >
             <Card3D depth={18} glare={true}>
-              <div className="rounded-3xl p-8 bg-[#070b1a]/90 border border-emerald-500/40 backdrop-blur-2xl shadow-[0_0_60px_rgba(16,185,129,0.2)] space-y-6">
+              <div className="rounded-3xl p-8 bg-[#070b1a]/90 border border-sky-500/40 backdrop-blur-2xl shadow-[0_0_60px_rgba(56,189,248,0.2)] space-y-6">
                 <div className="text-center space-y-3">
-                  <div className="inline-flex p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-400/40 shadow-[0_0_30px_rgba(16,185,129,0.3)] text-emerald-400">
+                  <div className="inline-flex p-3.5 rounded-2xl bg-gradient-to-br from-sky-500/20 to-cyan-500/20 border border-sky-400/40 shadow-[0_0_30px_rgba(56,189,248,0.3)] text-sky-400">
                     <Sparkles className="h-8 w-8 animate-spin-slow" />
                   </div>
                   <div>
-                    <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 mb-1">
+                    <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/30 mb-1">
                       3D Dimension Gateway
                     </span>
                     <h1 className="text-3xl font-black text-white">
-                      Consult<span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">ancy 3D</span>
+                      Consult<span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400">ancy 3D</span>
                     </h1>
                     <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
                       Log in using your Tasskly ID to unlock full 3D scroll advisory matrix.
@@ -621,13 +621,13 @@ export const Consultancy: React.FC = () => {
                   <form onSubmit={handleCheckId} className="space-y-4">
                     <div className="space-y-2">
                       <Label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                        <User className="h-3.5 w-3.5 text-emerald-400" /> Enter Tasskly ID
+                        <User className="h-3.5 w-3.5 text-sky-400" /> Enter Tasskly ID
                       </Label>
                       <Input
                         placeholder="e.g. TSK-104829"
                         value={tassklyId}
                         onChange={(e) => setTassklyId(e.target.value.toUpperCase())}
-                        className="rounded-xl border-emerald-500/30 bg-[#04060f]/90 text-white font-mono font-bold tracking-widest text-center h-12 text-base focus-visible:ring-emerald-500"
+                        className="rounded-xl border-sky-500/30 bg-[#04060f]/90 text-white font-mono font-bold tracking-widest text-center h-12 text-base focus-visible:ring-sky-500"
                         required
                         autoFocus
                       />
@@ -636,7 +636,7 @@ export const Consultancy: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setTassklyId(activeLoggedInProfile.tasskly_id || "")}
-                          className="w-full text-center text-[11px] text-emerald-400 hover:text-emerald-300 hover:underline pt-1 transition-colors font-medium"
+                          className="w-full text-center text-[11px] text-sky-400 hover:text-sky-300 hover:underline pt-1 transition-colors font-medium"
                         >
                           ⚡ Autofill my active ID: <span className="font-mono font-bold">{activeLoggedInProfile.tasskly_id}</span>
                         </button>
@@ -646,7 +646,7 @@ export const Consultancy: React.FC = () => {
                     <Button
                       type="submit"
                       disabled={checkLoading}
-                      className="w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:opacity-95 text-slate-950 font-bold h-11 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] border-0"
+                      className="w-full bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-500 hover:opacity-95 text-slate-950 font-bold h-11 rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.3)] border-0"
                     >
                       {checkLoading ? <Loader2 className="h-4 w-4 animate-spin text-slate-950" /> : "Verify Identity →"}
                     </Button>
@@ -655,12 +655,12 @@ export const Consultancy: React.FC = () => {
 
                 {authStep === "password_setup" && (
                   <form onSubmit={handleSetupPassword} className="space-y-4">
-                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 flex items-start gap-2.5">
-                      <KeyRound className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <div className="bg-sky-500/10 border border-sky-500/30 rounded-xl p-3 flex items-start gap-2.5">
+                      <KeyRound className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
                       <div>
                         <p className="text-[11px] font-bold text-slate-200">First-Time Setup</p>
                         <p className="text-[10px] text-slate-400">
-                          Configure password for ID: <strong className="font-mono text-emerald-400">{tassklyId}</strong>
+                          Configure password for ID: <strong className="font-mono text-sky-400">{tassklyId}</strong>
                         </p>
                       </div>
                     </div>
@@ -673,7 +673,7 @@ export const Consultancy: React.FC = () => {
                           placeholder="Min 6 characters"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="rounded-xl border-emerald-500/30 bg-[#04060f]/90 text-white h-10"
+                          className="rounded-xl border-sky-500/30 bg-[#04060f]/90 text-white h-10"
                           required
                           autoFocus
                         />
@@ -685,7 +685,7 @@ export const Consultancy: React.FC = () => {
                           placeholder="Re-enter password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="rounded-xl border-emerald-500/30 bg-[#04060f]/90 text-white h-10"
+                          className="rounded-xl border-sky-500/30 bg-[#04060f]/90 text-white h-10"
                           required
                         />
                       </div>
@@ -703,7 +703,7 @@ export const Consultancy: React.FC = () => {
                       <Button
                         type="submit"
                         disabled={authLoading}
-                        className="flex-1 rounded-xl bg-emerald-500 text-slate-950 font-bold"
+                        className="flex-1 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold shadow-[0_0_20px_rgba(56,189,248,0.3)]"
                       >
                         {authLoading ? <Loader2 className="h-4 w-4 animate-spin text-slate-950" /> : "Save & Enter"}
                       </Button>
@@ -716,14 +716,14 @@ export const Consultancy: React.FC = () => {
                     <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
                       <div>
                         <p className="text-[11px] font-bold text-slate-200">Welcome, {tempUserName}</p>
-                        <p className="text-[10px] font-mono text-emerald-400">{tassklyId}</p>
+                        <p className="text-[10px] font-mono text-sky-400">{tassklyId}</p>
                       </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => setAuthStep("id_entry")}
-                        className="text-[10px] text-slate-400"
+                        className="text-[10px] text-slate-400 hover:text-white"
                       >
                         Switch ID
                       </Button>
@@ -736,7 +736,7 @@ export const Consultancy: React.FC = () => {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="rounded-xl border-emerald-500/30 bg-[#04060f]/90 text-white h-11"
+                        className="rounded-xl border-sky-500/30 bg-[#04060f]/90 text-white h-11"
                         required
                         autoFocus
                       />
@@ -745,7 +745,7 @@ export const Consultancy: React.FC = () => {
                     <Button
                       type="submit"
                       disabled={authLoading}
-                      className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold h-11 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                      className="w-full bg-gradient-to-r from-sky-500 to-blue-500 text-slate-950 font-bold h-11 rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.3)]"
                     >
                       {authLoading ? <Loader2 className="h-4 w-4 animate-spin text-slate-950" /> : "Launch 3D Dimension 🚀"}
                     </Button>
@@ -779,51 +779,51 @@ export const Consultancy: React.FC = () => {
               }}
             >
               <div className="max-w-4xl text-center space-y-4 pointer-events-auto">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-mono font-bold tracking-widest uppercase shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/10 border border-sky-400/30 text-sky-300 text-xs font-mono font-bold tracking-widest uppercase shadow-[0_0_20px_rgba(56,189,248,0.3)]">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500" />
                   </span>
-                  3D SCROLL MATRIX • STAGE 01
+                  3D STUDENT MATRIX • STAGE 01
                 </div>
 
-                <h1 className="text-4xl md:text-7xl font-black text-white tracking-tight leading-none drop-shadow-[0_0_35px_rgba(16,185,129,0.35)]">
-                  CONSULTANCY{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+                <h1 className="text-4xl md:text-7xl font-black text-white tracking-tight leading-none drop-shadow-[0_0_35px_rgba(56,189,248,0.35)]">
+                  STUDENT CONSULTANCY{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400">
                     3D DIMENSION
                   </span>
                 </h1>
 
                 <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                  Fly through verified tech leads, AI researchers, and portfolio directors in a scroll-driven 3D universe.
+                  Navigate academic project reviews, thesis defense, AI research, and career mentorship in an interactive 3D universe.
                 </p>
 
                 <div className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Button
                     onClick={() => openBookingModal()}
-                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm px-6 h-12 rounded-xl shadow-[0_0_25px_rgba(16,185,129,0.4)] gap-2"
+                    className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-sm px-6 h-12 rounded-xl shadow-[0_0_25px_rgba(56,189,248,0.4)] gap-2"
                   >
                     <Zap className="h-4 w-4" /> Book Consultancy Service
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => scrollToStage(0.25)}
-                    className="border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10 h-12 rounded-xl px-5 text-sm gap-2"
+                    className="border-sky-500/30 text-sky-300 hover:bg-sky-500/10 h-12 rounded-xl px-5 text-sm gap-2"
                   >
-                    <span>Scroll to Explore 3D Stacks</span>
+                    <span>Scroll to Study Syllabus</span>
                     <ChevronDown className="h-4 w-4 animate-bounce" />
                   </Button>
                 </div>
 
                 <div className="pt-8 flex items-center justify-center gap-2 text-xs font-mono text-slate-500">
-                  <MousePointer className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-                  <span>Scroll mouse wheel or drag to navigate 3D space</span>
+                  <MousePointer className="h-3.5 w-3.5 text-sky-400 animate-pulse" />
+                  <span>Scroll mouse wheel or drag to navigate 3D study space</span>
                 </div>
               </div>
             </div>
 
             {/* ─────────────────────────────────────────────────────────────
-               STAGE 2: 3D ORBITAL DISCIPLINES (Scroll: 20% to 45%)
+               STAGE 2: 3D OPEN STUDY BOOK & DISCIPLINES (Scroll: 20% to 45%)
                ───────────────────────────────────────────────────────────── */}
             <div
               className="sticky top-0 h-screen w-full flex flex-col items-center justify-center px-4 pointer-events-none transition-all duration-300"
@@ -838,11 +838,11 @@ export const Consultancy: React.FC = () => {
             >
               <div className="max-w-6xl w-full text-center space-y-6 pointer-events-auto">
                 <div className="space-y-2">
-                  <span className="text-xs font-mono text-cyan-400 font-bold uppercase tracking-widest">
-                    STAGE 02 • ORBITAL SPECIALTIES
+                  <span className="text-xs font-mono text-sky-400 font-bold uppercase tracking-widest">
+                    STAGE 02 • CORE SYLLABUS & STUDY STACKS
                   </span>
                   <h2 className="text-3xl md:text-5xl font-black text-white">
-                    Choose Your <span className="text-cyan-400">Consultation Field</span>
+                    Choose Your <span className="text-sky-400">Study & Advisory Domain</span>
                   </h2>
                 </div>
 
@@ -858,7 +858,7 @@ export const Consultancy: React.FC = () => {
                       title: "Distributed Systems",
                       desc: "Microservices in Go, high-concurrency database schemas, Kafka message queues, and load balancing.",
                       icon: Code2,
-                      color: "border-emerald-500/40 text-emerald-400",
+                      color: "border-sky-500/40 text-sky-400",
                     },
                     {
                       title: "UI/UX & Product Design",
@@ -878,16 +878,16 @@ export const Consultancy: React.FC = () => {
                       <Card3D key={idx} depth={15} glare={true}>
                         <div
                           onClick={() => scrollToStage(0.55)}
-                          className="p-6 rounded-3xl bg-[#090e24]/85 border border-slate-800 hover:border-emerald-500/60 backdrop-blur-xl text-left space-y-3 cursor-pointer group shadow-xl transition-colors"
+                          className="p-6 rounded-3xl bg-[#090e24]/85 border border-slate-800 hover:border-sky-500/60 backdrop-blur-xl text-left space-y-3 cursor-pointer group shadow-xl transition-colors"
                         >
                           <div className={`p-3 rounded-2xl bg-black/50 border w-fit ${disc.color}`}>
                             <Icon className="h-6 w-6" />
                           </div>
-                          <h3 className="font-bold text-white text-lg group-hover:text-emerald-300 transition-colors">
+                          <h3 className="font-bold text-white text-lg group-hover:text-sky-300 transition-colors">
                             {disc.title}
                           </h3>
                           <p className="text-xs text-slate-400 leading-relaxed">{disc.desc}</p>
-                          <div className="pt-2 flex items-center gap-1.5 text-xs text-emerald-400 font-bold">
+                          <div className="pt-2 flex items-center gap-1.5 text-xs text-sky-400 font-bold">
                             <span>Inspect Mentors</span>
                             <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
                           </div>
@@ -915,11 +915,11 @@ export const Consultancy: React.FC = () => {
             >
               <div className="max-w-6xl w-full text-center space-y-6 pointer-events-auto">
                 <div className="space-y-1">
-                  <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-widest">
-                    STAGE 03 • CERTIFIED EXPERTS
+                  <span className="text-xs font-mono text-sky-400 font-bold uppercase tracking-widest">
+                    STAGE 03 • 1-ON-1 CERTIFIED SPECIALISTS
                   </span>
                   <h2 className="text-3xl md:text-5xl font-black text-white">
-                    Verified <span className="text-emerald-400">1-on-1 Consultants</span>
+                    Verified <span className="text-sky-400">Student Mentors & Leads</span>
                   </h2>
                 </div>
 
@@ -927,12 +927,12 @@ export const Consultancy: React.FC = () => {
                   {consultants.length > 0 ? (
                     consultants.slice(0, 3).map((consultant) => (
                       <Card3D key={consultant.id} depth={16} glare={true}>
-                        <div className="p-6 rounded-3xl bg-[#090e24]/90 border border-emerald-500/30 backdrop-blur-xl text-left space-y-4 shadow-2xl">
+                        <div className="p-6 rounded-3xl bg-[#090e24]/90 border border-sky-500/30 backdrop-blur-xl text-left space-y-4 shadow-2xl">
                           <div className="flex items-start justify-between">
                             <img
                               src={consultant.avatar}
                               alt={consultant.name}
-                              className="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                              className="w-14 h-14 rounded-2xl object-cover border-2 border-sky-500/40 shadow-[0_0_20px_rgba(56,189,248,0.3)]"
                             />
                             <div className="flex items-center gap-1 text-amber-400 text-xs font-bold bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
                               <Star className="h-3 w-3 fill-amber-400" />
@@ -943,7 +943,7 @@ export const Consultancy: React.FC = () => {
                           <div>
                             <h4 className="font-bold text-white text-lg">{consultant.name}</h4>
                             <p className="text-xs text-slate-300 font-semibold">{consultant.title}</p>
-                            <p className="text-[11px] font-mono text-emerald-400">{consultant.company}</p>
+                            <p className="text-[11px] font-mono text-sky-400">{consultant.company}</p>
                           </div>
 
                           <p className="text-xs text-slate-400 line-clamp-2">{consultant.bio}</p>
@@ -951,7 +951,7 @@ export const Consultancy: React.FC = () => {
                           <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
                             <div>
                               <span className="text-[10px] text-slate-500 uppercase font-bold">Session Fee</span>
-                              <p className="text-base font-black text-emerald-400 flex items-center">
+                              <p className="text-base font-black text-sky-400 flex items-center">
                                 <IndianRupee className="h-3.5 w-3.5" />
                                 {consultant.price}
                                 <span className="text-[10px] text-slate-400 font-normal ml-1">/ {consultant.duration}</span>
@@ -960,7 +960,7 @@ export const Consultancy: React.FC = () => {
                             <Button
                               size="sm"
                               onClick={() => openBookingModal(consultant)}
-                              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                              className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-xl text-xs gap-1.5 shadow-[0_0_15px_rgba(56,189,248,0.3)]"
                             >
                               <Video className="h-3.5 w-3.5" /> Book 1-on-1
                             </Button>
@@ -976,7 +976,7 @@ export const Consultancy: React.FC = () => {
                       <Button
                         size="sm"
                         onClick={() => scrollToStage(0.98)}
-                        className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 font-bold rounded-xl text-xs"
+                        className="bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 border border-sky-500/30 font-bold rounded-xl text-xs"
                       >
                         Jump to Custom Advisory Request &rarr;
                       </Button>
@@ -987,7 +987,7 @@ export const Consultancy: React.FC = () => {
             </div>
 
             {/* ─────────────────────────────────────────────────────────────
-               STAGE 4: 3D ESCROW SECURITY SHIELD (Scroll: 72% to 88%)
+               STAGE 4: 3D ESCROW SECURITY & EXCELLENCE SHIELD (Scroll: 72% to 88%)
                ───────────────────────────────────────────────────────────── */}
             <div
               className="sticky top-0 h-screen w-full flex flex-col items-center justify-center px-4 pointer-events-none transition-all duration-300"
@@ -1003,10 +1003,10 @@ export const Consultancy: React.FC = () => {
               <div className="max-w-4xl w-full text-center space-y-6 pointer-events-auto">
                 <div className="space-y-1">
                   <span className="text-xs font-mono text-purple-400 font-bold uppercase tracking-widest">
-                    STAGE 04 • TRUST MATRIX
+                    STAGE 04 • TRUST & ACADEMIC EXCELLENCE
                   </span>
                   <h2 className="text-3xl md:text-5xl font-black text-white">
-                    100% Escrow & Satisfaction Shield
+                    100% Student Protection & Excellence Shield
                   </h2>
                 </div>
 
@@ -1032,8 +1032,8 @@ export const Consultancy: React.FC = () => {
                   </Card3D>
 
                   <Card3D depth={14} glare={true}>
-                    <div className="p-6 rounded-3xl bg-[#090e24]/90 border border-emerald-500/30 backdrop-blur-xl text-left space-y-3">
-                      <Clock className="h-8 w-8 text-emerald-400" />
+                    <div className="p-6 rounded-3xl bg-[#090e24]/90 border border-sky-500/30 backdrop-blur-xl text-left space-y-3">
+                      <Clock className="h-8 w-8 text-sky-400" />
                       <h4 className="font-bold text-white text-base">Instant Rescheduling</h4>
                       <p className="text-xs text-slate-400">
                         Change your slot anytime up to 2 hours before the call with 1 click, or get an instant 100% refund.
@@ -1057,22 +1057,22 @@ export const Consultancy: React.FC = () => {
             >
               <div className="max-w-5xl w-full text-center space-y-6 pointer-events-auto">
                 <div className="space-y-2">
-                  <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30">
-                    STAGE 05 • AT LAST
+                  <span className="text-xs font-mono text-sky-400 font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30">
+                    STAGE 05 • CAMPUS GATEWAY TO INDUSTRY
                   </span>
                   <h2 className="text-3xl md:text-6xl font-black text-white tracking-tight">
-                    Reserve Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">Consultancy Session</span>
+                    Reserve Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400">Consultancy Session</span>
                   </h2>
                   <p className="text-xs md:text-sm text-slate-300 max-w-xl mx-auto">
-                    Direct access to certified industry architects and researchers. Choose your expert or broadcast custom requirements.
+                    Direct access to certified industry architects and academic researchers. Choose your expert or broadcast custom requirements.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
                   {/* Quick 1-on-1 Booking Station */}
                   <Card3D depth={14} glare={true}>
-                    <div className="p-7 rounded-3xl bg-[#090e24]/95 border border-emerald-500/40 backdrop-blur-2xl space-y-4 shadow-2xl">
-                      <div className="flex items-center gap-2 text-emerald-400">
+                    <div className="p-7 rounded-3xl bg-[#090e24]/95 border border-sky-500/40 backdrop-blur-2xl space-y-4 shadow-2xl">
+                      <div className="flex items-center gap-2 text-sky-400">
                         <Zap className="h-5 w-5" />
                         <h3 className="font-bold text-white text-lg">Instant 1-on-1 Reservation</h3>
                       </div>
@@ -1084,7 +1084,7 @@ export const Consultancy: React.FC = () => {
                         <div className="space-y-1">
                           <Label className="text-xs text-slate-300">Selected Expert</Label>
                           <select
-                            className="w-full h-11 px-3 rounded-xl border border-slate-700 bg-black/60 text-white text-xs focus:ring-2 focus:ring-emerald-500"
+                            className="w-full h-11 px-3 rounded-xl border border-slate-700 bg-black/60 text-white text-xs focus:ring-2 focus:ring-sky-500"
                             value={bookingConsultant?.id || ""}
                             onChange={(e) => {
                               const found = consultants.find((m) => m.id === e.target.value);
@@ -1107,7 +1107,7 @@ export const Consultancy: React.FC = () => {
 
                         <Button
                           onClick={() => openBookingModal(bookingConsultant || (consultants.length > 0 ? consultants[0] : null))}
-                          className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:opacity-95 text-slate-950 font-black h-12 rounded-xl text-sm shadow-[0_0_25px_rgba(16,185,129,0.35)] mt-2"
+                          className="w-full bg-gradient-to-r from-sky-500 to-blue-500 hover:opacity-95 text-slate-950 font-black h-12 rounded-xl text-sm shadow-[0_0_25px_rgba(56,189,248,0.35)] mt-2"
                         >
                           Proceed to Reserve Slot ⚡
                         </Button>
@@ -1160,13 +1160,13 @@ export const Consultancy: React.FC = () => {
           {/* ─────────────────────────────────────────────────────────────
              BOTTOM 3D SCROLL PROGRESS HUD INDICATOR
              ───────────────────────────────────────────────────────────── */}
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-full bg-[#060814]/85 border border-emerald-500/30 backdrop-blur-xl flex items-center gap-3 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-full bg-[#060814]/85 border border-sky-500/30 backdrop-blur-xl flex items-center gap-3 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
             {[
-              { label: "01 Nexus", progress: 0.05 },
-              { label: "02 Stacks", progress: 0.3 },
+              { label: "01 Grad", progress: 0.05 },
+              { label: "02 Study", progress: 0.3 },
               { label: "03 Mentors", progress: 0.58 },
-              { label: "04 Shield", progress: 0.8 },
-              { label: "05 At Last", progress: 0.98 },
+              { label: "04 Trophy", progress: 0.8 },
+              { label: "05 Gateway", progress: 0.98 },
             ].map((stg, i) => {
               const active = Math.abs(scrollProgress - stg.progress) < 0.14;
               return (
@@ -1175,7 +1175,7 @@ export const Consultancy: React.FC = () => {
                   onClick={() => scrollToStage(stg.progress)}
                   className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold transition-all ${
                     active
-                      ? "bg-emerald-500 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.5)] scale-105"
+                      ? "bg-sky-500 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.5)] scale-105"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
@@ -1191,10 +1191,10 @@ export const Consultancy: React.FC = () => {
          INTERACTIVE 3D BOOKING DIALOG MODAL
          ───────────────────────────────────────────────────────────── */}
       <Dialog open={isBookingOpen} onOpenChange={(open) => !open && setIsBookingOpen(false)}>
-        <DialogContent className="max-w-lg bg-[#0a0f26] border border-emerald-500/50 text-white p-6 rounded-3xl shadow-[0_0_70px_rgba(16,185,129,0.3)]">
+        <DialogContent className="max-w-lg bg-[#0a0f26] border border-sky-500/50 text-white p-6 rounded-3xl shadow-[0_0_70px_rgba(56,189,248,0.3)]">
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-xl font-bold flex items-center gap-2 text-white">
-              <Zap className="h-5 w-5 text-emerald-400" />
+              <Zap className="h-5 w-5 text-sky-400" />
               Book 1-on-1 Consultancy Service
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-400">
@@ -1205,22 +1205,22 @@ export const Consultancy: React.FC = () => {
           {bookingConsultant && (
             <div className="space-y-4 py-2 text-xs">
               {/* Consultant Selected Card */}
-              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-black/60 border border-emerald-500/30">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-black/60 border border-sky-500/30">
                 <div className="flex items-center gap-3">
                   <img
                     src={bookingConsultant.avatar}
                     alt={bookingConsultant.name}
-                    className="w-11 h-11 rounded-xl object-cover border border-emerald-400"
+                    className="w-11 h-11 rounded-xl object-cover border border-sky-400"
                   />
                   <div>
                     <h4 className="font-bold text-white text-sm">{bookingConsultant.name}</h4>
                     <p className="text-[11px] text-slate-400">{bookingConsultant.title}</p>
-                    <p className="text-[10px] text-emerald-400 font-mono">{bookingConsultant.company}</p>
+                    <p className="text-[10px] text-sky-400 font-mono">{bookingConsultant.company}</p>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <p className="font-black text-emerald-400 text-base">₹{bookingConsultant.price}</p>
+                  <p className="font-black text-sky-400 text-base">₹{bookingConsultant.price}</p>
                   <p className="text-[10px] text-slate-400">{bookingConsultant.duration}</p>
                 </div>
               </div>
@@ -1241,7 +1241,7 @@ export const Consultancy: React.FC = () => {
                       onClick={() => setSelectedMode(mode)}
                       className={`p-2.5 rounded-xl border text-left text-xs font-medium transition-all ${
                         selectedMode === mode
-                          ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold"
+                          ? "bg-sky-500/20 border-sky-400 text-sky-300 font-bold"
                           : "bg-black/40 border-slate-800 text-slate-400 hover:text-white"
                       }`}
                     >
@@ -1258,7 +1258,7 @@ export const Consultancy: React.FC = () => {
                   <select
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-700 bg-black/50 text-white text-xs focus:ring-2 focus:ring-emerald-500"
+                    className="w-full h-10 px-3 rounded-xl border border-slate-700 bg-black/50 text-white text-xs focus:ring-2 focus:ring-sky-500"
                   >
                     <option>Today Evening</option>
                     <option>Tomorrow</option>
@@ -1272,7 +1272,7 @@ export const Consultancy: React.FC = () => {
                   <select
                     value={selectedTime}
                     onChange={(e) => setSelectedTime(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-700 bg-black/50 text-white text-xs focus:ring-2 focus:ring-emerald-500"
+                    className="w-full h-10 px-3 rounded-xl border border-slate-700 bg-black/50 text-white text-xs focus:ring-2 focus:ring-sky-500"
                   >
                     <option>04:00 PM - 04:45 PM</option>
                     <option>06:00 PM - 06:45 PM</option>
@@ -1294,8 +1294,8 @@ export const Consultancy: React.FC = () => {
               </div>
 
               {/* Escrow Guarantee Pill */}
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-[11px] text-emerald-300 flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+              <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/25 text-[11px] text-sky-300 flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-sky-400 shrink-0" />
                 <span>
                   <strong>Escrow Security:</strong> Funds remain securely held until your video session successfully concludes.
                 </span>
@@ -1314,7 +1314,7 @@ export const Consultancy: React.FC = () => {
             <Button
               onClick={handleConfirmBooking}
               disabled={isBookingSubmitting}
-              className="rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+              className="rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 text-slate-950 font-bold shadow-[0_0_20px_rgba(56,189,248,0.4)]"
             >
               {isBookingSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-slate-950" /> : "Confirm & Reserve Slot ⚡"}
             </Button>
@@ -1326,22 +1326,22 @@ export const Consultancy: React.FC = () => {
          CONFIRMATION 3D PASS MODAL
          ───────────────────────────────────────────────────────────── */}
       <Dialog open={!!confirmedPass} onOpenChange={(open) => !open && setConfirmedPass(null)}>
-        <DialogContent className="max-w-md bg-[#0a0f26] border border-emerald-400/50 text-white p-6 rounded-3xl shadow-[0_0_70px_rgba(16,185,129,0.4)] text-center space-y-4">
-          <div className="inline-flex p-3 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-400/40 mx-auto">
+        <DialogContent className="max-w-md bg-[#0a0f26] border border-sky-400/50 text-white p-6 rounded-3xl shadow-[0_0_70px_rgba(56,189,248,0.4)] text-center space-y-4">
+          <div className="inline-flex p-3 rounded-full bg-sky-500/20 text-sky-400 border border-sky-400/40 mx-auto">
             <CheckCircle className="h-8 w-8" />
           </div>
 
           <div>
             <h3 className="text-xl font-black text-white">Consultancy Pass Confirmed!</h3>
             <p className="text-xs text-slate-400 mt-1">
-              Your 1-on-1 session with <strong className="text-emerald-400">{confirmedPass?.consultantName}</strong> is reserved.
+              Your 1-on-1 session with <strong className="text-sky-400">{confirmedPass?.consultantName}</strong> is reserved.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-black/60 border border-emerald-500/30 text-xs space-y-2 text-left font-mono">
+          <div className="p-4 rounded-2xl bg-black/60 border border-sky-500/30 text-xs space-y-2 text-left font-mono">
             <div className="flex justify-between">
               <span className="text-slate-400">Pass ID:</span>
-              <span className="text-emerald-400 font-bold">{confirmedPass?.id}</span>
+              <span className="text-sky-400 font-bold">{confirmedPass?.id}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Slot:</span>
@@ -1362,7 +1362,7 @@ export const Consultancy: React.FC = () => {
 
           <Button
             onClick={() => setConfirmedPass(null)}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl"
+            className="w-full bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.3)]"
           >
             Done
           </Button>
