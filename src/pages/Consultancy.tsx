@@ -18,7 +18,6 @@ import {
   Sparkles,
   ArrowLeft,
   User,
-  KeyRound,
   ShieldCheck,
   Calendar,
   Clock,
@@ -29,42 +28,30 @@ import {
   Loader2,
   LogOut,
   Compass,
-  Cpu,
   Code2,
   Palette,
   Briefcase,
-  IndianRupee,
   Layers,
   Zap,
   ChevronDown,
   ArrowRight,
   MousePointer,
-  Check,
   GraduationCap,
   Award,
   BookOpen,
-  Send,
-  SlidersHorizontal,
   Search,
-  Filter,
   TrendingUp,
   FileText,
   DollarSign,
-  MessageSquare,
   Users,
-  Building,
   Target,
   Rocket,
   HelpCircle,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Linkedin,
-  Mail,
-  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getApiUrl } from "@/lib/api";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { AnimeScrollCanvas3D } from "@/components/consultancy/AnimeScrollCanvas3D";
@@ -78,7 +65,7 @@ export interface Consultant {
   name: string;
   title: string;
   company: string;
-  category: string; // 1 of the 8 categories
+  category: string;
   avatar: string;
   rating: number;
   reviewsCount: number;
@@ -130,40 +117,40 @@ interface ConsultantApplication {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 8 Required Categories
+// 8 Required Categories with Distinct 3D Identities
 // ─────────────────────────────────────────────────────────────
 const CONSULTANCY_CATEGORIES = [
   {
     id: "startup",
-    title: "Startup & Business Consulting",
-    shortDesc: "Business model validation, pitch deck audits, and go-to-market strategies for student founders.",
+    title: "Startup & Business Strategy",
+    shortDesc: "Business model validation, pitch deck audits, and go-to-market roadmaps for student founders.",
     icon: Rocket,
     color: "from-emerald-500/20 to-teal-500/20 text-emerald-400 border-emerald-500/30",
   },
   {
     id: "career",
-    title: "Career Guidance",
+    title: "Career & Professional Development",
     shortDesc: "Personalized roadmaps, industry transition strategies, and 1-on-1 career pathing with senior leaders.",
     icon: Compass,
     color: "from-sky-500/20 to-blue-500/20 text-sky-400 border-sky-500/30",
   },
   {
     id: "resume",
-    title: "Resume & LinkedIn Review",
+    title: "Resume & LinkedIn Reviews",
     shortDesc: "ATS score optimization, impactful storytelling, and LinkedIn profile redesigns that get recruiter eyes.",
     icon: FileText,
     color: "from-teal-500/20 to-cyan-500/20 text-teal-300 border-teal-500/30",
   },
   {
     id: "tech",
-    title: "Technical & Project Mentorship",
+    title: "Software Development & Technical Mentorship",
     shortDesc: "System architecture reviews, clean code practices, production debugging, and full-stack project guidance.",
     icon: Code2,
     color: "from-blue-500/20 to-indigo-500/20 text-blue-400 border-blue-500/30",
   },
   {
     id: "product",
-    title: "Product Development Guidance",
+    title: "Product Design & Development",
     shortDesc: "MVP scoping, user research methods, feature prioritization frameworks, and design system reviews.",
     icon: Palette,
     color: "from-emerald-500/20 to-sky-500/20 text-emerald-300 border-emerald-500/30",
@@ -192,7 +179,7 @@ const CONSULTANCY_CATEGORIES = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// Sample & Benchmark Consultant Profiles (Clearly Labeled)
+// Sample & Benchmark Profiles (Clearly Labeled for Development)
 // ─────────────────────────────────────────────────────────────
 const SAMPLE_CONSULTANTS: Consultant[] = [
   {
@@ -205,7 +192,7 @@ const SAMPLE_CONSULTANTS: Consultant[] = [
     rating: 4.98,
     reviewsCount: 46,
     skills: ["Distributed Systems", "Go/Rust", "System Architecture", "Cloud Scale"],
-    bio: "10+ years engineering high-concurrency cloud backends. Passionate about mentoring students through real-world software architecture.",
+    bio: "10+ years engineering high-concurrency cloud backends. Passionate about mentoring students through real-world software architecture and distributed systems.",
     price: 999,
     duration: "45 mins",
     experienceYears: 10,
@@ -306,7 +293,7 @@ const SAMPLE_CONSULTANTS: Consultant[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// Real Platform Testimonials (Transparent Feedback)
+// Real Platform Testimonials (Transparent Context)
 // ─────────────────────────────────────────────────────────────
 const TESTIMONIALS = [
   {
@@ -337,23 +324,15 @@ export const Consultancy: React.FC = () => {
   const isInsideDashboard = location.pathname.startsWith("/dashboard");
   const { profile: activeLoggedInProfile } = useApp();
 
-  // 3D Scroll Progress state
+  // 3D Scroll Progress state (0.0 to 1.0)
   const [scrollProgress, setScrollProgress] = useState(0);
   const scrollTargetRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Authentication States
+  // Authentication & Session
   const [portalUser, setPortalUser] = useState<PortalUser | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [tassklyId, setTassklyId] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [authStep, setAuthStep] = useState<"id_entry" | "password_entry" | "password_setup">("id_entry");
-  const [checkLoading, setCheckLoading] = useState(false);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [tempUserName, setTempUserName] = useState("");
 
-  // Consultant Discovery States & Filters
+  // Discovery Filters & Data
   const [consultants, setConsultants] = useState<Consultant[]>(SAMPLE_CONSULTANTS);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
@@ -384,7 +363,7 @@ export const Consultancy: React.FC = () => {
   const [appQualifications, setAppQualifications] = useState("");
   const [isAppSubmitting, setIsAppSubmitting] = useState(false);
 
-  // Active Testimonial Carousel Index
+  // Testimonials Carousel
   const [activeTestimonialIdx, setActiveTestimonialIdx] = useState(0);
 
   // Load real registered profiles from Supabase and merge with sample consultants
@@ -419,7 +398,6 @@ export const Consultancy: React.FC = () => {
               isSample: false,
             }));
 
-          // Merge registered consultants at the top, followed by sample consultants
           setConsultants([...registered, ...SAMPLE_CONSULTANTS]);
         }
       } catch {
@@ -446,13 +424,6 @@ export const Consultancy: React.FC = () => {
       } catch {}
     }
   }, []);
-
-  // Autofill Tasskly ID if logged in
-  useEffect(() => {
-    if (!portalUser && activeLoggedInProfile?.tasskly_id && !tassklyId) {
-      setTassklyId(activeLoggedInProfile.tasskly_id);
-    }
-  }, [activeLoggedInProfile, portalUser]);
 
   // Smooth buttery 3D scroll listener
   useEffect(() => {
@@ -508,7 +479,7 @@ export const Consultancy: React.FC = () => {
     e.preventDefault();
     if (!selectedConsultantForBooking) return;
     if (!bookingRequirements.trim()) {
-      toast.error("Please provide a brief description of your discussion requirements.");
+      toast.error("Please provide a brief description of your requirements.");
       return;
     }
 
@@ -580,7 +551,7 @@ export const Consultancy: React.FC = () => {
     }, 850);
   };
 
-  // Filtered consultants
+  // Filtered consultants calculation
   const filteredConsultants = consultants.filter((c) => {
     const matchesSearch =
       searchQuery === "" ||
@@ -611,14 +582,14 @@ export const Consultancy: React.FC = () => {
   });
 
   return (
-    <div className="h-screen w-screen relative overflow-hidden bg-[#030914] text-slate-100 font-sans select-none">
+    <div className="h-screen w-screen relative overflow-hidden bg-[#020617] text-slate-100 font-sans select-none">
       
       {/* ─────────────────────────────────────────────────────────────
-         1. INTERACTIVE 3D WEBGL WORLD (THREE.JS RUNNING IN BACKGROUND)
+         1. 3D WEBGL ENGINE RUNNING CONTINUOUS SCROLL IN BACKGROUND
          ───────────────────────────────────────────────────────────── */}
       <AnimeScrollCanvas3D scrollProgress={scrollProgress} />
 
-      {/* Subtle Blue-Green Glowing Auras */}
+      {/* Atmospheric Glow Highlights */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[750px] bg-emerald-500/10 rounded-full blur-[140px]" />
         <div className="absolute top-1/2 right-1/4 w-[600px] h-[600px] bg-sky-500/10 rounded-full blur-[130px]" />
@@ -626,10 +597,10 @@ export const Consultancy: React.FC = () => {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-         2. FIXED HEADER NAVIGATION (BLUE & GREEN ACCENTS)
+         2. FIXED HEADER NAVIGATION (TASSKLY / CONSULTANCY)
          ───────────────────────────────────────────────────────────── */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-3.5 flex items-center justify-between bg-[#030914]/80 backdrop-blur-2xl border-b border-teal-500/20 shadow-lg">
-        {/* Left Branding */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-3.5 flex items-center justify-between bg-[#020617]/80 backdrop-blur-2xl border-b border-teal-500/20 shadow-lg">
+        {/* Left Eyebrow & Brand */}
         <div className="flex items-center gap-3">
           <Link to={isInsideDashboard ? "/dashboard" : "/"}>
             <Button
@@ -652,20 +623,21 @@ export const Consultancy: React.FC = () => {
               </span>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-widest bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
-              3D DIMENSION
+              3D WORLD
             </span>
           </div>
         </div>
 
-        {/* Center Section Jump Links (Desktop) */}
+        {/* Center Navigation Links (Desktop) */}
         <nav className="hidden lg:flex items-center gap-1 px-3 py-1 rounded-full bg-slate-950/70 border border-teal-500/20 backdrop-blur-xl">
           {[
-            { id: "hero", label: "Overview" },
-            { id: "categories", label: "Categories" },
-            { id: "consultants", label: "Consultants" },
-            { id: "how-it-works", label: "How It Works" },
-            { id: "why-tasskly", label: "Why Tasskly" },
-            { id: "become-consultant", label: "Become a Mentor" },
+            { id: "scene-discover", label: "Discover" },
+            { id: "scene-connect", label: "Connection" },
+            { id: "scene-expertise", label: "Expertise" },
+            { id: "scene-experts", label: "Find Experts" },
+            { id: "scene-process", label: "Process" },
+            { id: "scene-why", label: "Why Tasskly" },
+            { id: "scene-apply", label: "Apply" },
           ].map((item) => (
             <button
               key={item.id}
@@ -677,7 +649,7 @@ export const Consultancy: React.FC = () => {
           ))}
         </nav>
 
-        {/* Top Right CTAs */}
+        {/* Top Right Action Buttons */}
         <div className="flex items-center gap-2.5">
           {userBookings.length > 0 && (
             <button
@@ -685,7 +657,7 @@ export const Consultancy: React.FC = () => {
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-emerald-300 hover:bg-emerald-900/40 transition-colors"
             >
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-              <span>My Passes ({userBookings.length})</span>
+              <span>Passes ({userBookings.length})</span>
             </button>
           )}
 
@@ -708,25 +680,25 @@ export const Consultancy: React.FC = () => {
       </header>
 
       {/* ─────────────────────────────────────────────────────────────
-         3. CONTINUOUS SCROLL-DRIVEN 3D JOURNEY CONTAINER
+         3. CONTINUOUS SCROLL JOURNEY CONTAINER
          ───────────────────────────────────────────────────────────── */}
       <div
         ref={scrollContainerRef}
         className="h-full w-full overflow-y-auto overflow-x-hidden relative z-10 scrollbar-none scroll-smooth pt-16"
         style={{ height: "100vh" }}
       >
-        <div className="relative w-full space-y-28 pb-32">
+        <div className="relative w-full space-y-32 pb-32">
 
           {/* ═════════════════════════════════════════════════════════
-             SECTION 1: HERO SECTION — IMMERSIVE 3D EXPERIENCE
+             SCENE 01 — DISCOVER (CINEMATIC HERO)
              ═════════════════════════════════════════════════════════ */}
           <section
-            id="hero"
+            id="scene-discover"
             className="min-h-screen w-full flex flex-col items-center justify-center px-4 md:px-8 text-center relative z-10"
           >
             <div className="w-full max-w-4xl mx-auto space-y-6 pointer-events-auto">
               
-              {/* Trust Badge */}
+              {/* Eyebrow Label */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -734,33 +706,34 @@ export const Consultancy: React.FC = () => {
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-xs font-mono font-bold tracking-widest uppercase shadow-[0_0_25px_rgba(16,185,129,0.3)]"
               >
                 <Sparkles className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-                <span>TASSKLY 1-ON-1 EXPERT CONSULTANCY</span>
+                <span>TASSKLY / CONSULTANCY</span>
               </motion.div>
 
-              {/* Exact Requested Headline */}
+              {/* Exact Requested Hero Headline */}
               <motion.h1
                 initial={{ opacity: 0, y: 25 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.15 }}
                 className="text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-tight leading-[1.08] drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]"
               >
-                Your Ideas Deserve{" "}
+                BIG IDEAS.{" "}
                 <span className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400">
-                  Expert Guidance.
+                  BETTER GUIDANCE.
                 </span>
+                REAL PROGRESS.
               </motion.h1>
 
-              {/* Exact Requested Supporting Text */}
+              {/* Exact Requested Supporting Copy */}
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.3 }}
                 className="text-slate-200 text-base md:text-xl leading-relaxed max-w-2xl mx-auto drop-shadow-md"
               >
-                Connect with experienced consultants, industry professionals, and mentors who help you turn your ideas into real opportunities.
+                Meet the people who can help you think bigger, build smarter, and move forward with confidence.
               </motion.p>
 
-              {/* Exact Requested CTAs */}
+              {/* Exact Requested Hero Buttons */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -768,11 +741,11 @@ export const Consultancy: React.FC = () => {
                 className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4"
               >
                 <Button
-                  onClick={() => scrollToSection("consultants")}
+                  onClick={() => scrollToSection("scene-experts")}
                   className="w-full sm:w-auto bg-gradient-to-r from-emerald-400 via-teal-400 to-sky-400 hover:from-emerald-300 hover:to-sky-300 text-slate-950 font-black text-sm px-8 h-13 rounded-2xl shadow-[0_0_35px_rgba(16,185,129,0.5)] border border-teal-300/40 transition-all hover:scale-105 active:scale-95 gap-2"
                 >
                   <Search className="h-4 w-4" />
-                  <span>Explore Consultants</span>
+                  <span>EXPLORE EXPERTS</span>
                 </Button>
 
                 <Button
@@ -781,11 +754,11 @@ export const Consultancy: React.FC = () => {
                   className="w-full sm:w-auto border-teal-500/40 bg-slate-950/60 hover:bg-emerald-500/10 text-emerald-300 hover:text-white h-13 rounded-2xl px-7 text-sm backdrop-blur-xl gap-2 font-bold transition-all"
                 >
                   <Rocket className="h-4 w-4 text-emerald-400" />
-                  <span>Become a Consultant</span>
+                  <span>BECOME A CONSULTANT</span>
                 </Button>
               </motion.div>
 
-              {/* Layered Metric Badges */}
+              {/* Floating Layered Badges */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -793,8 +766,8 @@ export const Consultancy: React.FC = () => {
                 className="pt-8 grid grid-cols-2 md:grid-cols-4 gap-3.5 max-w-3xl mx-auto"
               >
                 {[
-                  { icon: GraduationCap, label: "500+ Mentors", sub: "Verified Industry Leads" },
-                  { icon: Video, label: "1-on-1 Sessions", sub: "Direct Screen Sharing" },
+                  { icon: GraduationCap, label: "500+ Mentors", sub: "Verified Leaders" },
+                  { icon: Video, label: "1-on-1 Sessions", sub: "Live Screen Sharing" },
                   { icon: ShieldCheck, label: "Escrow Protected", sub: "100% Student Guarantee" },
                   { icon: Star, label: "4.98 / 5 Rating", sub: "Authentic Reviews" },
                 ].map((item, i) => {
@@ -817,7 +790,7 @@ export const Consultancy: React.FC = () => {
               {/* Subtle Scroll Indicator */}
               <div className="pt-8 flex flex-col items-center justify-center gap-1.5 text-xs font-mono text-slate-400">
                 <MousePointer className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-                <span>Scroll to explore continuous 3D journey</span>
+                <span>Scroll to enter the connected 3D narrative</span>
                 <ChevronDown className="h-4 w-4 text-teal-400 animate-bounce" />
               </div>
 
@@ -825,17 +798,80 @@ export const Consultancy: React.FC = () => {
           </section>
 
           {/* ═════════════════════════════════════════════════════════
-             SECTION 2: CONSULTANCY CATEGORIES — "Expertise for Every Ambition"
+             SCENE 02 — CONNECT
              ═════════════════════════════════════════════════════════ */}
           <section
-            id="categories"
+            id="scene-connect"
+            className="min-h-screen w-full flex flex-col items-center justify-center px-4 md:px-12 py-20 relative z-10"
+          >
+            <div className="w-full max-w-4xl mx-auto pointer-events-auto space-y-10 text-center">
+              
+              <div className="space-y-3">
+                <span className="px-3.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
+                  SCENE 02 — THE RIGHT CONNECTION
+                </span>
+                <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight">
+                  THE RIGHT CONNECTION{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400">
+                    CHANGES EVERYTHING.
+                  </span>
+                </h2>
+                <p className="text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                  Breakthroughs rarely happen in isolation. Connect directly with industry veterans, founders, and research scholars who turn insurmountable hurdles into clear, actionable roadmaps.
+                </p>
+              </div>
+
+              {/* 3 Spatial Glass Pillars */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                {[
+                  {
+                    title: "Direct 1-on-1 Access",
+                    desc: "Bypass generic courses. Talk directly to specialists who review your actual code, thesis, or business model in real time.",
+                    icon: Video,
+                  },
+                  {
+                    title: "Goal-Specific Guidance",
+                    desc: "From cracking FAANG system design interviews to publishing IEEE research papers—every session is custom-tailored to your exact objective.",
+                    icon: Target,
+                  },
+                  {
+                    title: "Escrow Peace of Mind",
+                    desc: "Your payment is held safely in Tasskly escrow until your consultation is completed satisfactorily. 100% student satisfaction guaranteed.",
+                    icon: ShieldCheck,
+                  },
+                ].map((pillar, i) => {
+                  const Icon = pillar.icon;
+                  return (
+                    <Card3D key={i} depth={8} glare={true}>
+                      <div className="p-7 rounded-3xl bg-[#040e24]/85 border border-teal-500/25 backdrop-blur-2xl space-y-3.5 h-full flex flex-col justify-between shadow-xl text-left">
+                        <div className="space-y-3">
+                          <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-400 w-fit">
+                            <Icon className="h-6 w-6" />
+                          </div>
+                          <h3 className="font-bold text-white text-lg tracking-tight">{pillar.title}</h3>
+                          <p className="text-xs text-slate-300 leading-relaxed">{pillar.desc}</p>
+                        </div>
+                      </div>
+                    </Card3D>
+                  );
+                })}
+              </div>
+
+            </div>
+          </section>
+
+          {/* ═════════════════════════════════════════════════════════
+             SCENE 03 — EXPLORE EXPERTISE
+             ═════════════════════════════════════════════════════════ */}
+          <section
+            id="scene-expertise"
             className="min-h-screen w-full flex flex-col items-center justify-center px-4 md:px-12 py-20 relative z-10"
           >
             <div className="w-full max-w-6xl mx-auto pointer-events-auto space-y-10">
               
               <div className="text-center space-y-2 max-w-2xl mx-auto">
-                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
-                  DISCIPLINES & EXPERTISE
+                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest bg-sky-500/15 text-sky-300 border border-sky-400/30">
+                  FIND YOUR NEXT ADVANTAGE
                 </span>
                 <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">
                   Expertise for Every{" "}
@@ -844,7 +880,7 @@ export const Consultancy: React.FC = () => {
                   </span>
                 </h2>
                 <p className="text-sm text-slate-300">
-                  Choose from 8 specialized consulting tracks tailored for students, builders, and future founders.
+                  Explore 8 specialized consulting tracks tailored for students, developers, and future founders.
                 </p>
               </div>
 
@@ -867,7 +903,7 @@ export const Consultancy: React.FC = () => {
                           <button
                             onClick={() => {
                               setSelectedCategoryFilter(cat.id);
-                              scrollToSection("consultants");
+                              scrollToSection("scene-experts");
                             }}
                             className="w-full py-2 px-3 rounded-xl bg-teal-500/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-white border border-teal-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
                           >
@@ -885,87 +921,10 @@ export const Consultancy: React.FC = () => {
           </section>
 
           {/* ═════════════════════════════════════════════════════════
-             SECTION 3: HOW IT WORKS — 3D CONNECTED TIMELINE
+             SCENE 04 — MEET THE EXPERTS (DISCOVERY & REAL PRODUCT UI)
              ═════════════════════════════════════════════════════════ */}
           <section
-            id="how-it-works"
-            className="min-h-screen w-full flex flex-col items-center justify-center px-4 md:px-12 py-20 relative z-10"
-          >
-            <div className="w-full max-w-5xl mx-auto pointer-events-auto space-y-12">
-              
-              <div className="text-center space-y-2 max-w-2xl mx-auto">
-                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest bg-sky-500/15 text-sky-300 border border-sky-400/30">
-                  STEP-BY-STEP PROCESS
-                </span>
-                <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-                  How It <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400">Works</span>
-                </h2>
-                <p className="text-sm text-slate-300">
-                  A smooth, continuous path connecting your questions with actionable expert feedback.
-                </p>
-              </div>
-
-              {/* 4 Connected Timeline Nodes */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
-                {[
-                  {
-                    step: "01",
-                    title: "Explore",
-                    desc: "Find a consultant based on your goals.",
-                    icon: Search,
-                    color: "border-sky-400 text-sky-400",
-                  },
-                  {
-                    step: "02",
-                    title: "Connect",
-                    desc: "Review their expertise and choose a suitable consultation.",
-                    icon: Users,
-                    color: "border-emerald-400 text-emerald-400",
-                  },
-                  {
-                    step: "03",
-                    title: "Book",
-                    desc: "Select an available slot and submit your booking.",
-                    icon: Calendar,
-                    color: "border-teal-400 text-teal-400",
-                  },
-                  {
-                    step: "04",
-                    title: "Grow",
-                    desc: "Receive guidance, feedback, and actionable next steps.",
-                    icon: TrendingUp,
-                    color: "border-green-400 text-green-400",
-                  },
-                ].map((item, i) => {
-                  const Icon = item.icon;
-                  return (
-                    <Card3D key={i} depth={8} glare={true}>
-                      <div className="p-6 rounded-3xl bg-[#040e24]/85 border border-teal-500/25 backdrop-blur-2xl space-y-4 h-full flex flex-col justify-between shadow-xl">
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-2xl font-black font-mono text-emerald-400">{item.step}</span>
-                            <div className={`p-2.5 rounded-xl bg-black/60 border ${item.color}`}>
-                              <Icon className="h-5 w-5" />
-                            </div>
-                          </div>
-                          <h3 className="text-lg font-black text-white tracking-tight">{item.title}</h3>
-                          <p className="text-xs text-slate-300 leading-relaxed">{item.desc}</p>
-                        </div>
-                      </div>
-                    </Card3D>
-                  );
-                })}
-              </div>
-
-            </div>
-          </section>
-
-          {/* ═════════════════════════════════════════════════════════
-             SECTION 4: FEATURED CONSULTANTS DISCOVERY
-             "Learn from People Who've Been There."
-             ═════════════════════════════════════════════════════════ */}
-          <section
-            id="consultants"
+            id="scene-experts"
             className="min-h-screen w-full flex flex-col items-center justify-center px-4 md:px-12 py-20 relative z-10"
           >
             <div className="w-full max-w-6xl mx-auto pointer-events-auto space-y-8">
@@ -973,16 +932,16 @@ export const Consultancy: React.FC = () => {
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="space-y-2 text-center md:text-left">
                   <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
-                    DISCOVER EXPERTS
+                    FIND YOUR EXPERT
                   </span>
                   <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-                    Learn from People Who've{" "}
+                    Experience That Moves You{" "}
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-sky-400">
-                      Been There.
+                      Forward.
                     </span>
                   </h2>
                   <p className="text-sm text-slate-300">
-                    Verified leaders from Google, Microsoft, Y Combinator startups, and top universities.
+                    The next step is a conversation. Explore guidance that matches your ambitions, challenges, and goals.
                   </p>
                 </div>
 
@@ -999,7 +958,6 @@ export const Consultancy: React.FC = () => {
 
               {/* 4 Interactive Discovery Filters */}
               <div className="p-4 rounded-2xl bg-[#040e24]/80 border border-teal-500/20 backdrop-blur-xl flex flex-wrap items-center gap-3">
-                {/* Category Filter */}
                 <div className="flex items-center gap-2">
                   <Label className="text-xs text-slate-400 font-mono">Category:</Label>
                   <select
@@ -1016,7 +974,6 @@ export const Consultancy: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Price Filter */}
                 <div className="flex items-center gap-2">
                   <Label className="text-xs text-slate-400 font-mono">Price:</Label>
                   <select
@@ -1031,7 +988,6 @@ export const Consultancy: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Experience Filter */}
                 <div className="flex items-center gap-2">
                   <Label className="text-xs text-slate-400 font-mono">Experience:</Label>
                   <select
@@ -1046,7 +1002,6 @@ export const Consultancy: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Availability Filter */}
                 <div className="flex items-center gap-2">
                   <Label className="text-xs text-slate-400 font-mono">Availability:</Label>
                   <select
@@ -1096,7 +1051,7 @@ export const Consultancy: React.FC = () => {
                               {consultant.availableToday && (
                                 <span
                                   title="Available Today"
-                                  className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#030914] flex items-center justify-center"
+                                  className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 border-2 border-[#020617] flex items-center justify-center"
                                 >
                                   <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
                                 </span>
@@ -1201,10 +1156,89 @@ export const Consultancy: React.FC = () => {
           </section>
 
           {/* ═════════════════════════════════════════════════════════
-             SECTION 5: WHY CHOOSE TASSKLY CONSULTANCY?
+             SCENE 05 — HOW TASSSKLY CONSULTANCY WORKS
              ═════════════════════════════════════════════════════════ */}
           <section
-            id="why-tasskly"
+            id="scene-process"
+            className="min-h-screen w-full flex flex-col items-center justify-center px-4 md:px-12 py-20 relative z-10"
+          >
+            <div className="w-full max-w-5xl mx-auto pointer-events-auto space-y-12">
+              
+              <div className="text-center space-y-2 max-w-2xl mx-auto">
+                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest bg-sky-500/15 text-sky-300 border border-sky-400/30">
+                  HOW TASSSKLY CONSULTANCY WORKS
+                </span>
+                <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+                  A Seamless Path from Idea to{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400">
+                    Execution.
+                  </span>
+                </h2>
+                <p className="text-sm text-slate-300">
+                  Four intentional milestones connecting your challenges with actionable feedback.
+                </p>
+              </div>
+
+              {/* Connected Visual Timeline */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+                {[
+                  {
+                    step: "01",
+                    title: "DISCOVER",
+                    desc: "Find expertise relevant to your goal.",
+                    icon: Search,
+                    color: "border-sky-400 text-sky-400",
+                  },
+                  {
+                    step: "02",
+                    title: "CONNECT",
+                    desc: "Explore professional profiles and consultation services.",
+                    icon: Users,
+                    color: "border-emerald-400 text-emerald-400",
+                  },
+                  {
+                    step: "03",
+                    title: "BOOK",
+                    desc: "Choose a supported time slot and submit your request.",
+                    icon: Calendar,
+                    color: "border-teal-400 text-teal-400",
+                  },
+                  {
+                    step: "04",
+                    title: "GROW",
+                    desc: "Turn expert feedback into actionable next steps.",
+                    icon: TrendingUp,
+                    color: "border-green-400 text-green-400",
+                  },
+                ].map((item, i) => {
+                  const Icon = item.icon;
+                  return (
+                    <Card3D key={i} depth={8} glare={true}>
+                      <div className="p-6 rounded-3xl bg-[#040e24]/85 border border-teal-500/25 backdrop-blur-2xl space-y-4 h-full flex flex-col justify-between shadow-xl">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-2xl font-black font-mono text-emerald-400">{item.step}</span>
+                            <div className={`p-2.5 rounded-xl bg-black/60 border ${item.color}`}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+                          </div>
+                          <h3 className="text-lg font-black text-white tracking-tight">{item.title}</h3>
+                          <p className="text-xs text-slate-300 leading-relaxed">{item.desc}</p>
+                        </div>
+                      </div>
+                    </Card3D>
+                  );
+                })}
+              </div>
+
+            </div>
+          </section>
+
+          {/* ═════════════════════════════════════════════════════════
+             SCENE 06 — WHY CHOOSE TASSKLY CONSULTANCY?
+             ═════════════════════════════════════════════════════════ */}
+          <section
+            id="scene-why"
             className="min-h-screen w-full flex flex-col items-center justify-center px-4 md:px-12 py-20 relative z-10"
           >
             <div className="w-full max-w-5xl mx-auto pointer-events-auto space-y-10">
@@ -1221,7 +1255,7 @@ export const Consultancy: React.FC = () => {
                 </p>
               </div>
 
-              {/* 5 Layered Core Benefits */}
+              {/* 5 Core Pillars */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {[
                   {
@@ -1235,12 +1269,12 @@ export const Consultancy: React.FC = () => {
                     icon: Users,
                   },
                   {
-                    title: "Practical Feedback & Actionable Blueprints",
+                    title: "Practical Feedback & Actionable Recommendations",
                     desc: "Leave each session with clear code reviews, recommended reading papers, and a prioritized execution checklist.",
                     icon: CheckCircle2,
                   },
                   {
-                    title: "Built for Students & Creators",
+                    title: "Support for Students, Creators & Entrepreneurs",
                     desc: "Affordable student pricing, flexible scheduling around classes, and zero gatekeeping.",
                     icon: GraduationCap,
                   },
@@ -1276,17 +1310,17 @@ export const Consultancy: React.FC = () => {
           </section>
 
           {/* ═════════════════════════════════════════════════════════
-             SECTION 6: TESTIMONIALS & TRUST / VERIFICATION PROCESS
+             SCENE 07 — TRUST, QUALITY & TESTIMONIALS
              ═════════════════════════════════════════════════════════ */}
           <section
-            id="testimonials"
+            id="scene-trust"
             className="min-h-screen w-full flex flex-col items-center justify-center px-4 md:px-12 py-20 relative z-10"
           >
             <div className="w-full max-w-5xl mx-auto pointer-events-auto space-y-12">
               
               <div className="text-center space-y-2 max-w-2xl mx-auto">
                 <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-widest bg-sky-500/15 text-sky-300 border border-sky-400/30">
-                  PROVEN RESULTS & TRUST
+                  AUTHENTIC EXPERIENCES & TRUST
                 </span>
                 <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">
                   Student Breakthroughs &{" "}
@@ -1365,7 +1399,7 @@ export const Consultancy: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
                   {[
-                    { step: "01", name: "Identity & Degrees", detail: "Government ID and university degree verification." },
+                    { step: "01", name: "Identity & Credentials", detail: "Government ID and university degree verification." },
                     { step: "02", name: "Industry Experience", detail: "LinkedIn history and GitHub/portfolio audit." },
                     { step: "03", name: "Communication Screening", detail: "1-on-1 interview screening for clarity and empathy." },
                     { step: "04", name: "Student Feedback", detail: "Ratings must maintain a 4.8+ score to remain active." },
@@ -1383,10 +1417,10 @@ export const Consultancy: React.FC = () => {
           </section>
 
           {/* ═════════════════════════════════════════════════════════
-             SECTION 7: BECOME A CONSULTANT
+             SCENE 08 — BECOME A CONSULTANT
              ═════════════════════════════════════════════════════════ */}
           <section
-            id="become-consultant"
+            id="scene-apply"
             className="min-h-screen w-full flex flex-col items-center justify-center px-4 md:px-12 py-20 relative z-10"
           >
             <div className="w-full max-w-4xl mx-auto pointer-events-auto">
@@ -1399,24 +1433,32 @@ export const Consultancy: React.FC = () => {
 
                   {/* Exact Requested Headline */}
                   <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                    Turn Your Experience into{" "}
+                    YOUR EXPERIENCE CAN CHANGE{" "}
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400">
-                      Someone Else's Breakthrough.
+                      SOMEONE'S DIRECTION.
                     </span>
                   </h2>
 
-                  {/* Exact Requested Supporting Text */}
+                  {/* Exact Requested Supporting Copy */}
                   <p className="text-sm md:text-base text-slate-200 max-w-xl mx-auto leading-relaxed">
-                    Share your expertise, help ambitious students, and make your knowledge count.
+                    Share what you've learned. Help others solve real problems. Turn your expertise into meaningful impact.
                   </p>
 
-                  <div className="pt-2">
+                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                     <Button
                       onClick={() => setIsApplicationModalOpen(true)}
-                      className="bg-gradient-to-r from-emerald-400 via-teal-400 to-sky-400 hover:from-emerald-300 hover:to-sky-300 text-slate-950 font-black text-sm px-8 h-13 rounded-2xl shadow-[0_0_35px_rgba(16,185,129,0.5)] border border-teal-300/40 transition-all hover:scale-105 active:scale-95 gap-2"
+                      className="w-full sm:w-auto bg-gradient-to-r from-emerald-400 via-teal-400 to-sky-400 hover:from-emerald-300 hover:to-sky-300 text-slate-950 font-black text-sm px-8 h-13 rounded-2xl shadow-[0_0_35px_rgba(16,185,129,0.5)] border border-teal-300/40 transition-all hover:scale-105 active:scale-95 gap-2"
                     >
                       <Rocket className="h-4 w-4" />
-                      <span>Apply to Become a Consultant</span>
+                      <span>APPLY AS A CONSULTANT</span>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      onClick={() => scrollToSection("scene-process")}
+                      className="w-full sm:w-auto border-teal-500/40 text-emerald-300 hover:text-white hover:bg-emerald-500/10 h-13 rounded-2xl px-6 text-sm"
+                    >
+                      HOW IT WORKS
                     </Button>
                   </div>
 
@@ -1426,7 +1468,7 @@ export const Consultancy: React.FC = () => {
           </section>
 
           {/* ═════════════════════════════════════════════════════════
-             SECTION 8: MY ACTIVE CONSULTATION PASSES (If Booked)
+             SCENE 09 — MY ACTIVE CONSULTATION PASSES (If Booked)
              ═════════════════════════════════════════════════════════ */}
           {userBookings.length > 0 && (
             <section
@@ -1487,40 +1529,43 @@ export const Consultancy: React.FC = () => {
           )}
 
           {/* ═════════════════════════════════════════════════════════
-             SECTION 9: FINAL CTA AND FOOTER
+             SCENE 10 — FINAL CINEMATIC MOMENT & FOOTER
              ═════════════════════════════════════════════════════════ */}
           <section className="w-full flex flex-col items-center justify-center px-4 md:px-12 pt-20 pb-12 relative z-10 text-center">
             <div className="w-full max-w-4xl mx-auto space-y-8 pointer-events-auto">
               
               <div className="space-y-4">
+                {/* Exact Requested Final Headline */}
                 <h2 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight">
-                  Your Next Breakthrough Starts with{" "}
+                  STOP FIGURING IT{" "}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-sky-400">
-                    One Conversation.
+                    OUT ALONE.
                   </span>
                 </h2>
+                {/* Exact Requested Final Supporting Copy */}
                 <p className="text-sm md:text-base text-slate-300 max-w-xl mx-auto">
-                  Take the first step toward career clarity, research publication, or launching your dream startup.
+                  Find the perspective, experience, and guidance that help you take the next step.
                 </p>
               </div>
 
+              {/* Exact Requested Final CTAs */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button
-                  onClick={() => scrollToSection("consultants")}
+                  onClick={() => scrollToSection("scene-experts")}
                   className="w-full sm:w-auto bg-gradient-to-r from-emerald-400 via-teal-400 to-sky-400 hover:from-emerald-300 hover:to-sky-300 text-slate-950 font-black text-sm px-8 h-13 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all"
                 >
-                  Find Your Consultant
+                  FIND YOUR EXPERT
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setIsApplicationModalOpen(true)}
                   className="w-full sm:w-auto border-teal-500/40 text-emerald-300 hover:text-white hover:bg-emerald-500/10 h-13 rounded-2xl px-8 text-sm"
                 >
-                  Become a Consultant
+                  SHARE YOUR EXPERTISE
                 </Button>
               </div>
 
-              {/* Tasskly Standard Footer */}
+              {/* Tasskly Official Footer */}
               <div className="pt-16 mt-16 border-t border-slate-800/80 text-left text-xs text-slate-400 grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -1546,10 +1591,10 @@ export const Consultancy: React.FC = () => {
                 <div>
                   <h4 className="font-bold text-white uppercase text-[11px] tracking-wider mb-3">Consulting Tracks</h4>
                   <ul className="space-y-2">
-                    <li><span className="hover:text-emerald-400 transition-colors cursor-pointer" onClick={() => scrollToSection("categories")}>Startup & Funding</span></li>
-                    <li><span className="hover:text-emerald-400 transition-colors cursor-pointer" onClick={() => scrollToSection("categories")}>Technical Mentorship</span></li>
-                    <li><span className="hover:text-emerald-400 transition-colors cursor-pointer" onClick={() => scrollToSection("categories")}>FAANG Career Strategy</span></li>
-                    <li><span className="hover:text-emerald-400 transition-colors cursor-pointer" onClick={() => scrollToSection("categories")}>Resume & LinkedIn</span></li>
+                    <li><span className="hover:text-emerald-400 transition-colors cursor-pointer" onClick={() => scrollToSection("scene-expertise")}>Startup & Strategy</span></li>
+                    <li><span className="hover:text-emerald-400 transition-colors cursor-pointer" onClick={() => scrollToSection("scene-expertise")}>Technical Mentorship</span></li>
+                    <li><span className="hover:text-emerald-400 transition-colors cursor-pointer" onClick={() => scrollToSection("scene-expertise")}>Career & Placement</span></li>
+                    <li><span className="hover:text-emerald-400 transition-colors cursor-pointer" onClick={() => scrollToSection("scene-expertise")}>Resume & LinkedIn</span></li>
                   </ul>
                 </div>
 
@@ -1678,7 +1723,6 @@ export const Consultancy: React.FC = () => {
 
           {selectedConsultantForBooking && (
             <form onSubmit={handleBookingSubmit} className="space-y-4 py-2">
-              {/* Consultant preview */}
               <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-teal-500/30 flex items-center gap-3">
                 <img
                   src={selectedConsultantForBooking.avatar}
@@ -1695,7 +1739,6 @@ export const Consultancy: React.FC = () => {
                 </div>
               </div>
 
-              {/* Session Mode */}
               <div>
                 <Label className="text-xs font-semibold text-slate-300 mb-1.5 block">Consultation Format</Label>
                 <div className="grid grid-cols-2 gap-2">
@@ -1716,7 +1759,6 @@ export const Consultancy: React.FC = () => {
                 </div>
               </div>
 
-              {/* Date & Time Slot */}
               <div>
                 <Label className="text-xs font-semibold text-slate-300 mb-1.5 block">Select Available Date & Slot</Label>
                 <div className="grid grid-cols-2 gap-2">
@@ -1743,7 +1785,6 @@ export const Consultancy: React.FC = () => {
                 </div>
               </div>
 
-              {/* Requirements Description */}
               <div>
                 <Label className="text-xs font-semibold text-slate-300 mb-1.5 block">
                   Short Description of Requirements <span className="text-emerald-400">*</span>
