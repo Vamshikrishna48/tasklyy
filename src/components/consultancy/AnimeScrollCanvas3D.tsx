@@ -75,9 +75,9 @@ export const AnimeScrollCanvas3D: React.FC<AnimeScrollCanvas3DProps> = ({
     (ceilingGrid.material as THREE.Material).opacity = 0.22;
     worldGroup.add(ceilingGrid);
 
-    // Responsive sculpture positioning (right-docked on desktop to keep text unobstructed)
+    // Centered sculpture positioning along 3D travel corridor
     const isMobile = width < 768;
-    const sculptureX = isMobile ? 0 : 5.8;
+    const sculptureX = 0;
 
     // ─────────────────────────────────────────────────────────────
     // 2. Student-Themed 3D Waypoint Sculptures Along Travel Path
@@ -527,7 +527,7 @@ export const AnimeScrollCanvas3D: React.FC<AnimeScrollCanvas3DProps> = ({
 
     // ── STAGE 5 (Z: -135): Grand Campus Portal Gateway Arch (At Last) ──
     const campusArchGroup = new THREE.Group();
-    campusArchGroup.position.set(isMobile ? 0 : 3.8, 2, -135);
+    campusArchGroup.position.set(0, 2, -135);
     worldGroup.add(campusArchGroup);
 
     // Twin Fluted Columns
@@ -679,16 +679,16 @@ export const AnimeScrollCanvas3D: React.FC<AnimeScrollCanvas3DProps> = ({
       currentCamZ += (targetZ - currentCamZ) * 0.085;
       camera.position.z = currentCamZ;
 
-      // Smooth camera position - left-offset on desktop to frame 3D sculptures on right
-      camera.position.y = 2 + Math.sin(currentProgressLerp * Math.PI * 3) * 1.0;
-      camera.position.x = isMobile ? 0 : -2.0 + Math.sin(currentProgressLerp * Math.PI * 2) * 0.8;
+      // Smooth camera position along central flight corridor
+      camera.position.y = 2.2 + Math.sin(currentProgressLerp * Math.PI * 3) * 0.6;
+      camera.position.x = Math.sin(currentProgressLerp * Math.PI * 2) * 0.5;
 
-      // Parallax mouse follow & slight inward angle to frame 3D sculptures
+      // Smooth parallax mouse follow
       targetMouseX += (mouseX - targetMouseX) * 0.05;
       targetMouseY += (mouseY - targetMouseY) * 0.05;
 
-      camera.rotation.y = -targetMouseX * 0.12 - Math.sin(currentProgressLerp * Math.PI) * 0.08 + (isMobile ? 0 : 0.06);
-      camera.rotation.x = -targetMouseY * 0.1 + (currentProgressLerp - 0.5) * 0.04;
+      camera.rotation.y = -targetMouseX * 0.12;
+      camera.rotation.x = -targetMouseY * 0.08 + (currentProgressLerp - 0.5) * 0.02;
 
       // Keep lights centered around current camera position
       camLightSky.position.set(camera.position.x + 6, camera.position.y + 4, camera.position.z - 8);
