@@ -243,13 +243,37 @@ export const Consultancy: React.FC = () => {
     };
   }, [portalUser]);
 
-  // Quick jump to section
-  const scrollToStage = (progressTarget: number) => {
+  // Quick jump to section by progress or stage number
+  const scrollToStage = (target: number) => {
+    if (target >= 1 && target <= 5) {
+      const el = document.getElementById(`stage-${target}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+    }
+    const stageMap: Record<number, number> = {
+      0.05: 1,
+      0.25: 2,
+      0.3: 2,
+      0.55: 3,
+      0.58: 3,
+      0.8: 4,
+      0.98: 5,
+    };
+    const mapped = stageMap[target];
+    if (mapped) {
+      const el = document.getElementById(`stage-${mapped}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+    }
     const el = scrollContainerRef.current;
     if (!el) return;
     const totalScroll = el.scrollHeight - el.clientHeight;
     el.scrollTo({
-      top: totalScroll * progressTarget,
+      top: totalScroll * target,
       behavior: "smooth",
     });
   };
@@ -764,419 +788,412 @@ export const Consultancy: React.FC = () => {
           className="h-full w-full overflow-y-auto overflow-x-hidden relative z-10 scrollbar-none scroll-smooth"
           style={{ height: "100vh" }}
         >
-          {/* Scroll Track: 500vh Virtual Depth for deep cinematic travel */}
-          <div className="relative w-full" style={{ height: "500vh" }}>
+          {/* Continuous Stage Journey - 100% Visible Text & Split 3D Layout */}
+          <div className="relative w-full space-y-12">
             
             {/* ─────────────────────────────────────────────────────────────
-               STAGE 1: 3D HERO GATEWAY (Scroll: 0% to 20%)
+               STAGE 1: ACADEMIC COMMENCEMENT & GRADUATION (Stage 01)
                ───────────────────────────────────────────────────────────── */}
-            <div
-              className="sticky top-0 h-screen w-full flex flex-col items-center justify-center px-4 pointer-events-none transition-all duration-300"
-              style={{
-                opacity: scrollProgress < 0.22 ? 1 - scrollProgress * 4.5 : 0,
-                transform: `perspective(1000px) translateZ(${scrollProgress * 400}px) scale(${1 + scrollProgress * 0.4})`,
-                display: scrollProgress > 0.25 ? "none" : "flex",
-              }}
+            <section
+              id="stage-1"
+              className="min-h-screen w-full flex items-center px-4 md:px-12 lg:px-20 py-24 relative z-10"
             >
-              <div className="max-w-4xl text-center space-y-4 pointer-events-auto">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/10 border border-sky-400/30 text-sky-300 text-xs font-mono font-bold tracking-widest uppercase shadow-[0_0_20px_rgba(56,189,248,0.3)]">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500" />
-                  </span>
-                  3D STUDENT MATRIX • STAGE 01
-                </div>
+              <div className="w-full max-w-2xl text-left pointer-events-auto">
+                <Card3D depth={14} glare={true}>
+                  <div className="p-8 md:p-10 rounded-3xl bg-[#020617]/92 border border-sky-500/40 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] space-y-5">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-500/15 border border-sky-400/40 text-sky-300 text-xs font-mono font-bold tracking-widest uppercase shadow-[0_0_20px_rgba(56,189,248,0.25)]">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500" />
+                      </span>
+                      3D STUDENT MATRIX • STAGE 01
+                    </div>
 
-                <h1 className="text-4xl md:text-7xl font-black text-white tracking-tight leading-none drop-shadow-[0_0_35px_rgba(56,189,248,0.35)]">
-                  STUDENT CONSULTANCY{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400">
-                    3D DIMENSION
-                  </span>
-                </h1>
+                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
+                      STUDENT CONSULTANCY{" "}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400">
+                        3D DIMENSION
+                      </span>
+                    </h1>
 
-                <p className="text-base md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                  Navigate academic project reviews, thesis defense, AI research, and career mentorship in an interactive 3D universe.
-                </p>
+                    <p className="text-slate-100 text-sm md:text-base leading-relaxed">
+                      Navigate academic graduation strategy, thesis defense, research paper reviews, and top career mentoring with verified experts in an interactive 3D universe.
+                    </p>
 
-                <div className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <Button
-                    onClick={() => openBookingModal()}
-                    className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-sm px-6 h-12 rounded-xl shadow-[0_0_25px_rgba(56,189,248,0.4)] gap-2"
-                  >
-                    <Zap className="h-4 w-4" /> Book Consultancy Service
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => scrollToStage(0.25)}
-                    className="border-sky-500/30 text-sky-300 hover:bg-sky-500/10 h-12 rounded-xl px-5 text-sm gap-2"
-                  >
-                    <span>Scroll to Study Syllabus</span>
-                    <ChevronDown className="h-4 w-4 animate-bounce" />
-                  </Button>
-                </div>
-
-                <div className="pt-8 flex items-center justify-center gap-2 text-xs font-mono text-slate-500">
-                  <MousePointer className="h-3.5 w-3.5 text-sky-400 animate-pulse" />
-                  <span>Scroll mouse wheel or drag to navigate 3D study space</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ─────────────────────────────────────────────────────────────
-               STAGE 2: 3D OPEN STUDY BOOK & DISCIPLINES (Scroll: 20% to 45%)
-               ───────────────────────────────────────────────────────────── */}
-            <div
-              className="sticky top-0 h-screen w-full flex flex-col items-center justify-center px-4 pointer-events-none transition-all duration-300"
-              style={{
-                opacity:
-                  scrollProgress >= 0.18 && scrollProgress < 0.44
-                    ? 1 - Math.abs(scrollProgress - 0.3) * 6
-                    : 0,
-                transform: `perspective(1000px) translateZ(${(scrollProgress - 0.3) * 350}px)`,
-                display: scrollProgress < 0.16 || scrollProgress > 0.46 ? "none" : "flex",
-              }}
-            >
-              <div className="max-w-6xl w-full text-center space-y-6 pointer-events-auto">
-                <div className="space-y-2">
-                  <span className="text-xs font-mono text-sky-400 font-bold uppercase tracking-widest">
-                    STAGE 02 • CORE SYLLABUS & STUDY STACKS
-                  </span>
-                  <h2 className="text-3xl md:text-5xl font-black text-white">
-                    Choose Your <span className="text-sky-400">Study & Advisory Domain</span>
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                  {[
-                    {
-                      title: "AI & Neural Networks",
-                      desc: "RAG architectures, LLM fine-tuning, PyTorch pipelines, and academic research paper reviews.",
-                      icon: Cpu,
-                      color: "border-cyan-500/40 text-cyan-400",
-                    },
-                    {
-                      title: "Distributed Systems",
-                      desc: "Microservices in Go, high-concurrency database schemas, Kafka message queues, and load balancing.",
-                      icon: Code2,
-                      color: "border-sky-500/40 text-sky-400",
-                    },
-                    {
-                      title: "UI/UX & Product Design",
-                      desc: "Figma design systems, micro-interactions, user research audits, and high-impact design portfolios.",
-                      icon: Palette,
-                      color: "border-purple-500/40 text-purple-400",
-                    },
-                    {
-                      title: "FAANG Career Strategy",
-                      desc: "Resume roasting, offer negotiation strategies, mock system interviews, and career roadmap deep-dives.",
-                      icon: Briefcase,
-                      color: "border-amber-500/40 text-amber-400",
-                    },
-                  ].map((disc, idx) => {
-                    const Icon = disc.icon;
-                    return (
-                      <Card3D key={idx} depth={15} glare={true}>
-                        <div
-                          onClick={() => scrollToStage(0.55)}
-                          className="p-6 rounded-3xl bg-[#090e24]/85 border border-slate-800 hover:border-sky-500/60 backdrop-blur-xl text-left space-y-3 cursor-pointer group shadow-xl transition-colors"
-                        >
-                          <div className={`p-3 rounded-2xl bg-black/50 border w-fit ${disc.color}`}>
-                            <Icon className="h-6 w-6" />
-                          </div>
-                          <h3 className="font-bold text-white text-lg group-hover:text-sky-300 transition-colors">
-                            {disc.title}
-                          </h3>
-                          <p className="text-xs text-slate-400 leading-relaxed">{disc.desc}</p>
-                          <div className="pt-2 flex items-center gap-1.5 text-xs text-sky-400 font-bold">
-                            <span>Inspect Mentors</span>
-                            <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-                          </div>
-                        </div>
-                      </Card3D>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* ─────────────────────────────────────────────────────────────
-               STAGE 3: 3D VERIFIED MENTORS FLY-THROUGH (Scroll: 45% to 75%)
-               ───────────────────────────────────────────────────────────── */}
-            <div
-              className="sticky top-0 h-screen w-full flex flex-col items-center justify-center px-4 pointer-events-none transition-all duration-300"
-              style={{
-                opacity:
-                  scrollProgress >= 0.44 && scrollProgress < 0.74
-                    ? 1 - Math.abs(scrollProgress - 0.58) * 5.5
-                    : 0,
-                transform: `perspective(1000px) translateZ(${(scrollProgress - 0.58) * 350}px)`,
-                display: scrollProgress < 0.42 || scrollProgress > 0.76 ? "none" : "flex",
-              }}
-            >
-              <div className="max-w-6xl w-full text-center space-y-6 pointer-events-auto">
-                <div className="space-y-1">
-                  <span className="text-xs font-mono text-sky-400 font-bold uppercase tracking-widest">
-                    STAGE 03 • 1-ON-1 CERTIFIED SPECIALISTS
-                  </span>
-                  <h2 className="text-3xl md:text-5xl font-black text-white">
-                    Verified <span className="text-sky-400">Student Mentors & Leads</span>
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {consultants.length > 0 ? (
-                    consultants.slice(0, 3).map((consultant) => (
-                      <Card3D key={consultant.id} depth={16} glare={true}>
-                        <div className="p-6 rounded-3xl bg-[#090e24]/90 border border-sky-500/30 backdrop-blur-xl text-left space-y-4 shadow-2xl">
-                          <div className="flex items-start justify-between">
-                            <img
-                              src={consultant.avatar}
-                              alt={consultant.name}
-                              className="w-14 h-14 rounded-2xl object-cover border-2 border-sky-500/40 shadow-[0_0_20px_rgba(56,189,248,0.3)]"
-                            />
-                            <div className="flex items-center gap-1 text-amber-400 text-xs font-bold bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
-                              <Star className="h-3 w-3 fill-amber-400" />
-                              <span>{consultant.rating}</span>
-                            </div>
-                          </div>
-
-                          <div>
-                            <h4 className="font-bold text-white text-lg">{consultant.name}</h4>
-                            <p className="text-xs text-slate-300 font-semibold">{consultant.title}</p>
-                            <p className="text-[11px] font-mono text-sky-400">{consultant.company}</p>
-                          </div>
-
-                          <p className="text-xs text-slate-400 line-clamp-2">{consultant.bio}</p>
-
-                          <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                            <div>
-                              <span className="text-[10px] text-slate-500 uppercase font-bold">Session Fee</span>
-                              <p className="text-base font-black text-sky-400 flex items-center">
-                                <IndianRupee className="h-3.5 w-3.5" />
-                                {consultant.price}
-                                <span className="text-[10px] text-slate-400 font-normal ml-1">/ {consultant.duration}</span>
-                              </p>
-                            </div>
-                            <Button
-                              size="sm"
-                              onClick={() => openBookingModal(consultant)}
-                              className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-xl text-xs gap-1.5 shadow-[0_0_15px_rgba(56,189,248,0.3)]"
-                            >
-                              <Video className="h-3.5 w-3.5" /> Book 1-on-1
-                            </Button>
-                          </div>
-                        </div>
-                      </Card3D>
-                    ))
-                  ) : (
-                    <div className="col-span-1 md:col-span-3 p-8 rounded-3xl bg-[#090e24]/80 border border-slate-800 text-center space-y-3">
-                      <p className="text-slate-400 text-sm">
-                        Verified specialists are currently onboarding. You can broadcast your custom consultation request below or reserve with our platform lead!
-                      </p>
+                    <div className="pt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       <Button
-                        size="sm"
-                        onClick={() => scrollToStage(0.98)}
-                        className="bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 border border-sky-500/30 font-bold rounded-xl text-xs"
+                        onClick={() => openBookingModal()}
+                        className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-sm px-6 h-12 rounded-xl shadow-[0_0_25px_rgba(56,189,248,0.45)] gap-2"
                       >
-                        Jump to Custom Advisory Request &rarr;
+                        <Zap className="h-4 w-4" /> Book Consultancy Service
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => scrollToStage(2)}
+                        className="border-sky-500/30 text-sky-300 hover:bg-sky-500/10 h-12 rounded-xl px-5 text-sm gap-2"
+                      >
+                        <span>Explore Syllabus</span>
+                        <ChevronDown className="h-4 w-4 animate-bounce" />
                       </Button>
                     </div>
-                  )}
-                </div>
+
+                    <div className="pt-2 flex items-center gap-2 text-xs font-mono text-slate-400">
+                      <MousePointer className="h-3.5 w-3.5 text-sky-400 animate-pulse" />
+                      <span>Scroll naturally or use bottom HUD to fly through stages</span>
+                    </div>
+                  </div>
+                </Card3D>
               </div>
-            </div>
+            </section>
 
             {/* ─────────────────────────────────────────────────────────────
-               STAGE 4: 3D ESCROW SECURITY & EXCELLENCE SHIELD (Scroll: 72% to 88%)
+               STAGE 2: CORE SYLLABUS & STUDY DISCIPLINES (Stage 02)
                ───────────────────────────────────────────────────────────── */}
-            <div
-              className="sticky top-0 h-screen w-full flex flex-col items-center justify-center px-4 pointer-events-none transition-all duration-300"
-              style={{
-                opacity:
-                  scrollProgress >= 0.72 && scrollProgress < 0.88
-                    ? 1 - Math.abs(scrollProgress - 0.8) * 8
-                    : 0,
-                transform: `perspective(1000px) translateZ(${(scrollProgress - 0.8) * 350}px)`,
-                display: scrollProgress < 0.7 || scrollProgress > 0.9 ? "none" : "flex",
-              }}
+            <section
+              id="stage-2"
+              className="min-h-screen w-full flex items-center px-4 md:px-12 lg:px-20 py-24 relative z-10"
             >
-              <div className="max-w-4xl w-full text-center space-y-6 pointer-events-auto">
-                <div className="space-y-1">
-                  <span className="text-xs font-mono text-purple-400 font-bold uppercase tracking-widest">
-                    STAGE 04 • TRUST & ACADEMIC EXCELLENCE
-                  </span>
-                  <h2 className="text-3xl md:text-5xl font-black text-white">
-                    100% Student Protection & Excellence Shield
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <Card3D depth={14} glare={true}>
-                    <div className="p-6 rounded-3xl bg-[#090e24]/90 border border-purple-500/30 backdrop-blur-xl text-left space-y-3">
-                      <ShieldCheck className="h-8 w-8 text-purple-400" />
-                      <h4 className="font-bold text-white text-base">Payment Protected in Escrow</h4>
-                      <p className="text-xs text-slate-400">
-                        Your payment is securely locked and only released to the consultant after your live call successfully concludes.
+              <div className="w-full max-w-3xl text-left pointer-events-auto">
+                <Card3D depth={12} glare={true}>
+                  <div className="p-7 md:p-9 rounded-3xl bg-[#020617]/92 border border-sky-500/40 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] space-y-6">
+                    <div className="space-y-1.5">
+                      <span className="text-xs font-mono text-sky-400 font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30">
+                        STAGE 02 • CORE SYLLABUS & STUDY STACKS
+                      </span>
+                      <h2 className="text-2xl md:text-4xl font-black text-white tracking-tight">
+                        Choose Your <span className="text-sky-400">Study & Advisory Domain</span>
+                      </h2>
+                      <p className="text-xs md:text-sm text-slate-200">
+                        Master your university curriculum and prepare for high-impact technical roles.
                       </p>
                     </div>
-                  </Card3D>
 
-                  <Card3D depth={14} glare={true}>
-                    <div className="p-6 rounded-3xl bg-[#090e24]/90 border border-cyan-500/30 backdrop-blur-xl text-left space-y-3">
-                      <Video className="h-8 w-8 text-cyan-400" />
-                      <h4 className="font-bold text-white text-base">Encrypted Video Rooms</h4>
-                      <p className="text-xs text-slate-400">
-                        1-on-1 private video conferencing with crystal-clear screen sharing, code inspection, and file transfers.
-                      </p>
-                    </div>
-                  </Card3D>
-
-                  <Card3D depth={14} glare={true}>
-                    <div className="p-6 rounded-3xl bg-[#090e24]/90 border border-sky-500/30 backdrop-blur-xl text-left space-y-3">
-                      <Clock className="h-8 w-8 text-sky-400" />
-                      <h4 className="font-bold text-white text-base">Instant Rescheduling</h4>
-                      <p className="text-xs text-slate-400">
-                        Change your slot anytime up to 2 hours before the call with 1 click, or get an instant 100% refund.
-                      </p>
-                    </div>
-                  </Card3D>
-                </div>
-              </div>
-            </div>
-
-            {/* ─────────────────────────────────────────────────────────────
-               STAGE 5: AT LAST — FINAL 3D BOOKING STATION (Scroll: 88% to 100%)
-               ───────────────────────────────────────────────────────────── */}
-            <div
-              className="sticky top-0 h-screen w-full flex flex-col items-center justify-center px-4 pointer-events-none transition-all duration-300"
-              style={{
-                opacity: scrollProgress >= 0.86 ? (scrollProgress - 0.86) * 7.5 : 0,
-                transform: `perspective(1000px) translateZ(${(scrollProgress - 0.95) * 300}px)`,
-                display: scrollProgress < 0.84 ? "none" : "flex",
-              }}
-            >
-              <div className="max-w-5xl w-full text-center space-y-6 pointer-events-auto">
-                <div className="space-y-2">
-                  <span className="text-xs font-mono text-sky-400 font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30">
-                    STAGE 05 • CAMPUS GATEWAY TO INDUSTRY
-                  </span>
-                  <h2 className="text-3xl md:text-6xl font-black text-white tracking-tight">
-                    Reserve Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400">Consultancy Session</span>
-                  </h2>
-                  <p className="text-xs md:text-sm text-slate-300 max-w-xl mx-auto">
-                    Direct access to certified industry architects and academic researchers. Choose your expert or broadcast custom requirements.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                  {/* Quick 1-on-1 Booking Station */}
-                  <Card3D depth={14} glare={true}>
-                    <div className="p-7 rounded-3xl bg-[#090e24]/95 border border-sky-500/40 backdrop-blur-2xl space-y-4 shadow-2xl">
-                      <div className="flex items-center gap-2 text-sky-400">
-                        <Zap className="h-5 w-5" />
-                        <h3 className="font-bold text-white text-lg">Instant 1-on-1 Reservation</h3>
-                      </div>
-                      <p className="text-xs text-slate-400">
-                        Choose your expert from our verified pool and lock in your scheduled slot with escrow protection.
-                      </p>
-
-                      <div className="space-y-3 pt-2">
-                        <div className="space-y-1">
-                          <Label className="text-xs text-slate-300">Selected Expert</Label>
-                          <select
-                            className="w-full h-11 px-3 rounded-xl border border-slate-700 bg-black/60 text-white text-xs focus:ring-2 focus:ring-sky-500"
-                            value={bookingConsultant?.id || ""}
-                            onChange={(e) => {
-                              const found = consultants.find((m) => m.id === e.target.value);
-                              if (found) setBookingConsultant(found);
-                            }}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {[
+                        {
+                          title: "AI & Neural Networks",
+                          desc: "RAG architectures, LLM fine-tuning, PyTorch pipelines, and academic paper reviews.",
+                          icon: Cpu,
+                          color: "border-cyan-500/40 text-cyan-400",
+                        },
+                        {
+                          title: "Distributed Systems",
+                          desc: "Microservices in Go, high-concurrency database schemas, Kafka message queues, and load balancing.",
+                          icon: Code2,
+                          color: "border-sky-500/40 text-sky-400",
+                        },
+                        {
+                          title: "UI/UX & Product Design",
+                          desc: "Figma design systems, micro-interactions, user research audits, and high-impact design portfolios.",
+                          icon: Palette,
+                          color: "border-purple-500/40 text-purple-400",
+                        },
+                        {
+                          title: "FAANG Career Strategy",
+                          desc: "Resume roasting, offer negotiation strategies, mock system interviews, and career roadmap deep-dives.",
+                          icon: Briefcase,
+                          color: "border-amber-500/40 text-amber-400",
+                        },
+                      ].map((disc, idx) => {
+                        const Icon = disc.icon;
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => scrollToStage(3)}
+                            className="p-4 rounded-2xl bg-[#070e24]/90 border border-slate-800 hover:border-sky-500/60 backdrop-blur-xl text-left space-y-2 cursor-pointer group shadow-lg transition-all"
                           >
-                            {consultants.length > 0 ? (
-                              consultants.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                  {m.name} — {m.title} (₹{m.price})
-                                </option>
-                              ))
-                            ) : (
-                              <option value="platform-advisor">
-                                Platform Senior Consultant — Verified Academic & Tech Consultant (₹999)
-                              </option>
-                            )}
-                          </select>
-                        </div>
-
-                        <Button
-                          onClick={() => openBookingModal(bookingConsultant || (consultants.length > 0 ? consultants[0] : null))}
-                          className="w-full bg-gradient-to-r from-sky-500 to-blue-500 hover:opacity-95 text-slate-950 font-black h-12 rounded-xl text-sm shadow-[0_0_25px_rgba(56,189,248,0.35)] mt-2"
-                        >
-                          Proceed to Reserve Slot ⚡
-                        </Button>
-                      </div>
+                            <div className={`p-2.5 rounded-xl bg-black/60 border w-fit ${disc.color}`}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            <h3 className="font-bold text-white text-base group-hover:text-sky-300 transition-colors">
+                              {disc.title}
+                            </h3>
+                            <p className="text-xs text-slate-300 leading-relaxed">{disc.desc}</p>
+                            <div className="pt-1 flex items-center gap-1.5 text-xs text-sky-400 font-bold">
+                              <span>Inspect Mentors</span>
+                              <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </Card3D>
-
-                  {/* Broadcast Custom Niche Request */}
-                  <Card3D depth={14} glare={true}>
-                    <div className="p-7 rounded-3xl bg-[#090e24]/95 border border-cyan-500/40 backdrop-blur-2xl space-y-4 shadow-2xl">
-                      <div className="flex items-center gap-2 text-cyan-400">
-                        <Sparkles className="h-5 w-5" />
-                        <h3 className="font-bold text-white text-lg">Broadcast Custom Advisory Request</h3>
-                      </div>
-                      <p className="text-xs text-slate-400">
-                        Need a niche specialist (e.g. BioTech, Quantum Computing, Microservices)? Broadcast your agenda.
-                      </p>
-
-                      <form onSubmit={handleCustomRequestSubmit} className="space-y-3">
-                        <Input
-                          placeholder="Project title or advisory topic"
-                          value={customTopic}
-                          onChange={(e) => setCustomTopic(e.target.value)}
-                          className="rounded-xl border-slate-700 bg-black/60 text-white text-xs h-10"
-                          required
-                        />
-                        <Textarea
-                          placeholder="Brief questions or roadblocks..."
-                          value={customDetails}
-                          onChange={(e) => setCustomDetails(e.target.value)}
-                          className="rounded-xl border-slate-700 bg-black/60 text-white text-xs min-h-[60px]"
-                          required
-                        />
-                        <Button
-                          type="submit"
-                          disabled={isCustomSubmitting}
-                          className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold h-11 rounded-xl text-xs"
-                        >
-                          {isCustomSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Broadcast Request 📨"}
-                        </Button>
-                      </form>
-                    </div>
-                  </Card3D>
-                </div>
+                  </div>
+                </Card3D>
               </div>
-            </div>
+            </section>
+
+            {/* ─────────────────────────────────────────────────────────────
+               STAGE 3: 1-ON-1 CERTIFIED SPECIALISTS (Stage 03)
+               ───────────────────────────────────────────────────────────── */}
+            <section
+              id="stage-3"
+              className="min-h-screen w-full flex items-center px-4 md:px-12 lg:px-20 py-24 relative z-10"
+            >
+              <div className="w-full max-w-4xl text-left pointer-events-auto">
+                <Card3D depth={10} glare={true}>
+                  <div className="p-7 md:p-9 rounded-3xl bg-[#020617]/92 border border-sky-500/40 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] space-y-6">
+                    <div className="space-y-1.5">
+                      <span className="text-xs font-mono text-sky-400 font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30">
+                        STAGE 03 • 1-ON-1 CERTIFIED SPECIALISTS
+                      </span>
+                      <h2 className="text-2xl md:text-4xl font-black text-white tracking-tight">
+                        Verified <span className="text-sky-400">Student Mentors & Leads</span>
+                      </h2>
+                      <p className="text-xs md:text-sm text-slate-200">
+                        Book direct 1-on-1 private video sessions with real platform advisors.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      {consultants.length > 0 ? (
+                        consultants.slice(0, 3).map((consultant) => (
+                          <div
+                            key={consultant.id}
+                            className="p-5 rounded-2xl bg-[#070e24]/95 border border-sky-500/35 backdrop-blur-xl text-left space-y-3.5 shadow-xl flex flex-col justify-between"
+                          >
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between">
+                                <img
+                                  src={consultant.avatar}
+                                  alt={consultant.name}
+                                  className="w-12 h-12 rounded-xl object-cover border-2 border-sky-500/50 shadow-[0_0_15px_rgba(56,189,248,0.3)]"
+                                />
+                                <div className="flex items-center gap-1 text-amber-400 text-xs font-bold bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/25">
+                                  <Star className="h-3 w-3 fill-amber-400" />
+                                  <span>{consultant.rating}</span>
+                                </div>
+                              </div>
+
+                              <div>
+                                <h4 className="font-bold text-white text-base">{consultant.name}</h4>
+                                <p className="text-xs text-slate-200 font-medium">{consultant.title}</p>
+                                <p className="text-[11px] font-mono text-sky-400">{consultant.company}</p>
+                              </div>
+
+                              <p className="text-xs text-slate-300 line-clamp-2">{consultant.bio}</p>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                              <div>
+                                <span className="text-[10px] text-slate-400 uppercase font-bold">Fee</span>
+                                <p className="text-sm font-black text-sky-400 flex items-center">
+                                  <IndianRupee className="h-3.5 w-3.5" />
+                                  {consultant.price}
+                                  <span className="text-[10px] text-slate-300 font-normal ml-0.5">/ {consultant.duration}</span>
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => openBookingModal(consultant)}
+                                className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-xl text-xs gap-1.5 shadow-[0_0_15px_rgba(56,189,248,0.35)]"
+                              >
+                                <Video className="h-3.5 w-3.5" /> Book 1-on-1
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-1 md:col-span-3 p-6 rounded-2xl bg-[#070e24]/85 border border-slate-800 text-center space-y-3">
+                          <p className="text-slate-200 text-sm">
+                            Verified specialists are currently onboarding. You can broadcast your custom consultation request below or reserve with our platform lead!
+                          </p>
+                          <Button
+                            size="sm"
+                            onClick={() => scrollToStage(5)}
+                            className="bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 border border-sky-500/30 font-bold rounded-xl text-xs"
+                          >
+                            Jump to Custom Advisory Request &rarr;
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card3D>
+              </div>
+            </section>
+
+            {/* ─────────────────────────────────────────────────────────────
+               STAGE 4: TRUST & ACADEMIC EXCELLENCE SHIELD (Stage 04)
+               ───────────────────────────────────────────────────────────── */}
+            <section
+              id="stage-4"
+              className="min-h-screen w-full flex items-center px-4 md:px-12 lg:px-20 py-24 relative z-10"
+            >
+              <div className="w-full max-w-3xl text-left pointer-events-auto">
+                <Card3D depth={12} glare={true}>
+                  <div className="p-7 md:p-9 rounded-3xl bg-[#020617]/92 border border-sky-500/40 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] space-y-6">
+                    <div className="space-y-1.5">
+                      <span className="text-xs font-mono text-purple-400 font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-purple-500/10 border border-purple-400/30">
+                        STAGE 04 • TRUST & ACADEMIC EXCELLENCE
+                      </span>
+                      <h2 className="text-2xl md:text-4xl font-black text-white tracking-tight">
+                        100% Student Protection & Excellence Shield
+                      </h2>
+                      <p className="text-xs md:text-sm text-slate-200">
+                        Complete peace of mind with escrow security, verified credentials, and instant refunds.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="p-5 rounded-2xl bg-[#070e24]/90 border border-purple-500/30 backdrop-blur-xl text-left space-y-2.5">
+                        <ShieldCheck className="h-7 w-7 text-purple-400" />
+                        <h4 className="font-bold text-white text-sm">Escrow Protection</h4>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          Funds remain safely locked in escrow and only release after your live session completes.
+                        </p>
+                      </div>
+
+                      <div className="p-5 rounded-2xl bg-[#070e24]/90 border border-cyan-500/30 backdrop-blur-xl text-left space-y-2.5">
+                        <Video className="h-7 w-7 text-cyan-400" />
+                        <h4 className="font-bold text-white text-sm">Private Video Rooms</h4>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          Encrypted 1-on-1 private video calls with HD screen sharing and real-time code audit.
+                        </p>
+                      </div>
+
+                      <div className="p-5 rounded-2xl bg-[#070e24]/90 border border-sky-500/30 backdrop-blur-xl text-left space-y-2.5">
+                        <Clock className="h-7 w-7 text-sky-400" />
+                        <h4 className="font-bold text-white text-sm">Instant Reschedule</h4>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          Easily change your scheduled slot up to 2 hours before the call, or get a 100% refund.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Card3D>
+              </div>
+            </section>
+
+            {/* ─────────────────────────────────────────────────────────────
+               STAGE 5: CAMPUS GATEWAY TO INDUSTRY (Stage 05 - At Last)
+               ───────────────────────────────────────────────────────────── */}
+            <section
+              id="stage-5"
+              className="min-h-screen w-full flex items-center px-4 md:px-12 lg:px-20 py-24 pb-36 relative z-10"
+            >
+              <div className="w-full max-w-4xl text-left pointer-events-auto">
+                <Card3D depth={10} glare={true}>
+                  <div className="p-7 md:p-9 rounded-3xl bg-[#020617]/92 border border-sky-500/40 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] space-y-6">
+                    <div className="space-y-1.5">
+                      <span className="text-xs font-mono text-sky-400 font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30">
+                        STAGE 05 • CAMPUS GATEWAY TO INDUSTRY
+                      </span>
+                      <h2 className="text-2xl md:text-4xl font-black text-white tracking-tight">
+                        Reserve Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400">Consultancy Session</span>
+                      </h2>
+                      <p className="text-xs md:text-sm text-slate-200">
+                        Direct access to certified industry architects and academic researchers.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Instant 1-on-1 Reservation Card */}
+                      <div className="p-6 rounded-2xl bg-[#070e24]/95 border border-sky-500/35 backdrop-blur-2xl space-y-4 shadow-xl">
+                        <div className="flex items-center gap-2 text-sky-400">
+                          <Zap className="h-5 w-5" />
+                          <h3 className="font-bold text-white text-base">Instant 1-on-1 Reservation</h3>
+                        </div>
+                        <p className="text-xs text-slate-300">
+                          Choose an expert and lock in your scheduled video slot with escrow protection.
+                        </p>
+
+                        <div className="space-y-3 pt-1">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-slate-200 font-semibold">Selected Expert</Label>
+                            <select
+                              className="w-full h-11 px-3 rounded-xl border border-slate-700 bg-black/70 text-white text-xs focus:ring-2 focus:ring-sky-500 font-medium"
+                              value={bookingConsultant?.id || ""}
+                              onChange={(e) => {
+                                const found = consultants.find((m) => m.id === e.target.value);
+                                if (found) setBookingConsultant(found);
+                              }}
+                            >
+                              {consultants.length > 0 ? (
+                                consultants.map((m) => (
+                                  <option key={m.id} value={m.id}>
+                                    {m.name} — {m.title} (₹{m.price})
+                                  </option>
+                                ))
+                              ) : (
+                                <option value="platform-advisor">
+                                  Platform Senior Consultant — Verified Academic & Tech Consultant (₹999)
+                                </option>
+                              )}
+                            </select>
+                          </div>
+
+                          <Button
+                            onClick={() => openBookingModal(bookingConsultant || (consultants.length > 0 ? consultants[0] : null))}
+                            className="w-full bg-gradient-to-r from-sky-500 to-blue-500 hover:opacity-95 text-slate-950 font-black h-11 rounded-xl text-xs md:text-sm shadow-[0_0_20px_rgba(56,189,248,0.4)] mt-2"
+                          >
+                            Proceed to Reserve Slot ⚡
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Custom Advisory Request Card */}
+                      <div className="p-6 rounded-2xl bg-[#070e24]/95 border border-cyan-500/35 backdrop-blur-2xl space-y-4 shadow-xl">
+                        <div className="flex items-center gap-2 text-cyan-400">
+                          <Sparkles className="h-5 w-5" />
+                          <h3 className="font-bold text-white text-base">Broadcast Custom Request</h3>
+                        </div>
+                        <p className="text-xs text-slate-300">
+                          Need a niche subject (e.g. BioTech, Quantum, VLSI)? Broadcast your requirement.
+                        </p>
+
+                        <form onSubmit={handleCustomRequestSubmit} className="space-y-3">
+                          <Input
+                            placeholder="Project topic or paper review title"
+                            value={customTopic}
+                            onChange={(e) => setCustomTopic(e.target.value)}
+                            className="rounded-xl border-slate-700 bg-black/70 text-white text-xs h-10"
+                            required
+                          />
+                          <Textarea
+                            placeholder="Brief questions or roadblocks..."
+                            value={customDetails}
+                            onChange={(e) => setCustomDetails(e.target.value)}
+                            className="rounded-xl border-slate-700 bg-black/70 text-white text-xs min-h-[60px]"
+                            required
+                          />
+                          <Button
+                            type="submit"
+                            disabled={isCustomSubmitting}
+                            className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold h-10 rounded-xl text-xs"
+                          >
+                            {isCustomSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-slate-950" /> : "Broadcast Request 📨"}
+                          </Button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </Card3D>
+              </div>
+            </section>
 
           </div>
 
           {/* ─────────────────────────────────────────────────────────────
              BOTTOM 3D SCROLL PROGRESS HUD INDICATOR
              ───────────────────────────────────────────────────────────── */}
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-full bg-[#060814]/85 border border-sky-500/30 backdrop-blur-xl flex items-center gap-3 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-3 md:px-4 py-2 rounded-full bg-[#030712]/92 border border-sky-500/40 backdrop-blur-2xl flex items-center gap-1.5 md:gap-3 shadow-[0_0_35px_rgba(0,0,0,0.9)]">
             {[
-              { label: "01 Grad", progress: 0.05 },
-              { label: "02 Study", progress: 0.3 },
-              { label: "03 Mentors", progress: 0.58 },
-              { label: "04 Trophy", progress: 0.8 },
-              { label: "05 Gateway", progress: 0.98 },
-            ].map((stg, i) => {
-              const active = Math.abs(scrollProgress - stg.progress) < 0.14;
+              { num: 1, label: "01 Grad" },
+              { num: 2, label: "02 Study" },
+              { num: 3, label: "03 Mentors" },
+              { num: 4, label: "04 Trophy" },
+              { num: 5, label: "05 Gateway" },
+            ].map((stg) => {
+              const stageProgress = (stg.num - 1) / 4;
+              const active = Math.abs(scrollProgress - stageProgress) < 0.16;
               return (
                 <button
-                  key={i}
-                  onClick={() => scrollToStage(stg.progress)}
-                  className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold transition-all ${
+                  key={stg.num}
+                  onClick={() => scrollToStage(stg.num)}
+                  className={`px-3 py-1.5 rounded-full text-[10px] md:text-xs font-mono font-bold transition-all ${
                     active
-                      ? "bg-sky-500 text-slate-950 shadow-[0_0_15px_rgba(56,189,248,0.5)] scale-105"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-sky-500 text-slate-950 shadow-[0_0_20px_rgba(56,189,248,0.6)] scale-105"
+                      : "text-slate-300 hover:text-white hover:bg-sky-500/10"
                   }`}
                 >
                   {stg.label}

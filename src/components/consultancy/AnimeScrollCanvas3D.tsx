@@ -75,13 +75,17 @@ export const AnimeScrollCanvas3D: React.FC<AnimeScrollCanvas3DProps> = ({
     (ceilingGrid.material as THREE.Material).opacity = 0.22;
     worldGroup.add(ceilingGrid);
 
+    // Responsive sculpture positioning (right-docked on desktop to keep text unobstructed)
+    const isMobile = width < 768;
+    const sculptureX = isMobile ? 0 : 5.8;
+
     // ─────────────────────────────────────────────────────────────
     // 2. Student-Themed 3D Waypoint Sculptures Along Travel Path
     // ─────────────────────────────────────────────────────────────
 
     // ── STAGE 1 (Z: 22): 3D Graduation Mortarboard Cap & Academic Degree Scroll ──
     const gradGroup = new THREE.Group();
-    gradGroup.position.set(0, 2, 22);
+    gradGroup.position.set(sculptureX, 1.8, 22);
     worldGroup.add(gradGroup);
 
     // Graduation Mortarboard Cap Top
@@ -211,7 +215,7 @@ export const AnimeScrollCanvas3D: React.FC<AnimeScrollCanvas3DProps> = ({
     // ── STAGE 2 (Z: -15): Grand Open 3D Study Book & Floating Writing Pen ──
     // (Explicitly replaces the circular coil with student study things!)
     const bookStageGroup = new THREE.Group();
-    bookStageGroup.position.set(0, 1.8, -15);
+    bookStageGroup.position.set(sculptureX, 1.8, -15);
     worldGroup.add(bookStageGroup);
 
     const bookMaster = new THREE.Group();
@@ -340,7 +344,7 @@ export const AnimeScrollCanvas3D: React.FC<AnimeScrollCanvas3DProps> = ({
 
     // ── STAGE 3 (Z: -55): 3D Student Laptop & Coding Workstation ──
     const laptopGroup = new THREE.Group();
-    laptopGroup.position.set(0, 1.5, -55);
+    laptopGroup.position.set(sculptureX, 1.5, -55);
     worldGroup.add(laptopGroup);
 
     // Laptop Base / Keyboard Chassis
@@ -443,7 +447,7 @@ export const AnimeScrollCanvas3D: React.FC<AnimeScrollCanvas3DProps> = ({
 
     // ── STAGE 4 (Z: -95): 3D Academic Trophy of Excellence & Floating Star ──
     const trophyGroup = new THREE.Group();
-    trophyGroup.position.set(0, 1.5, -95);
+    trophyGroup.position.set(sculptureX, 1.5, -95);
     worldGroup.add(trophyGroup);
 
     // Trophy Base Pedestal
@@ -523,7 +527,7 @@ export const AnimeScrollCanvas3D: React.FC<AnimeScrollCanvas3DProps> = ({
 
     // ── STAGE 5 (Z: -135): Grand Campus Portal Gateway Arch (At Last) ──
     const campusArchGroup = new THREE.Group();
-    campusArchGroup.position.set(0, 2, -135);
+    campusArchGroup.position.set(isMobile ? 0 : 3.8, 2, -135);
     worldGroup.add(campusArchGroup);
 
     // Twin Fluted Columns
@@ -675,16 +679,16 @@ export const AnimeScrollCanvas3D: React.FC<AnimeScrollCanvas3DProps> = ({
       currentCamZ += (targetZ - currentCamZ) * 0.085;
       camera.position.z = currentCamZ;
 
-      // Natural undulating flight curve
-      camera.position.y = 2 + Math.sin(currentProgressLerp * Math.PI * 3) * 1.5;
-      camera.position.x = Math.sin(currentProgressLerp * Math.PI * 2) * 2.2;
+      // Smooth camera position - left-offset on desktop to frame 3D sculptures on right
+      camera.position.y = 2 + Math.sin(currentProgressLerp * Math.PI * 3) * 1.0;
+      camera.position.x = isMobile ? 0 : -2.0 + Math.sin(currentProgressLerp * Math.PI * 2) * 0.8;
 
-      // Parallax mouse follow
+      // Parallax mouse follow & slight inward angle to frame 3D sculptures
       targetMouseX += (mouseX - targetMouseX) * 0.05;
       targetMouseY += (mouseY - targetMouseY) * 0.05;
 
-      camera.rotation.y = -targetMouseX * 0.12 - Math.sin(currentProgressLerp * Math.PI) * 0.08;
-      camera.rotation.x = -targetMouseY * 0.1 + (currentProgressLerp - 0.5) * 0.05;
+      camera.rotation.y = -targetMouseX * 0.12 - Math.sin(currentProgressLerp * Math.PI) * 0.08 + (isMobile ? 0 : 0.06);
+      camera.rotation.x = -targetMouseY * 0.1 + (currentProgressLerp - 0.5) * 0.04;
 
       // Keep lights centered around current camera position
       camLightSky.position.set(camera.position.x + 6, camera.position.y + 4, camera.position.z - 8);

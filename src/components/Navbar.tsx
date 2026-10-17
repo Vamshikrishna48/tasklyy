@@ -105,7 +105,7 @@ const Navbar = () => {
                   : "bg-orange-500/10 text-orange-600 hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-500 hover:text-white border border-orange-500/30 dark:text-orange-400 dark:bg-orange-500/15"
               }`}
             >
-              <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
+              <Sparkles className={`h-4 w-4 ${isActive("/consultancy") ? "text-white fill-white/30" : "text-orange-500"} animate-pulse`} />
               <span>Consultancy</span>
             </Button>
           </Link>
@@ -211,7 +211,7 @@ const Navbar = () => {
                           : "bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white border-orange-500/30 dark:text-orange-400"
                       }`}
                     >
-                      <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
+                      <Sparkles className={`h-4 w-4 ${isActive("/consultancy") ? "text-white fill-white/30" : "text-orange-500"} animate-pulse`} />
                       <span>Consultancy</span>
                     </Button>
                   </Link>
