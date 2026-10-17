@@ -48,99 +48,22 @@ import { supabase } from "@/lib/supabase";
 import { AnimeScrollCanvas3D } from "@/components/consultancy/AnimeScrollCanvas3D";
 import { Card3D } from "@/components/consultancy/Card3D";
 
-// Curated verified consultants
-const mockConsultants = [
-  {
-    id: "con-1",
-    name: "Dr. Arvind Raman",
-    title: "Principal AI Research Scientist",
-    company: "Ex-Google DeepMind / IIT Madras",
-    domain: "ai",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    rating: 4.96,
-    reviewsCount: 84,
-    skills: ["PyTorch", "LLMs & RAG", "Deep Learning", "Thesis Defense"],
-    bio: "Guiding thesis defense, algorithmic research papers, transformer architectures, and production ML pipelines.",
-    price: 1499,
-    duration: "45 mins",
-    availableToday: true,
-  },
-  {
-    id: "con-2",
-    name: "Meera Subramanian",
-    title: "Lead Frontend Architect",
-    company: "CloudScale Systems",
-    domain: "tech",
-    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
-    rating: 4.94,
-    reviewsCount: 112,
-    skills: ["React & Next.js", "TypeScript", "Performance", "Web Architecture"],
-    bio: "Code reviews, complex state management audits, frontend optimization, and high-impact portfolio preparation.",
-    price: 999,
-    duration: "45 mins",
-    availableToday: true,
-  },
-  {
-    id: "con-3",
-    name: "Kabir Sengupta",
-    title: "Staff Systems & Distributed Engineer",
-    company: "Razorpay / ex-Amazon",
-    domain: "tech",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    rating: 4.98,
-    reviewsCount: 96,
-    skills: ["Go / Microservices", "PostgreSQL & Redis", "System Design", "Kafka"],
-    bio: "Deep-dive backend system design, database indexing, high-concurrency architecture, and mock tech interviews.",
-    price: 1299,
-    duration: "60 mins",
-    availableToday: false,
-  },
-  {
-    id: "con-4",
-    name: "Ananya Deshmukh",
-    title: "Product Design Director",
-    company: "Studio Obsidian",
-    domain: "design",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-    rating: 4.92,
-    reviewsCount: 78,
-    skills: ["Figma Systems", "UX Research", "Micro-interactions", "Portfolio Review"],
-    bio: "Transforming design portfolios, critiquing user flows, wireframing guidance, and landing high-ticket design gigs.",
-    price: 899,
-    duration: "40 mins",
-    availableToday: true,
-  },
-  {
-    id: "con-5",
-    name: "Rohan Kapoor",
-    title: "Tech Career & Strategy Consultant",
-    company: "TopTalent Advisory",
-    domain: "career",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-    rating: 4.95,
-    reviewsCount: 140,
-    skills: ["Resume Roasting", "Offer Negotiation", "FAANG Mock Prep", "LinkedIn Polish"],
-    bio: "Helping students & working professionals crack competitive hiring rounds, structure resumes, and negotiate offers.",
-    price: 799,
-    duration: "45 mins",
-    availableToday: true,
-  },
-  {
-    id: "con-6",
-    name: "Siddharth Verma",
-    title: "Cloud & DevSecOps Lead",
-    company: "FinTech Infrastructure Core",
-    domain: "cloud",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-    rating: 4.89,
-    reviewsCount: 65,
-    skills: ["AWS & GCP", "Docker & Kubernetes", "CI/CD Pipelines", "Terraform"],
-    bio: "Production deployment reviews, cloud infrastructure sizing, Docker containerization, and zero-downtime releases.",
-    price: 1199,
-    duration: "50 mins",
-    availableToday: false,
-  },
-];
+// Consultant Interface
+export interface Consultant {
+  id: string;
+  name: string;
+  title: string;
+  company: string;
+  domain: string;
+  avatar: string;
+  rating: number;
+  reviewsCount: number;
+  skills: string[];
+  bio: string;
+  price: number;
+  duration: string;
+  availableToday: boolean;
+}
 
 interface PortalUser {
   id: string;
@@ -186,9 +109,11 @@ export const Consultancy: React.FC = () => {
   const scrollTargetRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Booking Modal State
+  // Consultants & Booking States
+  const [consultants, setConsultants] = useState<Consultant[]>([]);
+  const [consultantsLoading, setConsultantsLoading] = useState(true);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [bookingConsultant, setBookingConsultant] = useState<typeof mockConsultants[0] | null>(null);
+  const [bookingConsultant, setBookingConsultant] = useState<Consultant | null>(null);
   const [selectedDate, setSelectedDate] = useState("Tomorrow");
   const [selectedTime, setSelectedTime] = useState("06:00 PM - 06:45 PM");
   const [selectedMode, setSelectedMode] = useState("Live 1-on-1 Video Call");
@@ -204,7 +129,49 @@ export const Consultancy: React.FC = () => {
   const [customDetails, setCustomDetails] = useState("");
   const [isCustomSubmitting, setIsCustomSubmitting] = useState(false);
 
-  // Load user and bookings on mount
+  // Load real registered consultants from Supabase profiles
+  useEffect(() => {
+    const loadRealConsultants = async () => {
+      setConsultantsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, full_name, email, avatar_url, role, is_verified");
+
+        if (!error && data && data.length > 0) {
+          const loaded: Consultant[] = data.map((p: any) => ({
+            id: p.id,
+            name: p.full_name || "Verified Platform Consultant",
+            title: p.role === "admin" ? "Senior Lead Consultant" : "Verified Academic & Tech Consultant",
+            company: "Tasskly Verified Network",
+            domain: "tech",
+            avatar: p.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.full_name || "Consultant")}&backgroundColor=0f172a,1e293b&textColor=f97316`,
+            rating: 5.0,
+            reviewsCount: 1,
+            skills: ["Consultancy", "1-on-1 Guidance", "Code & Architecture"],
+            bio: "Verified platform advisor available for direct 1-on-1 consultation and project review.",
+            price: 999,
+            duration: "45 mins",
+            availableToday: true,
+          }));
+          setConsultants(loaded);
+          if (loaded.length > 0) {
+            setBookingConsultant((prev) => prev || loaded[0]);
+          }
+        } else {
+          setConsultants([]);
+        }
+      } catch {
+        setConsultants([]);
+      } finally {
+        setConsultantsLoading(false);
+      }
+    };
+
+    loadRealConsultants();
+  }, []);
+
+  // Load user and bookings on mount (clean of any demo data)
   useEffect(() => {
     const savedUser = localStorage.getItem("tasskly_consultancy_auth_user");
     if (savedUser) {
@@ -218,28 +185,18 @@ export const Consultancy: React.FC = () => {
     const savedBookings = localStorage.getItem("tasskly_consultancy_bookings");
     if (savedBookings) {
       try {
-        setBookings(JSON.parse(savedBookings));
+        const parsed = JSON.parse(savedBookings);
+        // Eliminate any legacy mock booking (e.g. TC-84920)
+        const realOnly = Array.isArray(parsed)
+          ? parsed.filter((b: any) => b.id !== "TC-84920" && !b.id.startsWith("TC-84920"))
+          : [];
+        setBookings(realOnly);
+        localStorage.setItem("tasskly_consultancy_bookings", JSON.stringify(realOnly));
       } catch {
-        // ignore
+        setBookings([]);
       }
     } else {
-      const defaultBooking: Booking = {
-        id: "TC-84920",
-        consultantId: "con-1",
-        consultantName: "Dr. Arvind Raman",
-        consultantTitle: "Principal AI Research Scientist",
-        consultantAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-        date: "Tomorrow, 06:00 PM",
-        timeSlot: "45 mins",
-        mode: "1-on-1 Live Video & Code Audit",
-        price: 1499,
-        meetingUrl: "https://meet.google.com/tsk-cns-8492",
-        status: "confirmed",
-        notes: "Architecture review for my deep learning transformer project.",
-        createdAt: new Date().toISOString(),
-      };
-      setBookings([defaultBooking]);
-      localStorage.setItem("tasskly_consultancy_bookings", JSON.stringify([defaultBooking]));
+      setBookings([]);
     }
   }, []);
 
@@ -486,8 +443,28 @@ export const Consultancy: React.FC = () => {
   };
 
   // Open booking modal for a specific consultant (or default)
-  const openBookingModal = (consultant?: typeof mockConsultants[0]) => {
-    setBookingConsultant(consultant || mockConsultants[0]);
+  const openBookingModal = (consultant?: Consultant | null) => {
+    if (consultant) {
+      setBookingConsultant(consultant);
+    } else if (consultants.length > 0) {
+      setBookingConsultant(consultants[0]);
+    } else {
+      setBookingConsultant({
+        id: "platform-advisor",
+        name: "Platform Senior Consultant",
+        title: "Verified Academic & Tech Consultant",
+        company: "Tasskly Verified Network",
+        domain: "tech",
+        avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Tasskly&backgroundColor=0f172a,1e293b&textColor=10b981",
+        rating: 5.0,
+        reviewsCount: 1,
+        skills: ["Consultancy", "1-on-1 Guidance", "Code & Architecture"],
+        bio: "Verified platform advisor available for direct 1-on-1 consultation and project review.",
+        price: 999,
+        duration: "45 mins",
+        availableToday: true,
+      });
+    }
     setIsBookingOpen(true);
   };
 
@@ -947,49 +924,64 @@ export const Consultancy: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {mockConsultants.slice(0, 3).map((consultant) => (
-                    <Card3D key={consultant.id} depth={16} glare={true}>
-                      <div className="p-6 rounded-3xl bg-[#090e24]/90 border border-emerald-500/30 backdrop-blur-xl text-left space-y-4 shadow-2xl">
-                        <div className="flex items-start justify-between">
-                          <img
-                            src={consultant.avatar}
-                            alt={consultant.name}
-                            className="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-                          />
-                          <div className="flex items-center gap-1 text-amber-400 text-xs font-bold bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
-                            <Star className="h-3 w-3 fill-amber-400" />
-                            <span>{consultant.rating}</span>
+                  {consultants.length > 0 ? (
+                    consultants.slice(0, 3).map((consultant) => (
+                      <Card3D key={consultant.id} depth={16} glare={true}>
+                        <div className="p-6 rounded-3xl bg-[#090e24]/90 border border-emerald-500/30 backdrop-blur-xl text-left space-y-4 shadow-2xl">
+                          <div className="flex items-start justify-between">
+                            <img
+                              src={consultant.avatar}
+                              alt={consultant.name}
+                              className="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                            />
+                            <div className="flex items-center gap-1 text-amber-400 text-xs font-bold bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
+                              <Star className="h-3 w-3 fill-amber-400" />
+                              <span>{consultant.rating}</span>
+                            </div>
                           </div>
-                        </div>
 
-                        <div>
-                          <h4 className="font-bold text-white text-lg">{consultant.name}</h4>
-                          <p className="text-xs text-slate-300 font-semibold">{consultant.title}</p>
-                          <p className="text-[11px] font-mono text-emerald-400">{consultant.company}</p>
-                        </div>
-
-                        <p className="text-xs text-slate-400 line-clamp-2">{consultant.bio}</p>
-
-                        <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
                           <div>
-                            <span className="text-[10px] text-slate-500 uppercase font-bold">Session Fee</span>
-                            <p className="text-base font-black text-emerald-400 flex items-center">
-                              <IndianRupee className="h-3.5 w-3.5" />
-                              {consultant.price}
-                              <span className="text-[10px] text-slate-400 font-normal ml-1">/ {consultant.duration}</span>
-                            </p>
+                            <h4 className="font-bold text-white text-lg">{consultant.name}</h4>
+                            <p className="text-xs text-slate-300 font-semibold">{consultant.title}</p>
+                            <p className="text-[11px] font-mono text-emerald-400">{consultant.company}</p>
                           </div>
-                          <Button
-                            size="sm"
-                            onClick={() => openBookingModal(consultant)}
-                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
-                          >
-                            <Video className="h-3.5 w-3.5" /> Book 1-on-1
-                          </Button>
+
+                          <p className="text-xs text-slate-400 line-clamp-2">{consultant.bio}</p>
+
+                          <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                            <div>
+                              <span className="text-[10px] text-slate-500 uppercase font-bold">Session Fee</span>
+                              <p className="text-base font-black text-emerald-400 flex items-center">
+                                <IndianRupee className="h-3.5 w-3.5" />
+                                {consultant.price}
+                                <span className="text-[10px] text-slate-400 font-normal ml-1">/ {consultant.duration}</span>
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => openBookingModal(consultant)}
+                              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                            >
+                              <Video className="h-3.5 w-3.5" /> Book 1-on-1
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </Card3D>
-                  ))}
+                      </Card3D>
+                    ))
+                  ) : (
+                    <div className="col-span-1 md:col-span-3 p-8 rounded-3xl bg-[#090e24]/80 border border-slate-800 text-center space-y-3">
+                      <p className="text-slate-400 text-sm">
+                        Verified specialists are currently onboarding. You can broadcast your custom consultation request below or reserve with our platform lead!
+                      </p>
+                      <Button
+                        size="sm"
+                        onClick={() => scrollToStage(0.98)}
+                        className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 font-bold rounded-xl text-xs"
+                      >
+                        Jump to Custom Advisory Request &rarr;
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1093,21 +1085,28 @@ export const Consultancy: React.FC = () => {
                           <Label className="text-xs text-slate-300">Selected Expert</Label>
                           <select
                             className="w-full h-11 px-3 rounded-xl border border-slate-700 bg-black/60 text-white text-xs focus:ring-2 focus:ring-emerald-500"
+                            value={bookingConsultant?.id || ""}
                             onChange={(e) => {
-                              const found = mockConsultants.find((m) => m.id === e.target.value);
+                              const found = consultants.find((m) => m.id === e.target.value);
                               if (found) setBookingConsultant(found);
                             }}
                           >
-                            {mockConsultants.map((m) => (
-                              <option key={m.id} value={m.id}>
-                                {m.name} — {m.title} (₹{m.price})
+                            {consultants.length > 0 ? (
+                              consultants.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name} — {m.title} (₹{m.price})
+                                </option>
+                              ))
+                            ) : (
+                              <option value="platform-advisor">
+                                Platform Senior Consultant — Verified Academic & Tech Consultant (₹999)
                               </option>
-                            ))}
+                            )}
                           </select>
                         </div>
 
                         <Button
-                          onClick={() => openBookingModal(bookingConsultant || mockConsultants[0])}
+                          onClick={() => openBookingModal(bookingConsultant || (consultants.length > 0 ? consultants[0] : null))}
                           className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:opacity-95 text-slate-950 font-black h-12 rounded-xl text-sm shadow-[0_0_25px_rgba(16,185,129,0.35)] mt-2"
                         >
                           Proceed to Reserve Slot ⚡

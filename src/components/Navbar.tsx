@@ -212,7 +212,7 @@ const Navbar = () => {
                       }`}
                     >
                       <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
-                      <span>Consultancy (3D)</span>
+                      <span>Consultancy</span>
                     </Button>
                   </Link>
                 </SheetClose>
