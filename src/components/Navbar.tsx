@@ -98,12 +98,15 @@ const Navbar = () => {
           </Link>
           <Link to="/consultancy">
             <Button
-              variant={isActive("/consultancy") ? "secondary" : "ghost"}
               size="sm"
-              className="gap-2 text-emerald-600 dark:text-emerald-400 font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+              className={`gap-2 font-bold rounded-xl transition-all shadow-xs ${
+                isActive("/consultancy")
+                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white border border-orange-400 shadow-orange-500/30 shadow-md"
+                  : "bg-orange-500/10 text-orange-600 hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-500 hover:text-white border border-orange-500/30 dark:text-orange-400 dark:bg-orange-500/15"
+              }`}
             >
-              <Sparkles className="h-4 w-4 text-emerald-500 animate-pulse" />
-              Consultancy
+              <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
+              <span>Consultancy</span>
             </Button>
           </Link>
         </div>
@@ -200,9 +203,16 @@ const Navbar = () => {
                 </SheetClose>
                 <SheetClose asChild>
                   <Link to="/consultancy" className="w-full">
-                    <Button variant={isActive("/consultancy") ? "secondary" : "ghost"} className="w-full justify-start gap-3 h-11 text-base font-semibold text-emerald-600 dark:text-emerald-400">
-                      <Sparkles className="h-4 w-4 text-emerald-500 animate-pulse" />
-                      Consultancy (3D)
+                    <Button
+                      variant={isActive("/consultancy") ? "default" : "outline"}
+                      className={`w-full justify-start gap-3 h-11 text-base font-bold rounded-xl transition-all ${
+                        isActive("/consultancy")
+                          ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-500 shadow-md"
+                          : "bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white border-orange-500/30 dark:text-orange-400"
+                      }`}
+                    >
+                      <Sparkles className="h-4 w-4 text-orange-500 animate-pulse" />
+                      <span>Consultancy (3D)</span>
                     </Button>
                   </Link>
                 </SheetClose>

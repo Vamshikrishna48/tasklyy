@@ -118,12 +118,12 @@ const DashboardOverview = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
       >
-        <Card className="relative overflow-hidden border-emerald-500/30 bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-900 text-white shadow-xl">
-          <div className="absolute right-0 top-0 w-80 h-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+        <Card className="relative overflow-hidden border-orange-500/30 bg-gradient-to-r from-slate-950 via-orange-950/60 to-slate-900 text-white shadow-xl">
+          <div className="absolute right-0 top-0 w-80 h-full bg-orange-500/10 blur-3xl pointer-events-none" />
           <CardContent className="p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
             <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                <Sparkles className="h-3 w-3 animate-pulse" /> 1-on-1 3D Advisory Matrix
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-400/30">
+                <Sparkles className="h-3 w-3 animate-pulse text-orange-400" /> 1-on-1 3D Advisory Matrix
               </div>
               <h3 className="font-display text-xl font-bold text-white">
                 Expert Tech, AI & Career Consultancy
@@ -133,7 +133,7 @@ const DashboardOverview = () => {
               </p>
             </div>
             <Link to="/dashboard/consultancy" className="shrink-0 w-full md:w-auto">
-              <Button className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold gap-2 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.35)]">
+              <Button className="w-full md:w-auto bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-bold gap-2 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.35)]">
                 Launch 3D Portal <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
