@@ -1,6 +1,6 @@
-# Tasskly 3D Consultancy Architecture
+# Tasskly Campus 3D Consultancy Architecture
 
-A production-grade, scroll-driven 3D experience built for Tasskly's Consultancy marketplace. Powered by Three.js, React, Tailwind CSS, and Framer Motion.
+A production-grade, scroll-driven 3D campus experience built for Tasskly's university and student consultancy portal. Powered by Three.js, React, Tailwind CSS, and Framer Motion.
 
 ---
 
@@ -10,97 +10,66 @@ A production-grade, scroll-driven 3D experience built for Tasskly's Consultancy 
 src/
 ├── components/
 │   └── consultancy/
-│       ├── CameraRig.tsx              # Spline camera navigation, waypoints & mouse parallax
-│       ├── Scene.tsx                  # Persistent Three.js scene, lighting, 3D stages & particles
-│       ├── Card3D.tsx                 # Reusable 3D tilt & specular glare card container
-│       ├── ConsultationForm.tsx       # Booking form (6 fields, validation, API & local fallback)
+│       ├── CameraRig.tsx               # 9-stop campus spline camera flight path
+│       ├── Scene.tsx                   # Three.js 3D campus world (university building, caps, books, clock tower)
+│       ├── Card3D.tsx                  # 3D interactive tilt & specular glare card container
+│       ├── ConsultationForm.tsx        # Campus consultation form (Name, Email, Role, College, Dept, Message)
 │       ├── sections/
-│       │   ├── HeroSection.tsx        # Section 1: Hero with headline, badges & CTAs
-│       │   ├── ServicesSection.tsx    # Section 2: 6 services with 3D tilt/flip cards
-│       │   ├── ProcessSection.tsx     # Section 3: 4-step Discover, Analyze, Implement, Optimize timeline
-│       │   ├── ResultsSection.tsx     # Section 4: 3 metric cards with animated counters & bars
-│       │   ├── PricingSection.tsx     # Section 5: 3 engagement models (Starter, Team, Enterprise)
-│       │   ├── TestimonialsSection.tsx# Section 6: 3D interactive testimonials carousel
-│       │   ├── BookingSection.tsx     # Section 7: Final CTA & booking form container
-│       │   └── FooterSection.tsx      # Section 8: Tasskly platform footer
-│       └── README.md                  # This guide
+│       │   ├── HeroSection.tsx         # Stop 1: Main Gate (Hero with headline, trust stats, CTAs)
+│       │   ├── WhoWeHelpSection.tsx    # Stop 2: Campus Quad (Students, Clubs & Societies, Colleges)
+│       │   ├── ServicesSection.tsx     # Stop 3: Central Library (6 academic services in 3x2 grid)
+│       │   ├── ProcessSection.tsx      # Stop 4: Academic Path (4 milestone stops along the road)
+│       │   ├── ResultsSection.tsx      # Stop 5: Project Lab (Split layout with 3 stacked metric cards & avatars)
+│       │   ├── PricingSection.tsx      # Stop 6: Innovation Center (Student Starter, Club Plan, Campus Partnership)
+│       │   ├── TestimonialsSection.tsx # Stop 7: Alumni Amphitheater (3D carousel ring of student/college stories)
+│       │   ├── PartnersSection.tsx     # Stop 8: Partners Boulevard (Infinite marquee of 60+ partner campuses)
+│       │   ├── BookingSection.tsx      # Stop 9: Graduation Stage (Two-column layout with glass form)
+│       │   └── FooterSection.tsx       # Campus skyline illustration & 4-column footer
+│       └── README.md                   # This guide
 └── pages/
-    └── Consultancy.tsx                # Page controller, dot navigation & scroll progress
+    └── Consultancy.tsx                 # Page controller with theme toggle, dot nav, and scroll progress
 ```
 
 ---
 
-## 2. Adjusting the 3D Camera Path
+## 2. Campus Journey Stops & Camera Path
 
-Camera flight positions and angles are defined in [`src/components/consultancy/CameraRig.tsx`](./CameraRig.tsx) within the `waypoints` array:
+The camera travels smoothly through 9 campus stops defined in [`src/components/consultancy/CameraRig.tsx`](./CameraRig.tsx):
 
 ```typescript
 private waypoints = [
-  { z: 36,   y: 2.2, x: 0,    rotY: 0,     rotX: -0.02 }, // Stage 1: Hero
-  { z: 12,   y: 1.8, x: -1.2, rotY: 0.08,  rotX: 0     }, // Stage 2: Services
-  { z: -28,  y: 2.4, x: 1.2,  rotY: -0.06, rotX: -0.03 }, // Stage 3: Process
-  { z: -75,  y: 1.6, x: -0.8, rotY: 0.05,  rotX: 0.02  }, // Stage 4: Results
-  { z: -125, y: 2.0, x: 0.8,  rotY: -0.04, rotX: -0.02 }, // Stage 5: Pricing
-  { z: -175, y: 1.8, x: 0,    rotY: 0,     rotX: 0     }, // Stage 6: Testimonials
-  { z: -220, y: 2.2, x: 0,    rotY: 0,     rotX: 0.02  }, // Stage 7: Final CTA
+  { z: 40,   y: 2.2, x: 0,    rotY: 0,     rotX: -0.02 }, // Stop 1: Main Gate (Hero)
+  { z: 18,   y: 1.8, x: -1.2, rotY: 0.08,  rotX: 0     }, // Stop 2: Campus Quad (Who we help)
+  { z: -18,  y: 2.4, x: 1.4,  rotY: -0.07, rotX: -0.02 }, // Stop 3: Central Library (Services)
+  { z: -58,  y: 1.9, x: -1.0, rotY: 0.06,  rotX: 0.02  }, // Stop 4: Academic Path (Process)
+  { z: -105, y: 2.3, x: 1.1,  rotY: -0.05, rotX: -0.02 }, // Stop 5: Research Lab (Results)
+  { z: -155, y: 1.7, x: -0.9, rotY: 0.05,  rotX: 0.01  }, // Stop 6: Innovation Center (Plans)
+  { z: -205, y: 2.0, x: 0.8,  rotY: -0.04, rotX: 0     }, // Stop 7: Alumni Amphitheater (Stories)
+  { z: -250, y: 1.8, x: -0.6, rotY: 0.03,  rotX: 0.01  }, // Stop 8: Partners Boulevard
+  { z: -295, y: 2.2, x: 0,    rotY: 0,     rotX: 0.02  }, // Stop 9: Graduation Stage (Final CTA)
 ];
 ```
 
-- **`z`**: Controls camera distance along the track. Lower negative numbers move further into the scene.
-- **`y`**: Camera height elevation.
-- **`x`**: Horizontal pan offset.
-- **`rotY` / `rotX`**: Subtle orientation angles (in radians).
-- **Interpolation**: Camera coordinates are computed using smooth cubic Hermite interpolation with lerp damping (`0.085`).
+Coordinates interpolate smoothly with cubic Hermite curves and lerp damping (`0.085`).
 
 ---
 
-## 3. Swapping or Modifying 3D Objects & Materials
+## 3. 3D Procedural Campus Assets ([`Scene.tsx`](./Scene.tsx))
 
-All 3D objects are created and animated in [`src/components/consultancy/Scene.tsx`](./Scene.tsx):
-
-- **Hero 3D Task Card & Gyroscope** (`heroStage` at `Z: 22`):
-  Uses `MeshPhysicalMaterial` with glass transmission (`transmission: 0.75`), roughness (`0.1`), and emissive glow.
-- **Services Cubes** (`serviceNodes` around `Z: 0` to `-10`):
-  Cubes rotating on independent orbits around the camera trajectory.
-- **Process Rail Nodes** (`stepNodes` from `Z: -32` to `-50`):
-  Glowing emerald and sky octahedrons connected by a pulsing central spline conduit.
-- **Results Data Pillars** (`dataPillars` at `Z: -80`):
-  Extruded cylinders representing quantitative metrics with glowing halos.
-- **Pricing Pedestals** (`pricingPillars` at `Z: -130`):
-  Floating pedestals with crown and gemstone geometries.
-- **Testimonial Ring** (`testimonialsStage` at `Z: -178`):
-  Rotating ring of translucent cards with orbital nodes.
-- **Starfield Particles**:
-  2,200 particle buffer geometry streaming past the camera.
-
-To import an external `.gltf` / `.glb` model instead of procedural Three.js primitives:
-```typescript
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-
-const loader = new GLTFLoader();
-loader.load("/models/custom-model.glb", (gltf) => {
-  heroStage.add(gltf.scene);
-});
-```
+- **Classical University Building**: 3-step plinth, 6 Corinthian-inspired columns, entablature, pediment, and glowing entrance portal.
+- **Graduation Caps (Mortarboards)**: Skull cap, square mortarboard, gold button, and dynamic swinging tassel.
+- **Hardcover Books & Pages**: Colorful covers (emerald, sky blue, amber, coral) with gold spine detailing and white page blocks.
+- **Campus Clock Tower**: Multi-dial clock tower with pointed spire roof.
+- **Academic Road**: Curved tube mesh winding continuously along the camera track.
+- **Diploma Scroll**: Cylindrical rolled parchment with gold ribbon.
+- **Starfield Sparkles**: 2,000 dual-colored particles streaming in depth.
 
 ---
 
-## 4. Updating Copy, Services & Metrics
+## 4. Theme System (Academic Light & Cinematic Dark)
 
-- **Hero Copy**: Edit `HeroSection.tsx` (`headline`, `subheading`, badges).
-- **Consultancy Services**: Edit `SERVICES_DATA` array in `ServicesSection.tsx`.
-- **Process Steps**: Edit `PROCESS_STEPS` array in `ProcessSection.tsx`.
-- **Results & Metrics**: Edit `METRICS_DATA` array in `ResultsSection.tsx`.
-- **Pricing Tiers**: Edit `PRICING_TIERS` array in `PricingSection.tsx`.
-- **Testimonials**: Edit `TESTIMONIALS_DATA` array in `TestimonialsSection.tsx`.
-- **Form Endpoints**: Edit `handleSubmit` in `ConsultationForm.tsx` (targets `/api/consultancy-requests`, with fallback to Supabase table `consultancy_requests` and `localStorage`).
+Toggle between:
+- **Bright Academic Mode**: Soft sky-blue and warm off-white panels, indigo text, and vivid emerald/amber accents.
+- **Cinematic Dark Mode**: Midnight navy (`#020617`), glowing emerald `#10b981`, and electric sky blue `#38bdf8`.
 
----
-
-## 5. Performance & Accessibility (WCAG AA)
-
-- **Dark Theme Palette**: Midnight Navy (`#020617` / `#040e24`), Emerald Green (`#10b981`), Electric Sky Blue (`#38bdf8`), Soft White (`#f8fafc`).
-- **High Contrast**: Meets WCAG AA standards with minimum contrast ratio > 4.5:1 against glassmorphic panels.
-- **Prefers Reduced Motion**: Automatic media query detection + user toggle button in header. Disables 3D canvas and simplifies animations.
-- **WebGL Fallback**: Proactively detects WebGL context; displays clean 2D layout if unsupported.
-- **Resource Disposal**: Geometry and material instances are tracked and systematically disposed of on unmount to eliminate memory leaks.
+Both modes meet **WCAG AA contrast standards** (> 4.5:1 ratio).

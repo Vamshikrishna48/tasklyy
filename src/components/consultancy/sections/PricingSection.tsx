@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { Card3D } from "../Card3D";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,13 +7,13 @@ import {
   Zap,
   Sparkles,
   ArrowRight,
-  ShieldCheck,
-  Building,
-  Rocket,
-  Crown,
+  GraduationCap,
+  Users,
+  Building2,
+  Gift,
 } from "lucide-react";
 
-export interface PricingTier {
+export interface CampusPlan {
   id: string;
   name: string;
   subtitle: string;
@@ -23,80 +22,81 @@ export interface PricingTier {
   badge?: string;
   popular?: boolean;
   icon: React.ComponentType<{ className?: string }>;
+  description: string;
   features: string[];
   ctaText: string;
-  description: string;
 }
 
-export const PRICING_TIERS: PricingTier[] = [
+export const CAMPUS_PLANS: CampusPlan[] = [
   {
-    id: "starter-advisory",
-    name: "Starter Advisory",
-    subtitle: "For early-stage startups & lean teams",
-    price: "$1,499",
-    period: "one-time engagement",
-    icon: Rocket,
+    id: "student-starter",
+    name: "Student Starter",
+    subtitle: "For individual undergraduate & postgraduate learners",
+    price: "Free",
+    period: "always complimentary for students",
+    icon: GraduationCap,
     description:
-      "A fast-paced diagnostic sprint to eliminate chaotic bottlenecks and establish clean async rhythms.",
+      "Essential study workflow advisory, syllabus calendar setup, and access to student template kits.",
     features: [
-      "Full 2-Week Operational & Tool Audit",
-      "3 Private Executive Strategy Sessions",
-      "Asynchronous Communication Blueprint",
-      "Actionable Bottleneck Scorecard",
-      "Standard Linear / Jira Template Pack",
-      "30 Days of Priority Email Q&A",
+      "1-on-1 Personalized Study Audit Session",
+      "Semester Revision & Exam Calendar Blueprint",
+      "Internship Application Kanban Template",
+      "Access to Tasskly Campus Student Discord",
+      "Weekly Focus & Spaced Repetition Worksheets",
     ],
-    ctaText: "Talk to us",
+    ctaText: "Get Free Student Session",
   },
   {
-    id: "team-transformation",
-    name: "Team Transformation",
-    subtitle: "For scaling engineering & product teams",
-    price: "$3,499",
-    period: "full 60-day overhaul",
+    id: "club-department",
+    name: "Club & Department Plan",
+    subtitle: "For student councils, tech societies & academic departments",
+    price: "$299",
+    period: "per fest or semester program",
     badge: "Most Popular",
     popular: true,
-    icon: Zap,
+    icon: Users,
     description:
-      "Our signature full-stack consulting experience: we rebuild workflows, build custom webhooks, and coach your entire team.",
+      "End-to-end operational architecture for college societies, annual fests, hackathons, and departmental labs.",
     features: [
-      "End-to-End Workflow Architecture Redesign",
-      "5 Custom Webhook & Tool Automation Pipelines",
-      "4 Live Interactive Team Rollout Workshops",
-      "Dedicated Slack / Discord Channel Access",
-      "Bi-Weekly Velocity & PR Turnaround Audits",
-      "Custom Role-Based Video Onboarding Playbooks",
-      "90-Day ROI & Performance Money-Back Guarantee",
+      "Campus Fest & Hackathon Milestone Playbook",
+      "Member Task Handoff & Volunteer Dispatch System",
+      "Corporate Sponsorship Outreach Pipeline",
+      "60-Minute Live Interactive Workshop for Members",
+      "Dedicated Slack / WhatsApp Advisory Channel",
+      "Budget & Expense Real-Time Tracking Vault",
     ],
-    ctaText: "Talk to us",
+    ctaText: "Get Club Consultation",
   },
   {
-    id: "enterprise-partnership",
-    name: "Enterprise Partnership",
-    subtitle: "For multi-department organizations",
+    id: "campus-partnership",
+    name: "Campus-Wide Partnership",
+    subtitle: "For Deans, Registrars & University Administrators",
     price: "Custom",
-    period: "bespoke quarterly retainer",
-    icon: Crown,
+    period: "institutional annual partnership",
+    icon: Building2,
     description:
-      "Continuous embedded advisory for complex organizations needing custom migrations, high security, and cross-departmental governance.",
+      "University-wide digital modernization, LMS integration, departmental governance, and placement cell enablement.",
     features: [
-      "Multi-Tool Consolidation & Full Data Migration",
-      "Bespoke Internal Automation Middleware & APIs",
-      "Unlimited Leadership Coaching & Team Sessions",
-      "Dedicated Lead Productivity Architect",
-      "Custom Enterprise SLA & Security Compliance",
-      "Continuous Quarterly Benchmarking & Retrospectives",
-      "Executive Dashboard & Velocity Metric Feeds",
+      "Campus-Wide Student & Faculty Workspace Provisioning",
+      "LMS & College Portal Integration (Moodle, Canvas)",
+      "University Dean High-Level Analytics Dashboard",
+      "Dedicated On-Campus Productivity Architect",
+      "NAAC / ABET Accreditation Document Vaults",
+      "Placement Cell Company Tracking Suite",
     ],
-    ctaText: "Talk to us",
+    ctaText: "Discuss Campus Partnership",
   },
 ];
 
 interface PricingSectionProps {
-  onSelectTier: (tierName: string) => void;
+  onSelectPlan: (planName: string) => void;
+  isDark?: boolean;
 }
 
-export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectTier }) => {
+export const PricingSection: React.FC<PricingSectionProps> = ({
+  onSelectPlan,
+  isDark = true,
+}) => {
   return (
     <section
       id="pricing-section"
@@ -107,46 +107,52 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectTier }) 
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>Engagement Models</span>
+            <span>Stop 06: Innovation Center</span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight drop-shadow-md">
-            Transparent Investment.{" "}
+          <h2 className={`text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md ${
+            isDark ? "text-white" : "text-slate-900"
+          }`}>
+            Campus Engagement{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400">
-              Guaranteed ROI.
+              Plans
             </span>
           </h2>
 
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-            Select the engagement model that matches your team size and operational complexity. No hidden fees or bloated retainers.
+          <p className={`text-sm sm:text-base leading-relaxed ${
+            isDark ? "text-slate-300" : "text-slate-700 font-normal"
+          }`}>
+            Accessible plans built with student budgets and university procurement in mind. From free 1-on-1 sessions to full campus partnerships.
           </p>
         </div>
 
-        {/* 3 Pricing Cards Grid with 3D Hover Lift */}
+        {/* 3 Plans Grid (Middle Card larger with Most Popular badge) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-          {PRICING_TIERS.map((tier) => {
-            const Icon = tier.icon;
-            const isPopular = tier.popular;
+          {CAMPUS_PLANS.map((plan) => {
+            const Icon = plan.icon;
+            const isPopular = plan.popular;
 
             return (
               <Card3D
-                key={tier.id}
-                depth={isPopular ? 24 : 16}
+                key={plan.id}
+                depth={isPopular ? 22 : 14}
                 glare={true}
-                className={`h-full ${isPopular ? "lg:-translate-y-3" : ""}`}
+                className={`h-full ${isPopular ? "lg:-translate-y-4" : ""}`}
               >
                 <div
-                  className={`h-full p-7 sm:p-8 rounded-3xl flex flex-col justify-between transition-all relative overflow-hidden backdrop-blur-2xl ${
+                  className={`h-full p-7 sm:p-8 rounded-3xl flex flex-col justify-between transition-all relative overflow-hidden backdrop-blur-2xl text-left ${
                     isPopular
-                      ? "bg-[#040e24]/95 border-2 border-emerald-400/80 shadow-[0_0_40px_rgba(16,185,129,0.3)]"
-                      : "bg-[#040e24]/85 border border-teal-500/25 hover:border-teal-400/50 shadow-xl"
+                      ? "bg-[#040e24]/95 border-2 border-emerald-400 shadow-[0_0_40px_rgba(16,185,129,0.3)]"
+                      : isDark
+                      ? "bg-[#040e24]/85 border border-teal-500/25 hover:border-teal-400/50 shadow-xl"
+                      : "bg-white/90 border border-slate-200 hover:border-emerald-300 shadow-md"
                   }`}
                 >
-                  {/* Popular Badge */}
+                  {/* Most Popular Badge on Middle Card */}
                   {isPopular && (
                     <div className="absolute top-0 right-0">
                       <span className="inline-block px-4 py-1.5 rounded-bl-2xl bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 text-[11px] font-black uppercase tracking-wider shadow-md">
-                        {tier.badge}
+                        {plan.badge}
                       </span>
                     </div>
                   )}
@@ -164,60 +170,66 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectTier }) 
                         <Icon className="h-6 w-6" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-white">{tier.name}</h3>
-                        <p className="text-xs text-slate-400">{tier.subtitle}</p>
+                        <h3 className={`text-xl font-bold ${isDark ? "text-white" : "text-slate-900"}`}>
+                          {plan.name}
+                        </h3>
+                        <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                          {plan.subtitle}
+                        </p>
                       </div>
                     </div>
 
                     {/* Price Tag */}
                     <div className="pt-2 pb-4 border-b border-slate-800">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-                          {tier.price}
+                        <span className={`text-4xl sm:text-5xl font-black tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+                          {plan.price}
                         </span>
-                        {tier.price !== "Custom" && (
+                        {plan.price !== "Free" && plan.price !== "Custom" && (
                           <span className="text-xs text-slate-400 font-mono">USD</span>
                         )}
                       </div>
                       <p className="text-xs text-emerald-400 font-medium mt-1">
-                        {tier.period}
+                        {plan.period}
                       </p>
                     </div>
 
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      {tier.description}
+                    <p className={`text-xs leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+                      {plan.description}
                     </p>
 
-                    {/* Features List */}
+                    {/* 4-5 Checkmarked Features */}
                     <div className="space-y-3 pt-2">
                       <p className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold">
                         What's Included:
                       </p>
                       <ul className="space-y-2.5">
-                        {tier.features.map((feature, idx) => (
+                        {plan.features.map((feature, idx) => (
                           <li
                             key={idx}
                             className="flex items-start gap-2.5 text-xs text-slate-200"
                           >
                             <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                            <span>{feature}</span>
+                            <span className={isDark ? "text-slate-200" : "text-slate-700"}>
+                              {feature}
+                            </span>
                           </li>
                         ))}
                       </ul>
                     </div>
                   </div>
 
-                  {/* CTA Button */}
+                  {/* Button */}
                   <div className="pt-8">
                     <Button
-                      onClick={() => onSelectTier(tier.name)}
+                      onClick={() => onSelectPlan(plan.name)}
                       className={`w-full h-12 rounded-xl text-sm font-bold gap-2 transition-all ${
                         isPopular
                           ? "bg-gradient-to-r from-emerald-400 via-teal-400 to-sky-400 hover:from-emerald-300 hover:to-sky-300 text-slate-950 font-black shadow-lg shadow-emerald-500/30 hover:scale-[1.02] active:scale-95"
-                          : "bg-slate-900/80 hover:bg-emerald-500/20 text-white hover:text-emerald-300 border border-teal-500/30 hover:border-emerald-400/50"
+                          : "bg-slate-900/80 hover:bg-emerald-500/20 text-white hover:text-emerald-300 border border-teal-500/30"
                       }`}
                     >
-                      <span>{tier.ctaText}</span>
+                      <span>{plan.ctaText}</span>
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -225,19 +237,6 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectTier }) 
               </Card3D>
             );
           })}
-        </div>
-
-        {/* Custom Scoping Callout */}
-        <div className="text-center pt-4">
-          <p className="text-xs text-slate-400">
-            Have a custom workflow setup, proprietary internal tools, or on-premise security requirements?{" "}
-            <button
-              onClick={() => onSelectTier("Custom Enterprise Solution")}
-              className="text-emerald-400 underline font-semibold hover:text-emerald-300 transition-colors ml-1"
-            >
-              Request a custom scope consultation
-            </button>
-          </p>
         </div>
       </div>
     </section>

@@ -6,12 +6,14 @@ interface SceneProps {
   scrollProgress: number; // 0.0 to 1.0
   className?: string;
   onLoaded?: () => void;
+  isDark?: boolean;
 }
 
 export const Scene: React.FC<SceneProps> = ({
   scrollProgress,
   className = "fixed inset-0 pointer-events-none z-0",
   onLoaded,
+  isDark = true,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef(scrollProgress);
@@ -21,7 +23,7 @@ export const Scene: React.FC<SceneProps> = ({
     const container = mountRef.current;
     if (!container) return;
 
-    // Safety WebGL check
+    // Safety WebGL support check
     try {
       const test = document.createElement("canvas");
       const gl = test.getContext("webgl") || test.getContext("experimental-webgl");
@@ -37,12 +39,12 @@ export const Scene: React.FC<SceneProps> = ({
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // Three.js Scene Setup (Deep Midnight Navy & Tasskly Atmosphere)
+    // Three.js Scene Setup (Academic Campus Ambience)
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x020817, 0.009);
+    scene.fog = new THREE.FogExp2(isDark ? 0x030a1c : 0xf0f4fd, 0.008);
 
     const camera = new THREE.PerspectiveCamera(54, width / height, 0.1, 1000);
-    camera.position.set(0, 2.2, 36);
+    camera.position.set(0, 2.2, 40);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -57,10 +59,10 @@ export const Scene: React.FC<SceneProps> = ({
     const worldGroup = new THREE.Group();
     scene.add(worldGroup);
 
-    // Camera Rig instance for smooth spline navigation
+    // Camera Rig instance for smooth 9-stop spline flight
     const cameraRig = new CameraRig(camera);
 
-    // Resource tracking for leak-free disposal
+    // Track disposables for leak-free unmount
     const disposables: { geometry?: THREE.BufferGeometry; material?: THREE.Material | THREE.Material[] }[] = [];
     const track = <T extends THREE.Object3D>(obj: T): T => {
       if ((obj as any).geometry) disposables.push({ geometry: (obj as any).geometry });
@@ -69,367 +71,713 @@ export const Scene: React.FC<SceneProps> = ({
     };
 
     // ─────────────────────────────────────────────────────────────
-    // 1. Perspective Horizon Grid Floor & Ceiling
+    // Lighting Setup: Soft, Rounded, Academic Warmth
     // ─────────────────────────────────────────────────────────────
-    const gridHelper = track(new THREE.GridHelper(450, 110, 0x10b981, 0x0284c7));
-    gridHelper.position.y = -8.5;
-    (gridHelper.material as THREE.Material).transparent = true;
-    (gridHelper.material as THREE.Material).opacity = 0.32;
-    worldGroup.add(gridHelper);
+    const ambientLight = new THREE.AmbientLight(0xffffff, isDark ? 0.9 : 1.3);
+    scene.add(ambientLight);
 
-    const ceilingGrid = track(new THREE.GridHelper(450, 110, 0x38bdf8, 0x064e3b));
-    ceilingGrid.position.y = 20;
-    (ceilingGrid.material as THREE.Material).transparent = true;
-    (ceilingGrid.material as THREE.Material).opacity = 0.18;
-    worldGroup.add(ceilingGrid);
+    const dirLight = new THREE.DirectionalLight(0xfff7ed, 1.4);
+    dirLight.position.set(25, 40, 30);
+    scene.add(dirLight);
+
+    // Camera-following accent lights (Tasskly Emerald, Sky Blue, Warm Amber)
+    const lightEmerald = new THREE.PointLight(0x10b981, 2.2, 45);
+    const lightSky = new THREE.PointLight(0x38bdf8, 2.4, 50);
+    const lightAmber = new THREE.PointLight(0xf59e0b, 1.8, 40);
+    scene.add(lightEmerald);
+    scene.add(lightSky);
+    scene.add(lightAmber);
 
     // ─────────────────────────────────────────────────────────────
-    // 2. STAGE 1 (HERO): 3D Floating Task Card & Workflow Gyroscope (Z: 22)
+    // Campus Ground & Winding Stone Path / Grid
+    // ─────────────────────────────────────────────────────────────
+    const groundGrid = track(
+      new THREE.GridHelper(500, 100, isDark ? 0x10b981 : 0x0284c7, isDark ? 0x0f172a : 0xbfdbfe)
+    );
+    groundGrid.position.y = -8.2;
+    (groundGrid.material as THREE.Material).transparent = true;
+    (groundGrid.material as THREE.Material).opacity = isDark ? 0.28 : 0.45;
+    worldGroup.add(groundGrid);
+
+    // Curved Winding Campus Road
+    const roadCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, -7.8, 55),
+      new THREE.Vector3(-3, -7.8, 25),
+      new THREE.Vector3(3.5, -7.8, -10),
+      new THREE.Vector3(-2.5, -7.8, -55),
+      new THREE.Vector3(2.5, -7.8, -100),
+      new THREE.Vector3(-3.0, -7.8, -150),
+      new THREE.Vector3(2.0, -7.8, -200),
+      new THREE.Vector3(-1.0, -7.8, -250),
+      new THREE.Vector3(0, -7.8, -310),
+    ]);
+    const roadGeom = track(new THREE.TubeGeometry(roadCurve, 120, 2.2, 12, false));
+    const roadMat = track(
+      new THREE.MeshStandardMaterial({
+        color: isDark ? 0x091428 : 0xdbeafe,
+        roughness: 0.8,
+        metalness: 0.1,
+      })
+    );
+    const roadMesh = new THREE.Mesh(roadGeom, roadMat);
+    roadMesh.scale.set(1, 0.12, 1);
+    worldGroup.add(roadMesh);
+
+    // ─────────────────────────────────────────────────────────────
+    // Helper: Build a Procedural Graduation Cap (Mortarboard)
+    // ─────────────────────────────────────────────────────────────
+    const createGraduationCap = (scale = 1.0, capColor = 0x0f172a, tasselColor = 0xf59e0b) => {
+      const group = new THREE.Group();
+
+      // Top square board
+      const boardGeom = track(new THREE.BoxGeometry(2.4 * scale, 0.12 * scale, 2.4 * scale));
+      const boardMat = track(
+        new THREE.MeshStandardMaterial({
+          color: capColor,
+          roughness: 0.4,
+          metalness: 0.2,
+        })
+      );
+      const board = new THREE.Mesh(boardGeom, boardMat);
+      board.position.y = 0.5 * scale;
+      group.add(board);
+
+      // Skull cap base (cylinder)
+      const capBaseGeom = track(new THREE.CylinderGeometry(0.8 * scale, 0.95 * scale, 0.6 * scale, 16));
+      const capBase = new THREE.Mesh(capBaseGeom, boardMat);
+      group.add(capBase);
+
+      // Center gold button
+      const buttonGeom = track(new THREE.CylinderGeometry(0.12 * scale, 0.12 * scale, 0.14 * scale, 12));
+      const goldMat = track(
+        new THREE.MeshStandardMaterial({
+          color: tasselColor,
+          metalness: 0.85,
+          roughness: 0.2,
+          emissive: tasselColor,
+          emissiveIntensity: 0.3,
+        })
+      );
+      const button = new THREE.Mesh(buttonGeom, goldMat);
+      button.position.y = 0.6 * scale;
+      group.add(button);
+
+      // Hanging tassel cord & fringe
+      const tasselCordCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 0.6 * scale, 0),
+        new THREE.Vector3(0.6 * scale, 0.55 * scale, 0.4 * scale),
+        new THREE.Vector3(1.3 * scale, 0.2 * scale, 0.8 * scale),
+        new THREE.Vector3(1.35 * scale, -0.4 * scale, 0.85 * scale),
+      ]);
+      const tasselGeom = track(new THREE.TubeGeometry(tasselCordCurve, 16, 0.04 * scale, 8, false));
+      const tassel = new THREE.Mesh(tasselGeom, goldMat);
+      group.add(tassel);
+
+      return group;
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    // Helper: Build a Procedural Hardcover Book
+    // ─────────────────────────────────────────────────────────────
+    const createBook = (width = 2.0, height = 2.6, thickness = 0.45, coverColor = 0x10b981) => {
+      const bookGroup = new THREE.Group();
+
+      // Cover (Front, Back & Spine)
+      const coverMat = track(
+        new THREE.MeshStandardMaterial({
+          color: coverColor,
+          roughness: 0.35,
+          metalness: 0.3,
+        })
+      );
+      const coverGeom = track(new THREE.BoxGeometry(width, height, thickness));
+      const cover = new THREE.Mesh(coverGeom, coverMat);
+      bookGroup.add(cover);
+
+      // Inner white pages
+      const pagesGeom = track(new THREE.BoxGeometry(width - 0.15, height - 0.2, thickness - 0.08));
+      const pagesMat = track(
+        new THREE.MeshStandardMaterial({
+          color: 0xf8fafc,
+          roughness: 0.9,
+        })
+      );
+      const pages = new THREE.Mesh(pagesGeom, pagesMat);
+      pages.position.x = 0.05;
+      bookGroup.add(pages);
+
+      // Gold title line on spine
+      const stripeGeom = track(new THREE.BoxGeometry(0.04, height * 0.7, thickness + 0.02));
+      const stripeMat = track(
+        new THREE.MeshStandardMaterial({
+          color: 0xf59e0b,
+          metalness: 0.9,
+          roughness: 0.2,
+        })
+      );
+      const stripe = new THREE.Mesh(stripeGeom, stripeMat);
+      stripe.position.x = -width / 2;
+      bookGroup.add(stripe);
+
+      return bookGroup;
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    // Helper: Build Classical University Building with Columns
+    // ─────────────────────────────────────────────────────────────
+    const createUniversityBuilding = () => {
+      const building = new THREE.Group();
+
+      // Base pedestal steps (3 layers)
+      for (let i = 0; i < 3; i++) {
+        const stepGeom = track(new THREE.BoxGeometry(14 - i * 0.8, 0.5, 9 - i * 0.6));
+        const stepMat = track(
+          new THREE.MeshStandardMaterial({
+            color: isDark ? 0x111c38 : 0xe2e8f0,
+            roughness: 0.6,
+          })
+        );
+        const step = new THREE.Mesh(stepGeom, stepMat);
+        step.position.y = i * 0.5;
+        building.add(step);
+      }
+
+      // Main Hall Back Wall
+      const wallGeom = track(new THREE.BoxGeometry(11.5, 6.2, 5.5));
+      const wallMat = track(
+        new THREE.MeshStandardMaterial({
+          color: isDark ? 0x0c1527 : 0xf1f5f9,
+          roughness: 0.5,
+          metalness: 0.1,
+        })
+      );
+      const wall = new THREE.Mesh(wallGeom, wallMat);
+      wall.position.set(0, 4.6, -1.2);
+      building.add(wall);
+
+      // Glowing Grand Entrance Portal (Archway)
+      const archGeom = track(new THREE.CylinderGeometry(1.6, 1.6, 3.8, 16));
+      const archMat = track(
+        new THREE.MeshStandardMaterial({
+          color: 0x10b981,
+          emissive: 0x059669,
+          emissiveIntensity: 1.2,
+          roughness: 0.3,
+        })
+      );
+      const arch = new THREE.Mesh(archGeom, archMat);
+      arch.position.set(0, 3.5, 1.6);
+      building.add(arch);
+
+      // 6 Classical Columns (Portico)
+      const columnPositions = [-4.5, -2.7, -0.9, 0.9, 2.7, 4.5];
+      columnPositions.forEach((xPos) => {
+        const colGeom = track(new THREE.CylinderGeometry(0.38, 0.42, 6.0, 16));
+        const colMat = track(
+          new THREE.MeshStandardMaterial({
+            color: isDark ? 0x1e293b : 0xffffff,
+            roughness: 0.3,
+            metalness: 0.15,
+          })
+        );
+        const column = new THREE.Mesh(colGeom, colMat);
+        column.position.set(xPos, 4.5, 2.2);
+        building.add(column);
+
+        // Column capital / base rings
+        const capRingGeom = track(new THREE.BoxGeometry(1.0, 0.3, 1.0));
+        const capRing = new THREE.Mesh(capRingGeom, colMat);
+        capRing.position.set(xPos, 7.5, 2.2);
+        building.add(capRing);
+      });
+
+      // Entablature (Horizontal Beam over Columns)
+      const entablatureGeom = track(new THREE.BoxGeometry(12.5, 0.8, 5.0));
+      const entMat = track(
+        new THREE.MeshStandardMaterial({
+          color: isDark ? 0x1a2642 : 0xe2e8f0,
+          roughness: 0.4,
+        })
+      );
+      const entablature = new THREE.Mesh(entablatureGeom, entMat);
+      entablature.position.set(0, 7.8, 1.0);
+      building.add(entablature);
+
+      // Triangular Pediment Roof
+      const pedimentGeom = track(new THREE.ConeGeometry(7.0, 2.6, 4));
+      const pedimentMat = track(
+        new THREE.MeshStandardMaterial({
+          color: isDark ? 0x10b981 : 0x0284c7,
+          emissive: 0x064e3b,
+          emissiveIntensity: 0.4,
+          roughness: 0.3,
+        })
+      );
+      const pediment = new THREE.Mesh(pedimentGeom, pedimentMat);
+      pediment.rotation.y = Math.PI / 4;
+      pediment.position.set(0, 9.5, 1.0);
+      pediment.scale.set(1.15, 1, 0.5);
+      building.add(pediment);
+
+      // Classical Clock / Crest on Pediment
+      const clockGeom = track(new THREE.CylinderGeometry(0.7, 0.7, 0.2, 24));
+      const clockMat = track(
+        new THREE.MeshStandardMaterial({
+          color: 0xf59e0b,
+          emissive: 0xd97706,
+          emissiveIntensity: 0.6,
+          metalness: 0.8,
+        })
+      );
+      const clock = new THREE.Mesh(clockGeom, clockMat);
+      clock.rotation.x = Math.PI / 2;
+      clock.position.set(0, 9.2, 2.4);
+      building.add(clock);
+
+      return building;
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    // Helper: Build Stylized Clock Tower
+    // ─────────────────────────────────────────────────────────────
+    const createClockTower = () => {
+      const tower = new THREE.Group();
+
+      // Shaft
+      const shaftGeom = track(new THREE.BoxGeometry(3.6, 16, 3.6));
+      const shaftMat = track(
+        new THREE.MeshStandardMaterial({
+          color: isDark ? 0x0f1c36 : 0xe0e7ff,
+          roughness: 0.5,
+        })
+      );
+      const shaft = new THREE.Mesh(shaftGeom, shaftMat);
+      shaft.position.y = 8;
+      tower.add(shaft);
+
+      // Clock faces (4 dials)
+      for (let i = 0; i < 4; i++) {
+        const dialGeom = track(new THREE.CylinderGeometry(1.1, 1.1, 0.15, 24));
+        const dialMat = track(
+          new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            emissive: 0x38bdf8,
+            emissiveIntensity: 0.5,
+          })
+        );
+        const dial = new THREE.Mesh(dialGeom, dialMat);
+        dial.rotation.x = Math.PI / 2;
+        dial.rotation.z = (i * Math.PI) / 2;
+        dial.position.set(
+          i === 0 ? 0 : i === 1 ? 1.85 : i === 2 ? 0 : -1.85,
+          13.5,
+          i === 0 ? 1.85 : i === 1 ? 0 : i === 2 ? -1.85 : 0
+        );
+        tower.add(dial);
+      }
+
+      // Pointed Spire Roof
+      const spireGeom = track(new THREE.ConeGeometry(2.4, 6.0, 4));
+      const spireMat = track(
+        new THREE.MeshStandardMaterial({
+          color: 0x10b981,
+          emissive: 0x047857,
+          emissiveIntensity: 0.4,
+          roughness: 0.2,
+        })
+      );
+      const spire = new THREE.Mesh(spireGeom, spireMat);
+      spire.rotation.y = Math.PI / 4;
+      spire.position.y = 19;
+      tower.add(spire);
+
+      return tower;
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    // Helper: Build Floating Academic Task Card
+    // ─────────────────────────────────────────────────────────────
+    const createTaskCard = (label: string, colorHex: number) => {
+      const card = new THREE.Group();
+      const baseGeom = track(new THREE.BoxGeometry(3.4, 2.2, 0.12));
+      const baseMat = track(
+        new THREE.MeshPhysicalMaterial({
+          color: isDark ? 0x081329 : 0xffffff,
+          roughness: 0.2,
+          metalness: 0.1,
+          transmission: 0.7,
+          transparent: true,
+          opacity: 0.88,
+        })
+      );
+      const base = new THREE.Mesh(baseGeom, baseMat);
+      card.add(base);
+
+      // Header Tag
+      const tagGeom = track(new THREE.BoxGeometry(1.6, 0.35, 0.16));
+      const tagMat = track(
+        new THREE.MeshStandardMaterial({
+          color: colorHex,
+          emissive: colorHex,
+          emissiveIntensity: 0.8,
+        })
+      );
+      const tag = new THREE.Mesh(tagGeom, tagMat);
+      tag.position.set(-0.7, 0.65, 0.04);
+      card.add(tag);
+
+      // Checkbox lines
+      for (let j = 0; j < 2; j++) {
+        const lineGeom = track(new THREE.BoxGeometry(2.6, 0.2, 0.15));
+        const lineMat = track(
+          new THREE.MeshStandardMaterial({
+            color: isDark ? 0x1e293b : 0xe2e8f0,
+            roughness: 0.4,
+          })
+        );
+        const line = new THREE.Mesh(lineGeom, lineMat);
+        line.position.set(0, 0.1 - j * 0.45, 0.03);
+        card.add(line);
+      }
+
+      return card;
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    // STAGE 1: HERO CENTERPIECE (Main Campus Gate & Grand Library)
     // ─────────────────────────────────────────────────────────────
     const heroStage = new THREE.Group();
-    heroStage.position.set(0, 1.8, 22);
+    heroStage.position.set(5.5, 0.5, 26);
     worldGroup.add(heroStage);
 
-    // 3D Translucent Task Card Base
-    const cardGeom = new THREE.BoxGeometry(7.2, 4.6, 0.35);
-    const cardMat = new THREE.MeshPhysicalMaterial({
-      color: 0x0f172a,
-      emissive: 0x0369a1,
-      emissiveIntensity: 0.45,
-      metalness: 0.85,
-      roughness: 0.1,
-      transmission: 0.75,
-      transparent: true,
-      opacity: 0.85,
-    });
-    const taskCardMesh = track(new THREE.Mesh(cardGeom, cardMat));
-    taskCardMesh.rotation.x = -0.15;
-    taskCardMesh.rotation.y = 0.25;
-    heroStage.add(taskCardMesh);
+    // Grand University Building
+    const heroBuilding = createUniversityBuilding();
+    heroBuilding.scale.set(0.85, 0.85, 0.85);
+    heroBuilding.position.set(0, -2.5, 0);
+    heroBuilding.rotation.y = -0.35;
+    heroStage.add(heroBuilding);
 
-    // Glowing Task Progress Bar on Card
-    const barGeom = new THREE.BoxGeometry(5.8, 0.28, 0.4);
-    const barMat = new THREE.MeshStandardMaterial({
-      color: 0x10b981,
-      emissive: 0x059669,
-      emissiveIntensity: 1.5,
-      metalness: 0.9,
-    });
-    const progressBar = track(new THREE.Mesh(barGeom, barMat));
-    progressBar.position.set(0, 1.2, 0.05);
-    taskCardMesh.add(progressBar);
+    // Large floating graduation cap above building
+    const heroCap = createGraduationCap(1.4, 0x0b1329, 0xf59e0b);
+    heroCap.position.set(-1.5, 8.2, 2.5);
+    heroCap.rotation.set(-0.25, 0.4, 0.15);
+    heroStage.add(heroCap);
 
-    // Status Checkbox Badges on Card
+    // Orbiting hardcover books around Hero
+    const orbitingBooks: { mesh: THREE.Group; radius: number; speed: number; angle: number; y: number }[] = [];
+    const bookColors = [0x10b981, 0x38bdf8, 0xf59e0b, 0xf43f5e, 0x8b5cf6];
+    for (let i = 0; i < 5; i++) {
+      const bMesh = createBook(1.6, 2.2, 0.35, bookColors[i % bookColors.length]);
+      heroStage.add(bMesh);
+      orbitingBooks.push({
+        mesh: bMesh,
+        radius: 6.8 + (i % 2) * 1.5,
+        speed: 0.008 + (i % 3) * 0.003,
+        angle: (i * Math.PI * 2) / 5,
+        y: 2.5 + Math.sin(i) * 2.5,
+      });
+    }
+
+    // Orbiting Floating Task Cards around Hero
+    const orbitingCards: { mesh: THREE.Group; radius: number; speed: number; angle: number; y: number }[] = [];
+    const cardLabels = ["Exam Prep", "Hackathon", "Internship"];
+    const cardColors = [0x10b981, 0x38bdf8, 0xf59e0b];
     for (let i = 0; i < 3; i++) {
-      const rowGeom = new THREE.BoxGeometry(5.2, 0.5, 0.38);
-      const rowMat = new THREE.MeshStandardMaterial({
-        color: 0x1e293b,
-        emissive: i === 0 ? 0x10b981 : 0x0284c7,
-        emissiveIntensity: 0.6,
-        roughness: 0.2,
+      const card = createTaskCard(cardLabels[i], cardColors[i]);
+      heroStage.add(card);
+      orbitingCards.push({
+        mesh: card,
+        radius: 8.5 + i * 1.2,
+        speed: -0.006 - i * 0.002,
+        angle: (i * Math.PI * 2) / 3 + 1.0,
+        y: 4.0 - i * 1.5,
       });
-      const rowMesh = track(new THREE.Mesh(rowGeom, rowMat));
-      rowMesh.position.set(0, 0.2 - i * 0.9, 0.04);
-      taskCardMesh.add(rowMesh);
-    }
-
-    // Outer Workflow Gyroscope Rings (Tasskly Emerald & Sky Blue)
-    const gyroRing1Geom = new THREE.TorusGeometry(6.4, 0.08, 16, 120);
-    const gyroRing1Mat = new THREE.MeshStandardMaterial({
-      color: 0x10b981,
-      emissive: 0x059669,
-      emissiveIntensity: 1.2,
-      metalness: 0.95,
-      roughness: 0.15,
-    });
-    const gyroRing1 = track(new THREE.Mesh(gyroRing1Geom, gyroRing1Mat));
-    gyroRing1.rotation.x = Math.PI / 3;
-    heroStage.add(gyroRing1);
-
-    const gyroRing2Geom = new THREE.TorusGeometry(7.4, 0.07, 16, 120);
-    const gyroRing2Mat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
-      emissive: 0x0284c7,
-      emissiveIntensity: 1.1,
-      metalness: 0.95,
-      roughness: 0.15,
-    });
-    const gyroRing2 = track(new THREE.Mesh(gyroRing2Geom, gyroRing2Mat));
-    gyroRing2.rotation.y = Math.PI / 3.5;
-    heroStage.add(gyroRing2);
-
-    // 10 Connected Workflow Nodes
-    const networkNodesGroup = new THREE.Group();
-    heroStage.add(networkNodesGroup);
-
-    const nodeCount = 10;
-    const nodeSpheres: { mesh: THREE.Mesh; angle: number; radius: number; speed: number; y: number }[] = [];
-    const nodeGeom = new THREE.SphereGeometry(0.38, 16, 16);
-    const nodeMat = new THREE.MeshStandardMaterial({
-      color: 0x34d399,
-      emissive: 0x10b981,
-      emissiveIntensity: 1.6,
-      metalness: 0.85,
-    });
-
-    for (let i = 0; i < nodeCount; i++) {
-      const nodeMesh = track(new THREE.Mesh(nodeGeom, nodeMat));
-      const angle = (i / nodeCount) * Math.PI * 2;
-      const radius = 8.0 + Math.sin(i * 1.5) * 1.8;
-      const y = Math.sin(i * 2.2) * 2.8;
-      nodeMesh.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
-      networkNodesGroup.add(nodeMesh);
-      nodeSpheres.push({ mesh: nodeMesh, angle, radius, speed: 0.005 + (i % 3) * 0.003, y });
-    }
-
-    // Dynamic Connecting Workflow Splines
-    const lineGeom = new THREE.BufferGeometry();
-    const lineMat = new THREE.LineBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.45,
-    });
-    const connectionLines = new THREE.LineSegments(lineGeom, lineMat);
-    networkNodesGroup.add(connectionLines);
-
-    // ─────────────────────────────────────────────────────────────
-    // 3. STAGE 2 (SERVICES): 6 Spatial Service Hub Cubes (Z: -12)
-    // ─────────────────────────────────────────────────────────────
-    const servicesStage = new THREE.Group();
-    servicesStage.position.set(0, 1.8, -12);
-    worldGroup.add(servicesStage);
-
-    const serviceNodes: { mesh: THREE.Mesh; angle: number; radius: number; speed: number; y: number }[] = [];
-    const serviceGeom = new THREE.BoxGeometry(1.6, 1.6, 1.6);
-    const serviceColors = [0x10b981, 0x0ea5e9, 0x38bdf8, 0x14b8a6, 0x6366f1, 0x06b6d4];
-
-    for (let i = 0; i < 6; i++) {
-      const sMat = new THREE.MeshStandardMaterial({
-        color: serviceColors[i],
-        emissive: serviceColors[i],
-        emissiveIntensity: 0.85,
-        metalness: 0.85,
-        roughness: 0.2,
-      });
-      const sMesh = track(new THREE.Mesh(serviceGeom, sMat));
-      const angle = (i / 6) * Math.PI * 2;
-      const radius = 7.5;
-      const y = Math.sin(i * 1.5) * 2.2;
-      sMesh.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
-      servicesStage.add(sMesh);
-      serviceNodes.push({ mesh: sMesh, angle, radius, speed: 0.006, y });
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 4. STAGE 3 (PROCESS): 4 Glowing Timeline Nodes & Rail (Z: -48)
+    // STAGE 2: WHO WE HELP (Campus Quad & Student Commons)
+    // ─────────────────────────────────────────────────────────────
+    const quadStage = new THREE.Group();
+    quadStage.position.set(-6.5, 0.5, 12);
+    worldGroup.add(quadStage);
+
+    // Clock tower at the Quad
+    const quadTower = createClockTower();
+    quadTower.scale.set(0.65, 0.65, 0.65);
+    quadTower.position.set(-3.5, -4.5, -6);
+    quadStage.add(quadTower);
+
+    // Floating Notebook & Pencils
+    const quadBook = createBook(2.2, 3.0, 0.5, 0x38bdf8);
+    quadBook.rotation.set(0.3, -0.4, 0.2);
+    quadBook.position.set(0, 2.0, 0);
+    quadStage.add(quadBook);
+
+    // Floating Pencil
+    const pencilGeom = track(new THREE.CylinderGeometry(0.12, 0.12, 3.2, 8));
+    const pencilMat = track(
+      new THREE.MeshStandardMaterial({
+        color: 0xf59e0b,
+        roughness: 0.3,
+      })
+    );
+    const pencil = new THREE.Mesh(pencilGeom, pencilMat);
+    pencil.position.set(2.2, 1.8, 1.2);
+    pencil.rotation.set(0.6, 0.2, 0.8);
+    quadStage.add(pencil);
+
+    // ─────────────────────────────────────────────────────────────
+    // STAGE 3: SERVICES (Central Library & Department Archives)
+    // ─────────────────────────────────────────────────────────────
+    const libraryStage = new THREE.Group();
+    libraryStage.position.set(6.0, 1.2, -24);
+    worldGroup.add(libraryStage);
+
+    // Circular Stack of Academic Tomes / Books
+    for (let k = 0; k < 6; k++) {
+      const stackBook = createBook(2.4 - k * 0.15, 3.2 - k * 0.15, 0.45, bookColors[k % bookColors.length]);
+      stackBook.rotation.x = Math.PI / 2;
+      stackBook.rotation.z = (k * Math.PI) / 6;
+      stackBook.position.set(0, -1.5 + k * 0.55, 0);
+      libraryStage.add(stackBook);
+    }
+
+    // Glowing Knowledge Aura Ring
+    const auraGeom = track(new THREE.TorusGeometry(4.2, 0.08, 16, 80));
+    const auraMat = track(
+      new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        emissive: 0x0284c7,
+        emissiveIntensity: 1.4,
+      })
+    );
+    const auraRing = new THREE.Mesh(auraGeom, auraMat);
+    auraRing.rotation.x = Math.PI / 2.5;
+    auraRing.position.y = 1.0;
+    libraryStage.add(auraRing);
+
+    // ─────────────────────────────────────────────────────────────
+    // STAGE 4: PROCESS (Academic Path Milestone Archways)
     // ─────────────────────────────────────────────────────────────
     const processStage = new THREE.Group();
-    processStage.position.set(0, 1.8, -48);
+    processStage.position.set(-4.5, 0.8, -65);
     worldGroup.add(processStage);
 
-    const railGeom = new THREE.CylinderGeometry(0.12, 0.12, 26, 16);
-    const railMat = new THREE.MeshStandardMaterial({
-      color: 0x10b981,
-      emissive: 0x047857,
-      emissiveIntensity: 1.2,
-      metalness: 0.9,
-    });
-    const rail = track(new THREE.Mesh(railGeom, railMat));
-    rail.rotation.z = Math.PI / 2;
-    processStage.add(rail);
+    // 4 Milestone Landmarks along the process road
+    const milestones: THREE.Group[] = [];
+    const milestoneColors = [0x10b981, 0x38bdf8, 0xf59e0b, 0xec4899];
+    for (let m = 0; m < 4; m++) {
+      const mGroup = new THREE.Group();
+      mGroup.position.set(m % 2 === 0 ? -3.0 : 3.0, 0, -m * 8);
 
-    const stepColors = [0x38bdf8, 0x10b981, 0x0ea5e9, 0x34d399];
-    const stepNodes: THREE.Mesh[] = [];
+      // Milestone Column
+      const mColGeom = track(new THREE.CylinderGeometry(0.5, 0.6, 4.5, 16));
+      const mColMat = track(
+        new THREE.MeshStandardMaterial({
+          color: isDark ? 0x111c38 : 0xe0e7ff,
+          roughness: 0.4,
+        })
+      );
+      const mCol = new THREE.Mesh(mColGeom, mColMat);
+      mGroup.add(mCol);
 
-    for (let i = 0; i < 4; i++) {
-      const x = -10.5 + i * 7;
-      const sNodeGeom = new THREE.TorusGeometry(1.4, 0.22, 16, 32);
-      const sNodeMat = new THREE.MeshStandardMaterial({
-        color: stepColors[i],
-        emissive: stepColors[i],
-        emissiveIntensity: 1.3,
-        metalness: 0.85,
-      });
-      const sNode = track(new THREE.Mesh(sNodeGeom, sNodeMat));
-      sNode.position.set(x, 0, 0);
-      processStage.add(sNode);
-      stepNodes.push(sNode);
+      // Glowing Diamond Lantern on top
+      const diamondGeom = track(new THREE.OctahedronGeometry(0.85, 0));
+      const diamondMat = track(
+        new THREE.MeshStandardMaterial({
+          color: milestoneColors[m],
+          emissive: milestoneColors[m],
+          emissiveIntensity: 1.2,
+          roughness: 0.15,
+        })
+      );
+      const diamond = new THREE.Mesh(diamondGeom, diamondMat);
+      diamond.position.y = 3.2;
+      mGroup.add(diamond);
 
-      const coreDotGeom = new THREE.SphereGeometry(0.55, 16, 16);
-      const coreDotMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const coreDot = track(new THREE.Mesh(coreDotGeom, coreDotMat));
-      coreDot.position.set(x, 0, 0);
-      processStage.add(coreDot);
+      milestones.push(mGroup);
+      processStage.add(mGroup);
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 5. STAGE 4 (RESULTS): 3D Metric Hologram Pillars (Z: -90)
+    // STAGE 5: RESULTS (Research Lab & Project Data Pillars)
     // ─────────────────────────────────────────────────────────────
-    const resultsStage = new THREE.Group();
-    resultsStage.position.set(0, 1.5, -90);
-    worldGroup.add(resultsStage);
+    const labStage = new THREE.Group();
+    labStage.position.set(5.5, 0.8, -112);
+    worldGroup.add(labStage);
 
-    const metricPillars: THREE.Mesh[] = [];
-    const metricHeights = [5.5, 7.8, 6.4];
+    // 3 Metric Trophy Pillars with Floating Golden Laurels & Badges
+    for (let p = 0; p < 3; p++) {
+      const pGroup = new THREE.Group();
+      pGroup.position.set((p - 1) * 3.8, 0, 0);
 
-    for (let i = 0; i < 3; i++) {
-      const x = (i - 1) * 6.5;
-      const h = metricHeights[i];
-      const pGeom = new THREE.CylinderGeometry(1.2, 1.2, h, 24);
-      const pMat = new THREE.MeshStandardMaterial({
-        color: 0x0f172a,
-        emissive: i === 1 ? 0x10b981 : 0x0284c7,
-        emissiveIntensity: 0.9,
-        metalness: 0.9,
-        roughness: 0.2,
-        transparent: true,
-        opacity: 0.85,
-      });
-      const pMesh = track(new THREE.Mesh(pGeom, pMat));
-      pMesh.position.set(x, h / 2 - 2, 0);
-      resultsStage.add(pMesh);
-      metricPillars.push(pMesh);
+      const pillarGeom = track(new THREE.CylinderGeometry(1.2, 1.4, 3.5 + p * 1.0, 16));
+      const pillarMat = track(
+        new THREE.MeshStandardMaterial({
+          color: isDark ? 0x0f172a : 0xf1f5f9,
+          roughness: 0.3,
+          metalness: 0.3,
+        })
+      );
+      const pillar = new THREE.Mesh(pillarGeom, pillarMat);
+      pGroup.add(pillar);
 
-      // Top glowing indicator ring
-      const ringGeom = new THREE.TorusGeometry(1.5, 0.12, 16, 32);
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-      const ring = track(new THREE.Mesh(ringGeom, ringMat));
-      ring.position.set(x, h - 2, 0);
-      ring.rotation.x = Math.PI / 2;
-      resultsStage.add(ring);
+      // Floating Achievement Sphere / Star
+      const starGeom = track(new THREE.DodecahedronGeometry(0.95));
+      const starMat = track(
+        new THREE.MeshStandardMaterial({
+          color: p === 0 ? 0x10b981 : p === 1 ? 0x38bdf8 : 0xf59e0b,
+          emissive: p === 0 ? 0x059669 : p === 1 ? 0x0284c7 : 0xd97706,
+          emissiveIntensity: 1.3,
+          metalness: 0.9,
+          roughness: 0.1,
+        })
+      );
+      const star = new THREE.Mesh(starGeom, starMat);
+      star.position.y = 2.8 + p * 0.5;
+      pGroup.add(star);
+
+      labStage.add(pGroup);
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 6. STAGE 5 (PRICING): 3 Engagement Pedestals (Z: -140)
+    // STAGE 6: ENGAGEMENT PLANS (Innovation Center Pedestals)
     // ─────────────────────────────────────────────────────────────
-    const pricingStage = new THREE.Group();
-    pricingStage.position.set(0, 1.5, -140);
-    worldGroup.add(pricingStage);
+    const plansStage = new THREE.Group();
+    plansStage.position.set(-4.5, 0.5, -162);
+    worldGroup.add(plansStage);
 
-    for (let i = 0; i < 3; i++) {
-      const x = (i - 1) * 8.0;
-      const pedGeom = new THREE.CylinderGeometry(2.4, 2.8, 1.2, 32);
-      const pedMat = new THREE.MeshStandardMaterial({
-        color: 0x0f172a,
-        emissive: i === 1 ? 0x10b981 : 0x0369a1,
+    // 3 Tier Pedestals with Floating Laurels
+    for (let t = 0; t < 3; t++) {
+      const isMiddle = t === 1;
+      const pedestalGeom = track(new THREE.BoxGeometry(3.0, isMiddle ? 3.6 : 2.6, 3.0));
+      const pedestalMat = track(
+        new THREE.MeshStandardMaterial({
+          color: isMiddle ? (isDark ? 0x064e3b : 0xd1fae5) : (isDark ? 0x0b1329 : 0xf1f5f9),
+          roughness: 0.4,
+        })
+      );
+      const ped = new THREE.Mesh(pedestalGeom, pedestalMat);
+      ped.position.set((t - 1) * 4.2, 0, 0);
+      plansStage.add(ped);
+
+      if (isMiddle) {
+        // Floating Crown / Crest above Most Popular Plan
+        const crownCap = createGraduationCap(0.9, 0x10b981, 0xf59e0b);
+        crownCap.position.set(0, 3.2, 0);
+        plansStage.add(crownCap);
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // STAGE 7: TESTIMONIALS (Alumni Amphitheater Ring)
+    // ─────────────────────────────────────────────────────────────
+    const storiesStage = new THREE.Group();
+    storiesStage.position.set(0, 1.0, -212);
+    worldGroup.add(storiesStage);
+
+    // Rotating Ring of floating academic cards & cap icons
+    const ringCardsCount = 6;
+    const ringRadius = 7.2;
+    for (let r = 0; r < ringCardsCount; r++) {
+      const ringAngle = (r * Math.PI * 2) / ringCardsCount;
+      const ringCard = createTaskCard(`Story ${r + 1}`, bookColors[r % bookColors.length]);
+      ringCard.position.set(Math.cos(ringAngle) * ringRadius, Math.sin(r) * 0.8, Math.sin(ringAngle) * ringRadius);
+      ringCard.rotation.y = -ringAngle + Math.PI / 2;
+      storiesStage.add(ringCard);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // STAGE 8: PARTNER COLLEGES BOULEVARD
+    // ─────────────────────────────────────────────────────────────
+    const partnersStage = new THREE.Group();
+    partnersStage.position.set(0, 0, -256);
+    worldGroup.add(partnersStage);
+
+    // Boulevard Avenue Gateway Pillars
+    for (let b = 0; b < 2; b++) {
+      const bSide = b === 0 ? -7.0 : 7.0;
+      const pTower = createClockTower();
+      pTower.scale.set(0.5, 0.5, 0.5);
+      pTower.position.set(bSide, -4.0, 0);
+      partnersStage.add(pTower);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // STAGE 9: GRADUATION STAGE & CONVOCATION HALL (Final CTA)
+    // ─────────────────────────────────────────────────────────────
+    const gradStage = new THREE.Group();
+    gradStage.position.set(0, 1.2, -300);
+    worldGroup.add(gradStage);
+
+    // Monumental Convocation Archway
+    const archPortalGeom = track(new THREE.TorusGeometry(8.5, 0.45, 16, 64));
+    const archPortalMat = track(
+      new THREE.MeshStandardMaterial({
+        color: 0x10b981,
+        emissive: 0x059669,
+        emissiveIntensity: 1.4,
+        roughness: 0.1,
+      })
+    );
+    const archPortal = new THREE.Mesh(archPortalGeom, archPortalMat);
+    archPortal.rotation.x = Math.PI / 2;
+    archPortal.position.y = 1.0;
+    gradStage.add(archPortal);
+
+    // Grand Floating Graduation Cap (Centerpiece behind form)
+    const grandCap = createGraduationCap(2.8, 0x0b1329, 0xf59e0b);
+    grandCap.position.set(0, 4.5, -4.0);
+    grandCap.rotation.set(-0.2, 0.35, 0.1);
+    gradStage.add(grandCap);
+
+    // Diploma Scroll with Gold Ribbon
+    const scrollGeom = track(new THREE.CylinderGeometry(0.35, 0.35, 3.2, 16));
+    const scrollMat = track(
+      new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        roughness: 0.6,
+      })
+    );
+    const diplomaScroll = new THREE.Mesh(scrollGeom, scrollMat);
+    diplomaScroll.rotation.z = Math.PI / 3;
+    diplomaScroll.position.set(3.2, 2.0, -1.0);
+    gradStage.add(diplomaScroll);
+
+    // Gold ribbon ring on diploma
+    const ribbonGeom = track(new THREE.CylinderGeometry(0.4, 0.4, 0.4, 16));
+    const ribbonMat = track(
+      new THREE.MeshStandardMaterial({
+        color: 0xf59e0b,
+        emissive: 0xd97706,
         emissiveIntensity: 0.8,
         metalness: 0.9,
-        roughness: 0.2,
-      });
-      const ped = track(new THREE.Mesh(pedGeom, pedMat));
-      ped.position.set(x, -0.6, 0);
-      pricingStage.add(ped);
-
-      const symbolGeom = new THREE.OctahedronGeometry(1.1, 0);
-      const symbolMat = new THREE.MeshStandardMaterial({
-        color: i === 1 ? 0xfbbf24 : 0x38bdf8,
-        emissive: i === 1 ? 0xd97706 : 0x0284c7,
-        emissiveIntensity: 1.2,
-        metalness: 0.9,
-      });
-      const symbol = track(new THREE.Mesh(symbolGeom, symbolMat));
-      symbol.position.set(x, 1.8, 0);
-      pricingStage.add(symbol);
-    }
+      })
+    );
+    const ribbon = new THREE.Mesh(ribbonGeom, ribbonMat);
+    diplomaScroll.add(ribbon);
 
     // ─────────────────────────────────────────────────────────────
-    // 7. STAGE 6 (TESTIMONIALS): Rotating Ring of Cards (Z: -185)
+    // Atmospheric Sparkles & Academic Starfield Particles
     // ─────────────────────────────────────────────────────────────
-    const testimonialsStage = new THREE.Group();
-    testimonialsStage.position.set(0, 1.8, -185);
-    worldGroup.add(testimonialsStage);
-
-    const testimonialCards: THREE.Mesh[] = [];
-    const tCardGeom = new THREE.BoxGeometry(3.6, 2.4, 0.15);
-
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2;
-      const radius = 8.5;
-      const tCardMat = new THREE.MeshStandardMaterial({
-        color: 0x0f172a,
-        emissive: 0x10b981,
-        emissiveIntensity: 0.5,
-        metalness: 0.85,
-        roughness: 0.2,
-        transparent: true,
-        opacity: 0.8,
-      });
-      const tCard = track(new THREE.Mesh(tCardGeom, tCardMat));
-      tCard.position.set(Math.cos(angle) * radius, Math.sin(i * 1.2) * 1.2, Math.sin(angle) * radius);
-      tCard.rotation.y = -angle + Math.PI / 2;
-      testimonialsStage.add(tCard);
-      testimonialCards.push(tCard);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // 8. STAGE 7 (FINAL CTA): Grand Warp Archway (Z: -230)
-    // ─────────────────────────────────────────────────────────────
-    const gatewayStage = new THREE.Group();
-    gatewayStage.position.set(0, 2, -230);
-    worldGroup.add(gatewayStage);
-
-    const colGeom = new THREE.CylinderGeometry(1.1, 1.3, 24, 24);
-    const colMat = new THREE.MeshStandardMaterial({
-      color: 0x0284c7,
-      emissive: 0x064e3b,
-      emissiveIntensity: 0.6,
-      metalness: 0.85,
-      roughness: 0.25,
-      wireframe: true,
-    });
-    const leftCol = track(new THREE.Mesh(colGeom, colMat));
-    leftCol.position.set(-14, 3, 0);
-    gatewayStage.add(leftCol);
-
-    const rightCol = track(new THREE.Mesh(colGeom, colMat));
-    rightCol.position.set(14, 3, 0);
-    gatewayStage.add(rightCol);
-
-    const archBeamGeom = new THREE.BoxGeometry(30, 2.6, 3.0);
-    const archBeamMat = new THREE.MeshStandardMaterial({
-      color: 0x10b981,
-      emissive: 0x047857,
-      emissiveIntensity: 0.8,
-      metalness: 0.9,
-    });
-    const archBeam = track(new THREE.Mesh(archBeamGeom, archBeamMat));
-    archBeam.position.set(0, 15, 0);
-    gatewayStage.add(archBeam);
-
-    const warpRingGeom = new THREE.TorusGeometry(12, 0.26, 24, 120);
-    const warpRingMat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
-      emissive: 0x10b981,
-      emissiveIntensity: 1.5,
-      metalness: 0.9,
-    });
-    const warpRing = track(new THREE.Mesh(warpRingGeom, warpRingMat));
-    warpRing.position.y = 3;
-    gatewayStage.add(warpRing);
-
-    // ─────────────────────────────────────────────────────────────
-    // 9. Volumetric Star Particle Field (2,200 Stars)
-    // ─────────────────────────────────────────────────────────────
-    const particleCount = 2200;
-    const particleGeom = new THREE.BufferGeometry();
+    const particleCount = 2000;
+    const particleGeom = track(new THREE.BufferGeometry());
     const particlePositions = new Float32Array(particleCount * 3);
     const particleColors = new Float32Array(particleCount * 3);
 
-    const pColor1 = new THREE.Color(0x10b981); // Emerald
-    const pColor2 = new THREE.Color(0x38bdf8); // Sky Blue
-    const pColor3 = new THREE.Color(0x14b8a6); // Teal
-    const pColor4 = new THREE.Color(0x0284c7); // Deep Blue
+    const cEmerald = new THREE.Color(0x10b981);
+    const cSky = new THREE.Color(0x38bdf8);
+    const cAmber = new THREE.Color(0xf59e0b);
 
-    for (let i = 0; i < particleCount * 3; i += 3) {
-      particlePositions[i] = (Math.random() - 0.5) * 95;
-      particlePositions[i + 1] = (Math.random() - 0.5) * 70 + 4;
-      particlePositions[i + 2] = (Math.random() - 0.5) * 280 - 80;
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * 60;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 35;
+      particlePositions[i * 3 + 2] = 50 - Math.random() * 370;
 
-      const r = Math.random();
-      const col = r < 0.35 ? pColor1 : r < 0.65 ? pColor2 : r < 0.85 ? pColor3 : pColor4;
-      particleColors[i] = col.r;
-      particleColors[i + 1] = col.g;
-      particleColors[i + 2] = col.b;
+      const pickColor = Math.random() > 0.6 ? cEmerald : Math.random() > 0.3 ? cSky : cAmber;
+      particleColors[i * 3] = pickColor.r;
+      particleColors[i * 3 + 1] = pickColor.g;
+      particleColors[i * 3 + 2] = pickColor.b;
     }
 
     particleGeom.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
@@ -437,37 +785,25 @@ export const Scene: React.FC<SceneProps> = ({
 
     const particleMat = track(
       new THREE.PointsMaterial({
-        size: 0.24,
+        size: 0.28,
         vertexColors: true,
         transparent: true,
-        opacity: 0.85,
-        blending: THREE.AdditiveBlending,
+        opacity: isDark ? 0.75 : 0.55,
       })
     );
     const particles = new THREE.Points(particleGeom, particleMat);
-    scene.add(particles);
+    worldGroup.add(particles);
+
+    if (onLoaded) onLoaded();
 
     // ─────────────────────────────────────────────────────────────
-    // 10. Lights Tracking Camera
-    // ─────────────────────────────────────────────────────────────
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
-    scene.add(ambientLight);
-
-    const camLightEmerald = new THREE.PointLight(0x10b981, 5.0, 48);
-    scene.add(camLightEmerald);
-
-    const camLightSky = new THREE.PointLight(0x38bdf8, 4.5, 45);
-    scene.add(camLightSky);
-
-    // ─────────────────────────────────────────────────────────────
-    // 11. Mouse & Resize Handlers
+    // Mouse Parallax & Window Resize Listeners
     // ─────────────────────────────────────────────────────────────
     const handlePointerMove = (e: MouseEvent) => {
-      const normX = (e.clientX / window.innerWidth - 0.5) * 2;
-      const normY = (e.clientY / window.innerHeight - 0.5) * 2;
+      const normX = (e.clientX / window.innerWidth) * 2 - 1;
+      const normY = (e.clientY / window.innerHeight) * 2 - 1;
       cameraRig.updateMouse(normX, normY);
     };
-    window.addEventListener("mousemove", handlePointerMove);
 
     const handleResize = () => {
       const w = window.innerWidth;
@@ -476,89 +812,88 @@ export const Scene: React.FC<SceneProps> = ({
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
+
+    window.addEventListener("mousemove", handlePointerMove, { passive: true });
     window.addEventListener("resize", handleResize);
 
-    // Signal loaded
-    if (onLoaded) {
-      setTimeout(() => onLoaded(), 150);
-    }
-
     // ─────────────────────────────────────────────────────────────
-    // 12. Main 60fps Animation Loop
+    // Continuous Render Loop
     // ─────────────────────────────────────────────────────────────
     let animId: number;
-    const clock = new THREE.Clock();
+    const clockTimer = new THREE.Clock();
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      const elapsedTime = clock.getElapsedTime();
+      const elapsedTime = clockTimer.getElapsedTime();
 
-      // Update camera position along 3D spline
+      // Update camera flight
       cameraRig.setProgress(scrollRef.current);
       cameraRig.update();
 
       const currentProgress = cameraRig.getProgress();
 
       // Lights follow camera position
-      camLightEmerald.position.set(camera.position.x + 6, camera.position.y + 4, camera.position.z - 8);
-      camLightSky.position.set(camera.position.x - 6, camera.position.y - 3, camera.position.z - 12);
+      lightEmerald.position.set(camera.position.x + 5, camera.position.y + 4, camera.position.z - 6);
+      lightSky.position.set(camera.position.x - 5, camera.position.y - 3, camera.position.z - 10);
+      lightAmber.position.set(camera.position.x + 2, camera.position.y + 6, camera.position.z - 14);
 
-      // Hero Task Card & Gyroscope animations
-      taskCardMesh.rotation.y = 0.25 + Math.sin(elapsedTime * 0.8) * 0.12;
-      taskCardMesh.position.y = Math.sin(elapsedTime * 1.4) * 0.25;
-      gyroRing1.rotation.z = elapsedTime * 0.5;
-      gyroRing2.rotation.x = -elapsedTime * 0.45;
+      // Hero animations
+      heroCap.rotation.y = 0.4 + Math.sin(elapsedTime * 0.8) * 0.15;
+      heroCap.position.y = 8.2 + Math.sin(elapsedTime * 1.2) * 0.35;
 
-      // Hero Network Nodes & Spline Connections
-      const linePositions: number[] = [];
-      nodeSpheres.forEach((node, i) => {
-        node.angle += node.speed;
-        node.mesh.position.x = Math.cos(node.angle) * node.radius;
-        node.mesh.position.z = Math.sin(node.angle) * node.radius;
-        node.mesh.position.y = node.y + Math.sin(elapsedTime * 2 + i) * 0.4;
-
-        linePositions.push(0, 0, 0);
-        linePositions.push(node.mesh.position.x, node.mesh.position.y, node.mesh.position.z);
-
-        const nextNode = nodeSpheres[(i + 1) % nodeSpheres.length];
-        linePositions.push(node.mesh.position.x, node.mesh.position.y, node.mesh.position.z);
-        linePositions.push(nextNode.mesh.position.x, nextNode.mesh.position.y, nextNode.mesh.position.z);
-      });
-      lineGeom.setAttribute("position", new THREE.Float32BufferAttribute(linePositions, 3));
-
-      // Services Cubes rotation
-      serviceNodes.forEach((s) => {
-        s.angle += s.speed;
-        s.mesh.position.x = Math.cos(s.angle) * s.radius;
-        s.mesh.position.z = Math.sin(s.angle) * s.radius;
-        s.mesh.rotation.x += 0.02;
-        s.mesh.rotation.y += 0.025;
+      orbitingBooks.forEach((b) => {
+        b.angle += b.speed;
+        b.mesh.position.x = Math.cos(b.angle) * b.radius;
+        b.mesh.position.z = Math.sin(b.angle) * b.radius;
+        b.mesh.position.y = b.y + Math.sin(elapsedTime * 1.5 + b.angle) * 0.4;
+        b.mesh.rotation.y = -b.angle + Math.PI / 2;
+        b.mesh.rotation.x = Math.sin(elapsedTime + b.angle) * 0.2;
       });
 
-      // Process Timeline Nodes
-      stepNodes.forEach((sNode, i) => {
-        sNode.rotation.y = elapsedTime * 0.8 + i;
+      orbitingCards.forEach((c) => {
+        c.angle += c.speed;
+        c.mesh.position.x = Math.cos(c.angle) * c.radius;
+        c.mesh.position.z = Math.sin(c.angle) * c.radius;
+        c.mesh.position.y = c.y + Math.sin(elapsedTime * 1.8 + c.angle) * 0.3;
+        c.mesh.rotation.y = -c.angle;
       });
 
-      // Testimonial Ring rotation
-      testimonialsStage.rotation.y = elapsedTime * 0.25;
+      // Quad stage animations
+      quadBook.rotation.y = -0.4 + Math.sin(elapsedTime * 0.9) * 0.2;
+      pencil.rotation.z = 0.8 + Math.sin(elapsedTime * 1.4) * 0.25;
 
-      // Warp Archway
-      warpRing.rotation.z = elapsedTime * 0.5;
+      // Library stack animation
+      auraRing.rotation.z = elapsedTime * 0.4;
 
-      // Particle Stream
+      // Process milestones pulsation
+      milestones.forEach((m, idx) => {
+        const d = m.children[1];
+        if (d) {
+          d.rotation.y = elapsedTime * 1.2 + idx;
+          d.rotation.x = elapsedTime * 0.6 + idx;
+        }
+      });
+
+      // Stories ring rotation
+      storiesStage.rotation.y = elapsedTime * 0.22;
+
+      // Final Convocation Arch & Cap
+      archPortal.rotation.z = elapsedTime * 0.35;
+      grandCap.rotation.y = 0.35 + Math.sin(elapsedTime * 0.7) * 0.18;
+      diplomaScroll.rotation.y = elapsedTime * 0.8;
+
+      // Particle stream forward illusion
       const positions = particleGeom.attributes.position.array as Float32Array;
       for (let i = 2; i < particleCount * 3; i += 3) {
-        positions[i] += 0.16 + currentProgress * 0.4;
+        positions[i] += 0.14 + currentProgress * 0.3;
         if (positions[i] > camera.position.z + 10) {
-          positions[i] = camera.position.z - 220;
+          positions[i] = camera.position.z - 280;
         }
       }
       particleGeom.attributes.position.needsUpdate = true;
 
-      // Endless Grid Illusion
-      gridHelper.position.z = (camera.position.z % 4) - 2;
-      ceilingGrid.position.z = (camera.position.z % 4) - 2;
+      // Endless Ground Grid Illusion
+      groundGrid.position.z = (camera.position.z % 5) - 2.5;
 
       renderer.render(scene, camera);
     };
@@ -586,7 +921,7 @@ export const Scene: React.FC<SceneProps> = ({
       }
       renderer.dispose();
     };
-  }, []);
+  }, [isDark]);
 
   return <div ref={mountRef} className={className} />;
 };

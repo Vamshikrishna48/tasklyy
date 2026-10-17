@@ -13,8 +13,9 @@ import {
   Building,
   Mail,
   User,
-  Users,
+  GraduationCap,
   MessageSquare,
+  School,
   Clock,
   ShieldCheck,
   Video,
@@ -24,54 +25,56 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-export interface FormData {
+export interface CampusFormData {
   name: string;
   email: string;
-  company: string;
-  teamSize: string;
-  helpWith: string;
-  preferredDate: string;
+  role: string; // Student / Club / Professor / College admin
+  collegeName: string;
+  yearOrDept: string;
+  message: string;
 }
 
 interface FormErrors {
   name?: string;
   email?: string;
-  company?: string;
-  teamSize?: string;
-  helpWith?: string;
-  preferredDate?: string;
+  role?: string;
+  collegeName?: string;
+  yearOrDept?: string;
+  message?: string;
 }
 
 interface ConfirmedBooking {
   id: string;
   name: string;
   email: string;
-  company: string;
-  teamSize: string;
-  helpWith: string;
-  preferredDate: string;
+  role: string;
+  collegeName: string;
+  yearOrDept: string;
+  message: string;
   meetingLink: string;
   timestamp: string;
 }
 
 interface ConsultationFormProps {
-  initialServiceOrTier?: string;
+  initialPlanOrService?: string;
   onSuccess?: () => void;
+  isDark?: boolean;
 }
 
 export const ConsultationForm: React.FC<ConsultationFormProps> = ({
-  initialServiceOrTier = "",
+  initialPlanOrService = "",
   onSuccess,
+  isDark = true,
 }) => {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<CampusFormData>({
     name: "",
     email: "",
-    company: "",
-    teamSize: "10-50",
-    helpWith: initialServiceOrTier
-      ? `Interested in ${initialServiceOrTier}. Need guidance on our workflow architecture.`
+    role: "Student",
+    collegeName: "",
+    yearOrDept: "",
+    message: initialPlanOrService
+      ? `Interested in ${initialPlanOrService}. We would love guidance on our academic setup.`
       : "",
-    preferredDate: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -79,15 +82,14 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<ConfirmedBooking | null>(null);
 
-  // Update initial service or tier if prop changes
   React.useEffect(() => {
-    if (initialServiceOrTier) {
+    if (initialPlanOrService) {
       setFormData((prev) => ({
         ...prev,
-        helpWith: `Interested in ${initialServiceOrTier}. Need guidance on our workflow architecture.`,
+        message: `Interested in ${initialPlanOrService}. We would love guidance on our academic setup.`,
       }));
     }
-  }, [initialServiceOrTier]);
+  }, [initialPlanOrService]);
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -97,27 +99,27 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = "Work email is required";
+      newErrors.email = "Email address is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid work email address";
+      newErrors.email = "Please enter a valid email address";
     }
 
-    if (!formData.company.trim()) {
-      newErrors.company = "Company or organization is required";
+    if (!formData.role) {
+      newErrors.role = "Please select your role";
     }
 
-    if (!formData.teamSize) {
-      newErrors.teamSize = "Please select your team size";
+    if (!formData.collegeName.trim()) {
+      newErrors.collegeName = "College or university name is required";
     }
 
-    if (!formData.helpWith.trim()) {
-      newErrors.helpWith = "Please describe what your team needs help with";
-    } else if (formData.helpWith.trim().length < 10) {
-      newErrors.helpWith = "Please provide a bit more detail (min 10 characters)";
+    if (!formData.yearOrDept.trim()) {
+      newErrors.yearOrDept = "Year of study or department is required";
     }
 
-    if (!formData.preferredDate) {
-      newErrors.preferredDate = "Please choose a preferred consultation date";
+    if (!formData.message.trim()) {
+      newErrors.message = "Please describe what you need help with";
+    } else if (formData.message.trim().length < 8) {
+      newErrors.message = "Please provide a bit more detail (min 8 characters)";
     }
 
     setErrors(newErrors);
@@ -128,13 +130,13 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
     e.preventDefault();
 
     if (!validate()) {
-      toast.error("Please fill in all required fields accurately.");
+      toast.error("Please fill in all required campus fields.");
       return;
     }
 
     setIsSubmitting(true);
 
-    const bookingId = `TSK-REQ-${Math.floor(100000 + Math.random() * 900000)}`;
+    const bookingId = `CAMPUS-${Math.floor(100000 + Math.random() * 900000)}`;
     const meetingLink = `https://meet.google.com/tsk-cns-${Math.random().toString(36).substring(2, 7)}`;
     const newBooking: ConfirmedBooking = {
       id: bookingId,
@@ -144,61 +146,48 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
     };
 
     try {
-      // 1. Attempt POST to backend endpoint /api/consultancy-requests
-      let postSucceeded = false;
+      // 1. Post to backend endpoint
       try {
-        const response = await fetch("/api/consultancy-requests", {
+        await fetch("/api/consultancy-requests", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newBooking),
         });
-        if (response.ok) {
-          postSucceeded = true;
-        }
-      } catch {
-        // Fallback gracefully
-      }
+      } catch {}
 
-      // 2. Fallback to Supabase table if available
+      // 2. Fallback to Supabase
       try {
         await supabase.from("consultancy_requests").insert([
           {
             reference_id: bookingId,
             name: formData.name,
             email: formData.email,
-            company: formData.company,
-            team_size: formData.teamSize,
-            help_with: formData.helpWith,
-            preferred_date: formData.preferredDate,
+            company: formData.collegeName,
+            team_size: formData.role,
+            help_with: `${formData.yearOrDept} | ${formData.message}`,
+            preferred_date: new Date().toISOString().split("T")[0],
             meeting_link: meetingLink,
             status: "pending_confirmation",
           },
         ]);
-      } catch {
-        // If table doesn't exist, proceed to local persistence
-      }
+      } catch {}
 
-      // 3. Always store in localStorage as guaranteed persistence
+      // 3. LocalStorage persistence
       const savedRequests = JSON.parse(
-        localStorage.getItem("tasskly_consultancy_submissions") || "[]"
+        localStorage.getItem("tasskly_campus_submissions") || "[]"
       );
       savedRequests.unshift(newBooking);
-      localStorage.setItem("tasskly_consultancy_submissions", JSON.stringify(savedRequests));
+      localStorage.setItem("tasskly_campus_submissions", JSON.stringify(savedRequests));
 
-      // Simulate realistic API delay
-      await new Promise((r) => setTimeout(r, 650));
+      await new Promise((r) => setTimeout(r, 600));
 
       setConfirmedBooking(newBooking);
       setSubmissionSuccess(true);
-      toast.success("Consultation Request Confirmed! Our lead architect will reach out shortly.");
+      toast.success("Consultation Request Sent! Our student advisor will reach out within 24 hours.");
 
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (err: any) {
-      toast.error("An unexpected error occurred. Please try again or email support@tasskly.com");
+      if (onSuccess) onSuccess();
+    } catch {
+      toast.error("An error occurred. Please try again or email support@tasskly.com");
     } finally {
       setIsSubmitting(false);
     }
@@ -208,10 +197,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
     setFormData({
       name: "",
       email: "",
-      company: "",
-      teamSize: "10-50",
-      helpWith: "",
-      preferredDate: "",
+      role: "Student",
+      collegeName: "",
+      yearOrDept: "",
+      message: "",
     });
     setErrors({});
     setSubmissionSuccess(false);
@@ -219,28 +208,29 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
+    <div className="w-full">
       <AnimatePresence mode="wait">
         {submissionSuccess && confirmedBooking ? (
-          /* SUCCESS STATE CONFIRMATION PASS */
+          /* SUCCESS PASS */
           <motion.div
             key="success-card"
             initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -15 }}
-            className="p-8 sm:p-10 rounded-3xl bg-[#040e24]/95 backdrop-blur-2xl border-2 border-emerald-400/60 shadow-[0_0_50px_rgba(16,185,129,0.3)] space-y-8 text-left"
+            className={`p-8 sm:p-10 rounded-3xl border-2 border-emerald-400 shadow-[0_0_50px_rgba(16,185,129,0.3)] space-y-6 text-left ${
+              isDark ? "bg-[#040e24]/95 backdrop-blur-2xl" : "bg-white/95 shadow-xl"
+            }`}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-6 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-700/40">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-400/40">
                   <CheckCircle2 className="h-7 w-7" />
                 </div>
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white">
-                    Consultation Confirmed!
+                  <h3 className={`text-xl sm:text-2xl font-black ${isDark ? "text-white" : "text-slate-900"}`}>
+                    Consultation Request Confirmed!
                   </h3>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-slate-400">
                     Ref ID: <span className="font-mono text-emerald-400 font-bold">{confirmedBooking.id}</span>
                   </p>
                 </div>
@@ -251,29 +241,23 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               </span>
             </div>
 
-            {/* Booking Details Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-teal-500/20 space-y-1">
-                <p className="text-slate-400 font-mono uppercase text-[10px]">Client & Company</p>
-                <p className="text-white font-bold text-sm">{confirmedBooking.name}</p>
-                <p className="text-emerald-400">{confirmedBooking.company} • {confirmedBooking.teamSize} members</p>
+              <div className="p-3.5 rounded-xl bg-slate-900/60 border border-teal-500/20 space-y-1">
+                <p className="text-slate-400 font-mono uppercase text-[10px]">Contact & Role</p>
+                <p className="text-white font-bold text-sm">{confirmedBooking.name} ({confirmedBooking.role})</p>
+                <p className="text-emerald-400">{confirmedBooking.email}</p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-950/60 border border-teal-500/20 space-y-1">
-                <p className="text-slate-400 font-mono uppercase text-[10px]">Preferred Window</p>
-                <p className="text-white font-bold text-sm">{confirmedBooking.preferredDate}</p>
-                <p className="text-slate-300">45-min Zoom / Google Meet Diagnostic</p>
+              <div className="p-3.5 rounded-xl bg-slate-900/60 border border-teal-500/20 space-y-1">
+                <p className="text-slate-400 font-mono uppercase text-[10px]">Campus & Department</p>
+                <p className="text-white font-bold text-sm">{confirmedBooking.collegeName}</p>
+                <p className="text-slate-300">{confirmedBooking.yearOrDept}</p>
               </div>
 
-              <div className="col-span-1 sm:col-span-2 p-4 rounded-xl bg-slate-950/60 border border-teal-500/20 space-y-1">
-                <p className="text-slate-400 font-mono uppercase text-[10px]">Scope of Assistance</p>
-                <p className="text-slate-200 text-xs leading-relaxed">{confirmedBooking.helpWith}</p>
-              </div>
-
-              <div className="col-span-1 sm:col-span-2 p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-2">
+              <div className="col-span-1 sm:col-span-2 p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-2">
                 <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
                   <Video className="h-4 w-4" />
-                  <span>Your Dedicated Meeting Link</span>
+                  <span>Google Meet Room Generated</span>
                 </div>
                 <div className="flex items-center justify-between gap-3 bg-slate-950/80 p-2.5 rounded-lg border border-emerald-500/30 font-mono text-xs">
                   <span className="text-slate-300 truncate">{confirmedBooking.meetingLink}</span>
@@ -286,14 +270,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     Open Link
                   </a>
                 </div>
-                <p className="text-[11px] text-slate-400">
-                  A calendar invite and calendar ICS attachment have also been prepared for {confirmedBooking.email}.
-                </p>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-800">
+            <div className="pt-2 flex items-center justify-between border-t border-slate-700/40">
               <button
                 onClick={handleReset}
                 className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
@@ -301,52 +281,49 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 <RefreshCw className="h-3.5 w-3.5" />
                 <span>Submit another inquiry</span>
               </button>
-
-              <div className="flex items-center gap-2 text-xs text-emerald-400 font-mono">
+              <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono">
                 <ShieldCheck className="h-4 w-4" />
-                <span>Protected by Tasskly Client Confidentiality</span>
+                <span>Zero Obligation Free Session</span>
               </div>
             </div>
           </motion.div>
         ) : (
-          /* FORM ENTRY STATE */
+          /* FORM ENTRY */
           <motion.form
-            key="booking-form"
+            key="campus-form"
             onSubmit={handleSubmit}
-            className="p-6 sm:p-10 rounded-3xl bg-[#040e24]/90 backdrop-blur-2xl border border-teal-500/30 shadow-2xl space-y-6 text-left relative overflow-hidden"
+            className={`p-6 sm:p-9 rounded-3xl backdrop-blur-2xl border shadow-2xl space-y-5 text-left relative overflow-hidden ${
+              isDark ? "bg-[#040e24]/90 border-teal-500/30" : "bg-white/95 border-slate-200"
+            }`}
           >
-            {/* Background Glow */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            {/* Form Title */}
-            <div className="border-b border-slate-800/80 pb-4 space-y-1">
-              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                Schedule Your Free 45-Minute Diagnostic
+            <div className="border-b border-slate-700/40 pb-3 space-y-1">
+              <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+                Request Free Consultation
               </h3>
-              <p className="text-xs text-slate-300">
-                Meet directly with a senior productivity architect. No pitch decks, no junior reps—pure operational analysis.
+              <p className={`text-xs ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+                Tell us about your campus goals and we will schedule your session within 24 hours.
               </p>
             </div>
 
-            {/* Input Row 1: Name & Work Email */}
+            {/* Row 1: Name & Email */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="c-name" className="text-xs text-slate-200 font-medium flex items-center gap-1.5">
+                <Label htmlFor="cp-name" className={`text-xs font-medium flex items-center gap-1.5 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
                   <User className="h-3.5 w-3.5 text-teal-400" />
                   <span>Full Name *</span>
                 </Label>
                 <Input
-                  id="c-name"
+                  id="cp-name"
                   type="text"
-                  placeholder="e.g. Alex Morgan"
+                  placeholder="e.g. Priya Sharma"
                   value={formData.name}
                   onChange={(e) => {
                     setFormData({ ...formData, name: e.target.value });
                     if (errors.name) setErrors({ ...errors, name: undefined });
                   }}
-                  className={`bg-slate-950/70 border-teal-500/30 text-white placeholder:text-slate-500 text-xs sm:text-sm h-11 rounded-xl focus:border-emerald-400 ${
-                    errors.name ? "border-rose-500" : ""
-                  }`}
+                  className={`h-11 rounded-xl text-xs sm:text-sm ${
+                    isDark ? "bg-slate-950/70 border-teal-500/30 text-white placeholder:text-slate-500" : "bg-slate-50 border-slate-300 text-slate-900"
+                  } ${errors.name ? "border-rose-500" : ""}`}
                 />
                 {errors.name && (
                   <p className="text-[11px] text-rose-400 flex items-center gap-1">
@@ -357,22 +334,22 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="c-email" className="text-xs text-slate-200 font-medium flex items-center gap-1.5">
+                <Label htmlFor="cp-email" className={`text-xs font-medium flex items-center gap-1.5 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
                   <Mail className="h-3.5 w-3.5 text-teal-400" />
-                  <span>Work Email *</span>
+                  <span>Email Address *</span>
                 </Label>
                 <Input
-                  id="c-email"
+                  id="cp-email"
                   type="email"
-                  placeholder="alex@company.com"
+                  placeholder="priya@college.edu"
                   value={formData.email}
                   onChange={(e) => {
                     setFormData({ ...formData, email: e.target.value });
                     if (errors.email) setErrors({ ...errors, email: undefined });
                   }}
-                  className={`bg-slate-950/70 border-teal-500/30 text-white placeholder:text-slate-500 text-xs sm:text-sm h-11 rounded-xl focus:border-emerald-400 ${
-                    errors.email ? "border-rose-500" : ""
-                  }`}
+                  className={`h-11 rounded-xl text-xs sm:text-sm ${
+                    isDark ? "bg-slate-950/70 border-teal-500/30 text-white placeholder:text-slate-500" : "bg-slate-50 border-slate-300 text-slate-900"
+                  } ${errors.email ? "border-rose-500" : ""}`}
                 />
                 {errors.email && (
                   <p className="text-[11px] text-rose-400 flex items-center gap-1">
@@ -383,117 +360,113 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               </div>
             </div>
 
-            {/* Input Row 2: Company & Team Size */}
+            {/* Row 2: "I am a" Dropdown & College Name */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="c-company" className="text-xs text-slate-200 font-medium flex items-center gap-1.5">
-                  <Building className="h-3.5 w-3.5 text-teal-400" />
-                  <span>Company / Organization *</span>
+                <Label htmlFor="cp-role" className={`text-xs font-medium flex items-center gap-1.5 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
+                  <GraduationCap className="h-3.5 w-3.5 text-teal-400" />
+                  <span>I am a *</span>
                 </Label>
-                <Input
-                  id="c-company"
-                  type="text"
-                  placeholder="e.g. Acme Technologies"
-                  value={formData.company}
+                <select
+                  id="cp-role"
+                  value={formData.role}
                   onChange={(e) => {
-                    setFormData({ ...formData, company: e.target.value });
-                    if (errors.company) setErrors({ ...errors, company: undefined });
+                    setFormData({ ...formData, role: e.target.value });
+                    if (errors.role) setErrors({ ...errors, role: undefined });
                   }}
-                  className={`bg-slate-950/70 border-teal-500/30 text-white placeholder:text-slate-500 text-xs sm:text-sm h-11 rounded-xl focus:border-emerald-400 ${
-                    errors.company ? "border-rose-500" : ""
+                  className={`w-full h-11 rounded-xl px-3 text-xs sm:text-sm border focus:outline-none ${
+                    isDark ? "bg-slate-950/70 border-teal-500/30 text-white" : "bg-slate-50 border-slate-300 text-slate-900"
                   }`}
-                />
-                {errors.company && (
-                  <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    <span>{errors.company}</span>
-                  </p>
-                )}
+                >
+                  <option value="Student">Student (Undergraduate / Postgraduate)</option>
+                  <option value="Club / Society Leader">Club / Society Leader</option>
+                  <option value="Professor / Faculty">Professor / Faculty Member</option>
+                  <option value="College / University Admin">College / University Admin (Dean, Registrar)</option>
+                </select>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="c-teamsize" className="text-xs text-slate-200 font-medium flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5 text-teal-400" />
-                  <span>Team Size *</span>
+                <Label htmlFor="cp-college" className={`text-xs font-medium flex items-center gap-1.5 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
+                  <School className="h-3.5 w-3.5 text-teal-400" />
+                  <span>College or University Name *</span>
                 </Label>
-                <select
-                  id="c-teamsize"
-                  value={formData.teamSize}
+                <Input
+                  id="cp-college"
+                  type="text"
+                  placeholder="e.g. IIT Madras / Delhi University"
+                  value={formData.collegeName}
                   onChange={(e) => {
-                    setFormData({ ...formData, teamSize: e.target.value });
-                    if (errors.teamSize) setErrors({ ...errors, teamSize: undefined });
+                    setFormData({ ...formData, collegeName: e.target.value });
+                    if (errors.collegeName) setErrors({ ...errors, collegeName: undefined });
                   }}
-                  className="w-full bg-slate-950/70 border border-teal-500/30 text-white text-xs sm:text-sm h-11 rounded-xl px-3 focus:outline-none focus:border-emerald-400"
-                >
-                  <option value="1-10">1 – 10 (Early Stage / Student Team)</option>
-                  <option value="10-50">10 – 50 (Fast Scaling Startup)</option>
-                  <option value="50-250">50 – 250 (Mid-Market Scaleup)</option>
-                  <option value="250+">250+ (Enterprise Department)</option>
-                </select>
-                {errors.teamSize && (
+                  className={`h-11 rounded-xl text-xs sm:text-sm ${
+                    isDark ? "bg-slate-950/70 border-teal-500/30 text-white placeholder:text-slate-500" : "bg-slate-50 border-slate-300 text-slate-900"
+                  } ${errors.collegeName ? "border-rose-500" : ""}`}
+                />
+                {errors.collegeName && (
                   <p className="text-[11px] text-rose-400 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
-                    <span>{errors.teamSize}</span>
+                    <span>{errors.collegeName}</span>
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Input Row 3: What do you need help with */}
+            {/* Row 3: Year or Department */}
             <div className="space-y-1.5">
-              <Label htmlFor="c-help" className="text-xs text-slate-200 font-medium flex items-center gap-1.5">
+              <Label htmlFor="cp-dept" className={`text-xs font-medium flex items-center gap-1.5 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
+                <Building className="h-3.5 w-3.5 text-teal-400" />
+                <span>Year of Study or Department *</span>
+              </Label>
+              <Input
+                id="cp-dept"
+                type="text"
+                placeholder="e.g. 3rd Year B.Tech CSE or Dept of Mechanical Engineering"
+                value={formData.yearOrDept}
+                onChange={(e) => {
+                  setFormData({ ...formData, yearOrDept: e.target.value });
+                  if (errors.yearOrDept) setErrors({ ...errors, yearOrDept: undefined });
+                }}
+                className={`h-11 rounded-xl text-xs sm:text-sm ${
+                  isDark ? "bg-slate-950/70 border-teal-500/30 text-white placeholder:text-slate-500" : "bg-slate-50 border-slate-300 text-slate-900"
+                } ${errors.yearOrDept ? "border-rose-500" : ""}`}
+              />
+              {errors.yearOrDept && (
+                <p className="text-[11px] text-rose-400 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>{errors.yearOrDept}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Row 4: Message Box */}
+            <div className="space-y-1.5">
+              <Label htmlFor="cp-msg" className={`text-xs font-medium flex items-center gap-1.5 ${isDark ? "text-slate-200" : "text-slate-700"}`}>
                 <MessageSquare className="h-3.5 w-3.5 text-teal-400" />
                 <span>What do you need help with? *</span>
               </Label>
               <Textarea
-                id="c-help"
+                id="cp-msg"
                 rows={3}
-                placeholder="e.g. We have too many status meetings, Linear/Slack tasks get lost, and engineering cycle time has increased after expanding the team..."
-                value={formData.helpWith}
+                placeholder="e.g. We want to organize our college technical fest timeline, or help our 200 students prepare for summer internship drives..."
+                value={formData.message}
                 onChange={(e) => {
-                  setFormData({ ...formData, helpWith: e.target.value });
-                  if (errors.helpWith) setErrors({ ...errors, helpWith: undefined });
+                  setFormData({ ...formData, message: e.target.value });
+                  if (errors.message) setErrors({ ...errors, message: undefined });
                 }}
-                className={`bg-slate-950/70 border-teal-500/30 text-white placeholder:text-slate-500 text-xs sm:text-sm rounded-xl focus:border-emerald-400 ${
-                  errors.helpWith ? "border-rose-500" : ""
-                }`}
+                className={`rounded-xl text-xs sm:text-sm ${
+                  isDark ? "bg-slate-950/70 border-teal-500/30 text-white placeholder:text-slate-500" : "bg-slate-50 border-slate-300 text-slate-900"
+                } ${errors.message ? "border-rose-500" : ""}`}
               />
-              {errors.helpWith && (
+              {errors.message && (
                 <p className="text-[11px] text-rose-400 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
-                  <span>{errors.helpWith}</span>
+                  <span>{errors.message}</span>
                 </p>
               )}
             </div>
 
-            {/* Input Row 4: Preferred Date */}
-            <div className="space-y-1.5">
-              <Label htmlFor="c-date" className="text-xs text-slate-200 font-medium flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-teal-400" />
-                <span>Preferred Date *</span>
-              </Label>
-              <Input
-                id="c-date"
-                type="date"
-                min={new Date().toISOString().split("T")[0]}
-                value={formData.preferredDate}
-                onChange={(e) => {
-                  setFormData({ ...formData, preferredDate: e.target.value });
-                  if (errors.preferredDate) setErrors({ ...errors, preferredDate: undefined });
-                }}
-                className={`bg-slate-950/70 border-teal-500/30 text-white text-xs sm:text-sm h-11 rounded-xl focus:border-emerald-400 ${
-                  errors.preferredDate ? "border-rose-500" : ""
-                }`}
-              />
-              {errors.preferredDate && (
-                <p className="text-[11px] text-rose-400 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>{errors.preferredDate}</span>
-                </p>
-              )}
-            </div>
-
-            {/* Submit CTA */}
+            {/* Full-width "Request consultation" button */}
             <div className="pt-2 space-y-3">
               <Button
                 type="submit"
@@ -503,12 +476,12 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Booking Your Session...</span>
+                    <span>Sending Request...</span>
                   </>
                 ) : (
                   <>
                     <Calendar className="h-4 w-4" />
-                    <span>Book a Free Consultation</span>
+                    <span>Request Consultation</span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -516,7 +489,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
               <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400">
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                <span>100% Free Diagnostic • No Obligation • Guaranteed Confidential</span>
+                <span>100% Free Campus Advisory • No Obligation • Protected Student Privacy</span>
               </div>
             </div>
           </motion.form>
