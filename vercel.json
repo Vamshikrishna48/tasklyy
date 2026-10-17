@@ -9,6 +9,10 @@
       "destination": "/api/send-deletion-email"
     },
     {
+      "source": "/api/consultancy-auth",
+      "destination": "/api/internship-auth"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

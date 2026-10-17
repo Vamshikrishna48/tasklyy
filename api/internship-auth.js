@@ -80,17 +80,19 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: `Tasskly ID "${tasskly_id}" is not registered on this platform.` });
     }
 
+    const savedPassword = profile.consultancy_password || profile.internship_password;
+
     // 2. Process Actions
     if (action === 'check') {
       return res.status(200).json({
         success: true,
-        hasPassword: !!profile.internship_password,
+        hasPassword: !!savedPassword,
         name: profile.full_name || 'Tasskly User'
       });
     }
 
     if (action === 'setup') {
-      if (profile.internship_password) {
+      if (savedPassword) {
         return res.status(400).json({ error: 'Password has already been set for this Tasskly ID. Please log in.' });
       }
 
@@ -101,13 +103,25 @@ export default async function handler(req, res) {
       // Hash the password securely with SHA-256
       const hashedPassword = crypto.createHash('sha256').update(password.trim()).digest('hex');
 
-      const { error: updateErr } = await supabase
+      let { error: updateErr } = await supabase
         .from('profiles')
-        .update({ internship_password: hashedPassword })
+        .update({
+          internship_password: hashedPassword,
+          consultancy_password: hashedPassword,
+        })
         .eq('id', profile.id);
 
       if (updateErr) {
-        console.error("Failed to set internship password:", updateErr);
+        // Fallback to updating internship_password alone if consultancy_password column not added yet
+        const retry = await supabase
+          .from('profiles')
+          .update({ internship_password: hashedPassword })
+          .eq('id', profile.id);
+        updateErr = retry.error;
+      }
+
+      if (updateErr) {
+        console.error("Failed to set portal password:", updateErr);
         return res.status(500).json({ error: 'Failed to save password in database.' });
       }
 
@@ -118,7 +132,7 @@ export default async function handler(req, res) {
     }
 
     if (action === 'login') {
-      if (!profile.internship_password) {
+      if (!savedPassword) {
         return res.status(400).json({ error: 'Password not set. Please complete password setup first.' });
       }
 
@@ -128,7 +142,7 @@ export default async function handler(req, res) {
 
       const hashedPassword = crypto.createHash('sha256').update(password.trim()).digest('hex');
 
-      if (hashedPassword !== profile.internship_password) {
+      if (hashedPassword !== savedPassword) {
         return res.status(401).json({ error: 'Incorrect password. Please try again.' });
       }
 
