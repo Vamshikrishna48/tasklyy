@@ -14,7 +14,6 @@ import {
   Upload,
   Headphones,
   TrendingUp,
-  Sparkles,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,7 +38,7 @@ const baseMenuItems = [
   { title: "Portfolio", url: "/dashboard/portfolio", icon: FolderOutput },
   { title: "Earnings", url: "/dashboard/earnings", icon: IndianRupee },
   { title: "My Level", url: "/dashboard/levels", icon: TrendingUp },
-  { title: "Consultancy", url: "/dashboard/consultancy", icon: Sparkles },
+
   { title: "Your Information", url: "/dashboard/profile", icon: UserCircle },
   { title: "Customer Service", url: "/dashboard/support", icon: Headphones },
 ];

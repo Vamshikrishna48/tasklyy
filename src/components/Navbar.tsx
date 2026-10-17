@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Briefcase, Menu, Construction, Sparkles } from "lucide-react";
+import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Briefcase, Menu, Construction } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { Capacitor } from "@capacitor/core";
@@ -96,19 +96,7 @@ const Navbar = () => {
               Internships
             </Button>
           </Link>
-          <Link to="/consultancy">
-            <Button
-              size="sm"
-              className={`gap-2 font-bold rounded-xl transition-all shadow-xs ${
-                isActive("/consultancy")
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white border border-orange-400 shadow-orange-500/30 shadow-md"
-                  : "bg-orange-500/10 text-orange-600 hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-500 hover:text-white border border-orange-500/30 dark:text-orange-400 dark:bg-orange-500/15"
-              }`}
-            >
-              <Sparkles className={`h-4 w-4 ${isActive("/consultancy") ? "text-white fill-white/30" : "text-orange-500"} animate-pulse`} />
-              <span>Consultancy</span>
-            </Button>
-          </Link>
+
         </div>
 
         {/* Desktop Navigation Actions */}
@@ -201,21 +189,7 @@ const Navbar = () => {
                     </Button>
                   </Link>
                 </SheetClose>
-                <SheetClose asChild>
-                  <Link to="/consultancy" className="w-full">
-                    <Button
-                      variant={isActive("/consultancy") ? "default" : "outline"}
-                      className={`w-full justify-start gap-3 h-11 text-base font-bold rounded-xl transition-all ${
-                        isActive("/consultancy")
-                          ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-500 shadow-md"
-                          : "bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white border-orange-500/30 dark:text-orange-400"
-                      }`}
-                    >
-                      <Sparkles className={`h-4 w-4 ${isActive("/consultancy") ? "text-white fill-white/30" : "text-orange-500"} animate-pulse`} />
-                      <span>Consultancy</span>
-                    </Button>
-                  </Link>
-                </SheetClose>
+
 
                 <div className="border-t my-2" />
 
