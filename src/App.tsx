@@ -27,6 +27,7 @@ import JobDetail from "./pages/JobDetail.tsx";
 import PostJob from "./pages/PostJob.tsx";
 import OnTimeWorks from "./pages/OnTimeWorks.tsx";
 import Internships from "./pages/Internships.tsx";
+import Consultancy from "./pages/Consultancy.tsx";
 import Auth from "./pages/Auth.tsx";
 import DashboardLayout from "./pages/dashboard/DashboardLayout.tsx";
 import DashboardOverview from "./pages/dashboard/DashboardOverview.tsx";
@@ -299,6 +300,7 @@ const App = () => {
                     <Route path="/" element={<Index />} />
                     <Route path="/jobs" element={<BrowseJobs />} />
                     <Route path="/internships" element={<Internships />} />
+                    <Route path="/consultancy" element={<Consultancy />} />
                     <Route path="/jobs/:id" element={<JobDetail />} />
                     <Route path="/post-job" element={<ProtectedRoute><PostJob /></ProtectedRoute>} />
                     <Route path="/on-time-works" element={<ProtectedRoute><OnTimeWorks /></ProtectedRoute>} />
@@ -311,6 +313,7 @@ const App = () => {
                       <Route path="levels" element={<Levels />} />
                       <Route path="submitted" element={<SubmittedWork />} />
                       <Route path="support" element={<CustomerService />} />
+                      <Route path="consultancy" element={<Consultancy />} />
                     </Route>
                     <Route path="/admin-login" element={<AdminAuth />} />
                     <Route path="/admin/auth" element={<Navigate to="/admin-login" replace />} />

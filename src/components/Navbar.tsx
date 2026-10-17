@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Briefcase, Menu, Construction } from "lucide-react";
+import { Search, PlusCircle, LayoutDashboard, LogIn, LogOut, Briefcase, Menu, Construction, Sparkles } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { Capacitor } from "@capacitor/core";
@@ -96,6 +96,16 @@ const Navbar = () => {
               Internships
             </Button>
           </Link>
+          <Link to="/consultancy">
+            <Button
+              variant={isActive("/consultancy") ? "secondary" : "ghost"}
+              size="sm"
+              className="gap-2 text-emerald-600 dark:text-emerald-400 font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+            >
+              <Sparkles className="h-4 w-4 text-emerald-500 animate-pulse" />
+              Consultancy
+            </Button>
+          </Link>
         </div>
 
         {/* Desktop Navigation Actions */}
@@ -185,6 +195,14 @@ const Navbar = () => {
                     <Button variant={isActive("/internships") ? "secondary" : "ghost"} className="w-full justify-start gap-3 h-11 text-base">
                       <Briefcase className="h-4 w-4 text-muted-foreground" />
                       Internships
+                    </Button>
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link to="/consultancy" className="w-full">
+                    <Button variant={isActive("/consultancy") ? "secondary" : "ghost"} className="w-full justify-start gap-3 h-11 text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                      <Sparkles className="h-4 w-4 text-emerald-500 animate-pulse" />
+                      Consultancy (3D)
                     </Button>
                   </Link>
                 </SheetClose>
