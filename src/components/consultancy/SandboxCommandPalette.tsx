@@ -45,13 +45,13 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
     (m) =>
       m.name.toLowerCase().includes(query.toLowerCase()) ||
       m.role.toLowerCase().includes(query.toLowerCase()) ||
-      m.institution.toLowerCase().includes(query.toLowerCase()) ||
-      m.topics.some((t) => t.toLowerCase().includes(query.toLowerCase()))
+      (m.companyOrCollege || "").toLowerCase().includes(query.toLowerCase()) ||
+      (m.tags || []).some((t) => t.toLowerCase().includes(query.toLowerCase()))
   );
 
   const allItems = [
     ...filteredChapters.map((c) => ({ ...c, itemType: "chapter" })),
-    ...filteredMentors.map((m) => ({ ...m, title: `${m.name} — ${m.role} (${m.institution})`, itemType: "mentor" })),
+    ...filteredMentors.map((m) => ({ ...m, title: `${m.name} — ${m.role} (${m.companyOrCollege})`, itemType: "mentor" })),
   ];
 
   // Handle keyboard navigation

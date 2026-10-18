@@ -86,22 +86,22 @@ export const SandboxMentorsTrack: React.FC<SandboxMentorsTrackProps> = ({ onSele
                       <div className="flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
                         <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                         <span>{mentor.rating.toFixed(2)}</span>
-                        <span className="text-slate-400 font-normal">({mentor.reviewsCount})</span>
+                        <span className="text-slate-400 font-normal">({mentor.reviewCount})</span>
                       </div>
                     </div>
                     <h3 className="sb-tile-name mt-1">{mentor.name}</h3>
                     <p className="sb-tile-role">{mentor.role}</p>
-                    <span className="sb-tile-uni mt-1">{mentor.institution}</span>
+                    <span className="sb-tile-uni mt-1">{mentor.companyOrCollege}</span>
                   </div>
 
-                  {/* Topics Pills */}
+                  {/* Topics / Tags Pills */}
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    {mentor.topics.slice(0, 3).map((topic, i) => (
+                    {(mentor.tags || []).slice(0, 3).map((tag, i) => (
                       <span
                         key={i}
                         className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600"
                       >
-                        {topic}
+                        {tag}
                       </span>
                     ))}
                   </div>

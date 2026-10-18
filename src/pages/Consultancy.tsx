@@ -582,7 +582,7 @@ const ConsultancyContent: React.FC = () => {
             </DialogTitle>
             <DialogDescription className="text-slate-300 text-sm">
               {selectedMentor
-                ? `${selectedMentor.role} · ${selectedMentor.institution} (₹${selectedMentor.price} / session)`
+                ? `${selectedMentor.role} · ${selectedMentor.companyOrCollege} (₹${selectedMentor.price} / session)`
                 : "Select a date and time slot for your 1-on-1 video call."}
             </DialogDescription>
           </DialogHeader>

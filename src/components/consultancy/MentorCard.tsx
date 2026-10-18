@@ -99,7 +99,7 @@ export const MentorCard: React.FC<MentorCardProps> = ({ mentor, onBook, onPrevie
 
           {/* 3 Expertise Tags */}
           <div className="flex flex-wrap gap-1.5 pt-1">
-            {mentor.tags.slice(0, 3).map((tag, idx) => (
+            {(mentor.tags || []).slice(0, 3).map((tag, idx) => (
               <span
                 key={idx}
                 className="px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
