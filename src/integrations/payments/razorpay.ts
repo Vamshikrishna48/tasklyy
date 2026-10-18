@@ -89,12 +89,14 @@ export async function openRazorpayCheckout(
     console.warn("Server order creation unavailable, checking direct keys:", err);
   }
 
-  // 2. Try fetching dynamically from the backend if key not set
-  if (!key) {
+  const REVOKED_KEYS = ["rzp_test_T0P4HP3XQF8ksO", "your_razorpay_key_id", "rzp_test_SwrcccCFd0O03j", "rzp_test_Ss6UkuAHYOxOPV"];
+
+  // 2. Try fetching dynamically from the backend if key not set or invalid
+  if (!key || REVOKED_KEYS.includes(key)) {
     try {
       const response = await fetch(getApiUrl("/api/get-razorpay-key"));
       const data = await response.json();
-      if (data && data.key && data.key !== "your_razorpay_key_id") {
+      if (data && data.key && !REVOKED_KEYS.includes(data.key)) {
         key = data.key;
         console.log("Dynamically loaded active Razorpay key ID:", key);
       }
@@ -104,12 +106,15 @@ export async function openRazorpayCheckout(
   }
 
   // 3. Fallback to build-time environment variable if dynamic load failed
-  if (!key || key === "your_razorpay_key_id") {
-    key = import.meta.env.VITE_RAZORPAY_KEY_ID;
+  if (!key || REVOKED_KEYS.includes(key)) {
+    const envKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    if (envKey && !REVOKED_KEYS.includes(envKey)) {
+      key = envKey;
+    }
   }
 
-  // 4. Ultimate fallback to active test key if still placeholder
-  if (!key || key === "your_razorpay_key_id") {
+  // 4. Ultimate fallback to active verified test key
+  if (!key || REVOKED_KEYS.includes(key)) {
     key = "rzp_test_TpN1RYQAhmX0OC";
   }
 

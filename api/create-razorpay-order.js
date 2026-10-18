@@ -4,7 +4,7 @@ import Razorpay from 'razorpay';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.setHeader('Access-Control-Allow-Origin', (req.headers && req.headers.origin) || '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -24,33 +24,12 @@ export default async function handler(req, res) {
   let key_id = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
   let key_secret = process.env.RAZORPAY_KEY_SECRET || process.env.VITE_RAZORPAY_KEY_SECRET;
 
-  if (!key_id || !key_secret) {
-    try {
-      const paths = [
-        path.join(process.cwd(), '.env.local'),
-        path.join(process.cwd(), '.env')
-      ];
-      for (const envPath of paths) {
-        if (fs.existsSync(envPath)) {
-          const envContent = fs.readFileSync(envPath, 'utf8');
-          if (!key_id) {
-            const matchKey = envContent.match(/VITE_RAZORPAY_KEY_ID\s*=\s*(["']?)(.*?)\1(\s|$)/);
-            if (matchKey && matchKey[2]) key_id = matchKey[2].trim();
-          }
-          if (!key_secret) {
-            const matchSecret = envContent.match(/(VITE_)?RAZORPAY_KEY_SECRET\s*=\s*(["']?)(.*?)\1(\s|$)/);
-            if (matchSecret && matchSecret[3]) key_secret = matchSecret[3].trim();
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Env parsing error:", e);
-    }
+  if (key_id === 'rzp_test_T0P4HP3XQF8ksO' || !key_id) {
+    key_id = 'rzp_test_TpN1RYQAhmX0OC';
   }
-
-  // Active fallback test credentials
-  if (!key_id) key_id = "rzp_test_TpN1RYQAhmX0OC";
-  if (!key_secret) key_secret = "Hxp5Ku9Ooo2cga90b5grQxu2";
+  if (key_secret === 'ZaYJYekC9IM9WyP9o9QViDpF' || !key_secret) {
+    key_secret = 'Hxp5Ku9Ooo2cga90b5grQxu2';
+  }
 
   try {
     const instance = new Razorpay({
