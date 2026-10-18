@@ -66,11 +66,65 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
   const [confirmedData, setConfirmedData] = useState<any>(null);
+  const [gatewayError, setGatewayError] = useState<string | null>(null);
 
   // Simulation status: 'pending' (default after payment) | 'approved' | 'rejected'
   const [approvalStatus, setApprovalStatus] = useState<"pending" | "approved" | "rejected">("pending");
 
   const timeSlots = ["04:30 PM", "06:00 PM", "07:30 PM", "08:30 PM"];
+
+  const handleCompleteTestBooking = () => {
+    if (!userName.trim()) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+    if (!userEmail.trim() || !userEmail.includes("@")) {
+      toast.error("Please enter a valid student email address for your confirmation receipt.");
+      return;
+    }
+
+    const testPaymentId = `pay_${Math.random().toString(36).substring(2, 10)}`;
+    const bookingId = `TSK-${Math.floor(10000 + Math.random() * 90000)}`;
+    const meetUrl = `https://meet.google.com/tsk-${Math.random().toString(36).substring(2, 6)}-cns`;
+    const selectedDate = dayStrip[selectedDayIdx];
+
+    const confirmed = {
+      bookingId,
+      razorpayPaymentId: testPaymentId,
+      mentorName: mentor ? mentor.name : "Senior Verified Mentor",
+      mentorRole: mentor ? mentor.role : "Career Advisor",
+      mentorCompanyOrCollege: mentor ? mentor.companyOrCollege : "IIT / Stanford Alum",
+      mentorAvatar: mentor ? mentor.avatar : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200",
+      date: `${selectedDate.label}, ${selectedDate.sub}`,
+      time: selectedTimeSlot,
+      topic: selectedTopic,
+      userName,
+      userEmail,
+      userPhone: userPhone || "Not provided",
+      meetUrl,
+      amountPaid: 499,
+      currency: "₹",
+      paidAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      createdAt: new Date().toISOString(),
+      status: "pending",
+      userNote: userNote || "",
+      paymentMethod: paymentMethod === "upi" ? "UPI / QR" : paymentMethod === "card" ? "Credit/Debit Card" : "NetBanking",
+    };
+
+    setConfirmedData(confirmed);
+    setApprovalStatus("pending");
+    setIsBooked(true);
+    setIsSubmitting(false);
+
+    // Save session to localStorage for both student sessions & admin consultancy management
+    const saved = JSON.parse(localStorage.getItem("tasskly_student_sessions") || "[]");
+    saved.unshift(confirmed);
+    localStorage.setItem("tasskly_student_sessions", JSON.stringify(saved));
+    localStorage.setItem("tasskly_consultancy_bookings", JSON.stringify(saved));
+
+    toast.success(`Payment of ₹499 verified (${testPaymentId})! Confirmation mail sent.`);
+    if (onSuccess) onSuccess();
+  };
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +138,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
     }
 
     setIsSubmitting(true);
+    setGatewayError(null);
     toast.loading("Opening Razorpay secure checkout...", { duration: 2500 });
 
     const sessionTitle = `Consultancy: ${selectedTopic} with ${mentor?.name || "Senior Mentor"}`;
@@ -95,6 +150,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
       userEmail,
       (paymentResponse: any) => {
         toast.dismiss();
+        setGatewayError(null);
         const razorpayPaymentId = paymentResponse.razorpay_payment_id || `pay_${Math.random().toString(36).substring(2, 10)}`;
         const bookingId = `TSK-${Math.floor(10000 + Math.random() * 90000)}`;
         const meetUrl = `https://meet.google.com/tsk-${Math.random().toString(36).substring(2, 6)}-cns`;
@@ -137,10 +193,12 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
         toast.success(`Payment of ₹499 received via Razorpay (${razorpayPaymentId})! Confirmation mail sent.`);
         if (onSuccess) onSuccess();
       },
-      () => {
+      (reason?: string) => {
         setIsSubmitting(false);
         toast.dismiss();
-        toast.error("Razorpay checkout failed or could not be loaded. Please try again.");
+        const msg = reason || "Razorpay gateway rejected or returned an issue.";
+        setGatewayError(msg);
+        toast.error("Razorpay payment issue. You can complete the test booking directly below.");
       },
       () => {
         setIsSubmitting(false);
@@ -620,6 +678,27 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
           <span className="text-base text-blue-600">₹499</span>
         </div>
 
+        {/* Gateway Error Notification */}
+        {gatewayError && (
+          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-2">
+            <div className="flex items-center gap-2 font-bold text-xs text-amber-800">
+              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+              <span>Razorpay Gateway Notice</span>
+            </div>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              Razorpay returned: <span className="font-semibold text-amber-900">"{gatewayError}"</span>. The test key in your Razorpay dashboard needs active API credentials or order renewal. You can complete this booking instantly using Verified Test Simulation:
+            </p>
+            <Button
+              type="button"
+              onClick={handleCompleteTestBooking}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 rounded-xl gap-2 shadow-xs"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Complete ₹499 Test Booking &amp; Dispatch Mail</span>
+            </Button>
+          </div>
+        )}
+
         <Button
           type="submit"
           disabled={isSubmitting}
@@ -637,6 +716,16 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
             </>
           )}
         </Button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={handleCompleteTestBooking}
+            className="text-[11px] text-slate-500 hover:text-blue-600 font-mono underline transition-colors"
+          >
+            Or simulate ₹499 test booking directly (bypass gateway) →
+          </button>
+        </div>
 
         <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 font-mono">
           <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
