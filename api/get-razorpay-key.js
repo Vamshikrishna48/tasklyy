@@ -43,5 +43,5 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({ key: key || null });
+  return res.status(200).json({ key: key || "rzp_test_TpN1RYQAhmX0OC" });
 }

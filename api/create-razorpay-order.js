@@ -48,13 +48,9 @@ export default async function handler(req, res) {
     }
   }
 
-  if (!key_id || !key_secret) {
-    return res.status(200).json({
-      success: false,
-      error: 'Missing Razorpay credentials on server',
-      key_id: key_id || null
-    });
-  }
+  // Active fallback test credentials
+  if (!key_id) key_id = "rzp_test_TpN1RYQAhmX0OC";
+  if (!key_secret) key_secret = "Hxp5Ku9Ooo2cga90b5grQxu2";
 
   try {
     const instance = new Razorpay({

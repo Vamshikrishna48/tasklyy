@@ -110,7 +110,7 @@ export async function openRazorpayCheckout(
 
   // 4. Ultimate fallback to active test key if still placeholder
   if (!key || key === "your_razorpay_key_id") {
-    key = "rzp_test_T0P4HP3XQF8ksO";
+    key = "rzp_test_TpN1RYQAhmX0OC";
   }
 
   let paymentDone = false;
