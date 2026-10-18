@@ -71,6 +71,7 @@ const ConsultancyContent: React.FC = () => {
   // Modal and palette state
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
+  const [bookingTopic, setBookingTopic] = useState<string>("JoSAA & CET Choice-Filling Allotment Matrix");
   const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   // Chapter DOM references
@@ -142,9 +143,12 @@ const ConsultancyContent: React.FC = () => {
     }
   };
 
-  // Open booking modal for a specific mentor
-  const handleOpenBooking = (mentor?: Mentor) => {
+  // Open booking modal for a specific mentor / blueprint topic
+  const handleOpenBooking = (mentor?: Mentor, topic?: string) => {
     setSelectedMentor(mentor || MENTORS_DATA[0]);
+    if (topic) {
+      setBookingTopic(topic);
+    }
     setIsBookingOpen(true);
   };
 
@@ -354,7 +358,7 @@ const ConsultancyContent: React.FC = () => {
             onClick={() => scrollToChapter("sb-mentors-catalog")}
             className="sb-pill sb-pill-ghost hidden sm:inline-flex"
           >
-            Mentors
+            Blueprints
           </button>
 
           <button
@@ -439,7 +443,7 @@ const ConsultancyContent: React.FC = () => {
                     onClick={() => scrollToChapter("sb-mentors-catalog")}
                     className="sb-pill sb-pill-glass sb-pill-lg"
                   >
-                    Browse Mentors (₹500)
+                    Explore Blueprints (₹500)
                   </button>
                 </div>
               </div>
@@ -505,7 +509,7 @@ const ConsultancyContent: React.FC = () => {
          HORIZONTAL WORK TRACK (Pinned sideways scroll matching k-work)
          ───────────────────────────────────────────────────────────── */}
       <SandboxMentorsTrack
-        onSelectMentor={(mentor) => handleOpenBooking(mentor)}
+        onSelectMentor={(mentor, topic) => handleOpenBooking(mentor, topic)}
       />
 
       {/* ─────────────────────────────────────────────────────────────
@@ -664,6 +668,7 @@ const ConsultancyContent: React.FC = () => {
           <div className="p-6 max-h-[75vh] overflow-y-auto">
             <BookingPanel
               mentor={selectedMentor || MENTORS_DATA[0]}
+              initialTopic={bookingTopic}
               onSuccess={() => setIsBookingOpen(false)}
             />
           </div>
