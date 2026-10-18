@@ -333,7 +333,7 @@ const ConsultancyContent: React.FC = () => {
         </Link>
 
         <p className="sb-top-tag">
-          Flat ₹500 sessions. Confirmed only when member approves. 100% refund in 2–3h.
+          Flat ₹499 sessions. Confirmed only when member approves. 100% refund in 2–3h.
         </p>
 
         <nav className="sb-top-nav">
@@ -365,7 +365,7 @@ const ConsultancyContent: React.FC = () => {
             onClick={() => handleOpenBooking()}
             className="sb-pill sb-pill-dark"
           >
-            <span>Book (₹500)</span>
+            <span>Book Session</span>
             <span className="sb-pill-dot" />
           </button>
         </nav>
@@ -421,7 +421,7 @@ const ConsultancyContent: React.FC = () => {
                 {/* Policy Pill Badge */}
                 <div className="inline-flex flex-wrap items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-200 text-xs font-mono mb-4 backdrop-blur-md">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="font-bold text-white">Flat ₹500 / Session</span>
+                  <span className="font-bold text-white">Flat ₹499 / Session</span>
                   <span className="text-slate-500 hidden sm:inline">•</span>
                   <span>Confirmed on Member Approval</span>
                   <span className="text-slate-500 hidden sm:inline">•</span>
@@ -443,7 +443,7 @@ const ConsultancyContent: React.FC = () => {
                     onClick={() => scrollToChapter("sb-mentors-catalog")}
                     className="sb-pill sb-pill-glass sb-pill-lg"
                   >
-                    Explore Blueprints (₹500)
+                    Explore Blueprints
                   </button>
                 </div>
               </div>
@@ -541,7 +541,7 @@ const ConsultancyContent: React.FC = () => {
             <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base border border-blue-100">
               01
             </div>
-            <h3 className="font-bold text-slate-900 text-base">Flat ₹500 Fee</h3>
+            <h3 className="font-bold text-slate-900 text-base">Flat ₹499 Fee</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
               Transparent, predictable student pricing across every chapter and mentor. No surge rates or platform markups.
             </p>
@@ -553,7 +553,7 @@ const ConsultancyContent: React.FC = () => {
             </div>
             <h3 className="font-bold text-slate-900 text-base">Instant Email Receipt</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              After paying ₹500, a confirmation email with your booking request and payment receipt is immediately dispatched to your inbox.
+              After paying ₹499, a confirmation email with your booking request and payment receipt is immediately dispatched to your inbox.
             </p>
           </div>
 
@@ -573,7 +573,7 @@ const ConsultancyContent: React.FC = () => {
             </div>
             <h3 className="font-bold text-slate-900 text-base">2–3 Hours Refund Guarantee</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              If the member rejects your request or cannot accommodate your slot, the full ₹500 is refunded to your account within <strong>2–3 hours</strong>.
+              If the member rejects your request or cannot accommodate your slot, the full ₹499 is refunded to your account within <strong>2–3 hours</strong>.
             </p>
           </div>
         </div>
@@ -594,7 +594,7 @@ const ConsultancyContent: React.FC = () => {
         </h2>
         <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-600 font-medium">
           <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Flat ₹500 / Session
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Flat ₹499 / Session
           </span>
           <span className="flex items-center gap-2">
             <Mail className="h-4 w-4 text-blue-600" /> Instant Email Confirmation
@@ -642,7 +642,7 @@ const ConsultancyContent: React.FC = () => {
 
         <div className="sb-foot-bottom">
           <p>© 2026 Tasskly Technologies. All rights reserved.</p>
-          <p>Crafted for students, future engineers, and campus builders. Flat ₹500 Escrow Mentorship.</p>
+          <p>Crafted for students, future engineers, and campus builders. Flat ₹499 Escrow Mentorship.</p>
         </div>
       </footer>
 
@@ -653,15 +653,15 @@ const ConsultancyContent: React.FC = () => {
         <DialogContent className="max-w-xl p-0 overflow-hidden rounded-2xl border-slate-200">
           <DialogHeader className="p-6 bg-slate-900 text-white">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-amber-400 mb-1">
-              <Sparkles className="h-3.5 w-3.5 animate-pulse" /> Verified 1-on-1 Mentorship
+              <Sparkles className="h-3.5 w-3.5 animate-pulse" /> 1-on-1 Campus Insider &amp; Advisory
             </div>
             <DialogTitle className="text-2xl font-bold text-white">
-              {selectedMentor ? `Book Session with ${selectedMentor.name}` : "Book a Verified Mentor"}
+              {selectedMentor ? `Book Session with ${selectedMentor.name}` : "Book a Campus Advisor"}
             </DialogTitle>
             <DialogDescription className="text-slate-300 text-sm">
               {selectedMentor
-                ? `${selectedMentor.role} · ${selectedMentor.companyOrCollege} — Flat ₹500 (Confirmed when and only when member approves · Refund in 2–3h if rejected)`
-                : "Flat ₹500 / session · Confirmed upon member approval · 100% refund in 2–3 hours if rejected."}
+                ? `${selectedMentor.role} · ${selectedMentor.companyOrCollege} — Flat ₹499 (Confirmed when and only when member approves · Refund in 2–3h if rejected)`
+                : "Flat ₹499 / session · Confirmed upon member approval · 100% refund in 2–3 hours if rejected."}
             </DialogDescription>
           </DialogHeader>
 

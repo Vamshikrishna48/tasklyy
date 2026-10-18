@@ -90,7 +90,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
 
     // Open Razorpay Checkout modal directly
     openRazorpayCheckout(
-      500, // Flat ₹500 fee
+      499, // Flat ₹499 fee
       sessionTitle,
       userEmail,
       (paymentResponse: any) => {
@@ -114,7 +114,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
           userEmail,
           userPhone: userPhone || "Not provided",
           meetUrl,
-          amountPaid: 500,
+          amountPaid: 499,
           currency: "₹",
           paidAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         };
@@ -129,7 +129,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
         saved.unshift(confirmed);
         localStorage.setItem("tasskly_student_sessions", JSON.stringify(saved));
 
-        toast.success(`Payment of ₹500 received via Razorpay (${razorpayPaymentId})! Confirmation mail sent.`);
+        toast.success(`Payment of ₹499 received via Razorpay (${razorpayPaymentId})! Confirmation mail sent.`);
         if (onSuccess) onSuccess();
       },
       () => {
@@ -154,7 +154,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
 
   const handleSimulateRejection = () => {
     setApprovalStatus("rejected");
-    toast.info("Member declined request. ₹500 refund initiated (credited in 2-3 hrs).");
+    toast.info("Member declined request. ₹499 refund initiated (credited in 2-3 hrs).");
   };
 
   const handleGoogleCalendarAdd = () => {
@@ -194,7 +194,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
 
             <div>
               <h4 className="text-lg font-bold text-slate-900">
-                {approvalStatus === "pending" && "₹500 Payment Received via Razorpay · Awaiting Approval"}
+                {approvalStatus === "pending" && "₹499 Payment Received via Razorpay · Awaiting Approval"}
                 {approvalStatus === "approved" && "Session Confirmed & Approved!"}
                 {approvalStatus === "rejected" && "Session Declined · Refund Initiated"}
               </h4>
@@ -226,7 +226,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
             <span>Confirmation Mail Dispatched to {confirmedData.userEmail}</span>
           </div>
           <p className="text-xs text-blue-800 leading-relaxed">
-            Your ₹500 payment has been verified. <strong>Your session is confirmed when and only when the member approves.</strong> You will receive a second notification as soon as {confirmedData.mentorName} reviews your slot.
+            Your ₹499 payment has been verified. <strong>Your session is confirmed when and only when the member approves.</strong> You will receive a second notification as soon as {confirmedData.mentorName} reviews your slot.
           </p>
         </div>
 
@@ -243,11 +243,11 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
           <p>
             {approvalStatus === "rejected" ? (
               <span className="text-rose-700 font-semibold">
-                The member was unavailable for this slot. Your ₹500 refund has been initiated and will reflect in your account within <strong>2–3 hours</strong>. No deductions applied.
+                The member was unavailable for this slot. Your ₹499 refund has been initiated and will reflect in your account within <strong>2–3 hours</strong>. No deductions applied.
               </span>
             ) : (
               <span>
-                If the member rejects your request or cannot take your slot, your ₹500 will be <strong>automatically refunded within 2–3 hours</strong> to your original payment method.
+                If the member rejects your request or cannot take your slot, your ₹499 will be <strong>automatically refunded within 2–3 hours</strong> to your original payment method.
               </span>
             )}
           </p>
@@ -264,7 +264,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
               </div>
             </div>
             <div className="text-right">
-              <span className="text-xs font-bold text-slate-900">₹500</span>
+              <span className="text-xs font-bold text-slate-900">₹499</span>
               <span className="block text-[10px] text-emerald-600 font-medium">Escrow Protected</span>
             </div>
           </div>
@@ -369,14 +369,14 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
   }
 
   // ─────────────────────────────────────────────────────────────
-  // PRE-BOOKING FORM: FLAT ₹500 & CLEAR APPROVAL/REFUND GUARANTEE
+  // PRE-BOOKING FORM: FLAT ₹499 & CLEAR APPROVAL/REFUND GUARANTEE
   // ─────────────────────────────────────────────────────────────
   return (
     <form
       onSubmit={handleBooking}
       className={`p-6 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-xl space-y-5 text-left ${className}`}
     >
-      {/* Mentor Header with ₹500 badge */}
+      {/* Mentor Header with ₹499 badge */}
       {mentor && (
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -392,7 +392,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
           </div>
           <div className="text-right">
             <span className="text-xs font-black text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
-              ₹500 / session
+              ₹499 / session
             </span>
             <span className="block text-[10px] text-slate-400 mt-0.5">45-min consultation</span>
           </div>
@@ -531,7 +531,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
             <span>Escrow &amp; Member Approval Guarantee</span>
           </div>
           <span className="text-xs font-mono font-bold text-white bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700">
-            Amount: ₹500
+            Amount: ₹499
           </span>
         </div>
 
@@ -539,7 +539,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
           <li className="flex items-start gap-2">
             <Mail className="h-3.5 w-3.5 text-blue-400 shrink-0 mt-0.5" />
             <span>
-              <strong>Email Confirmation:</strong> After paying ₹500, you will receive an immediate confirmation email with your booking receipt.
+              <strong>Email Confirmation:</strong> After paying ₹499, you will receive an immediate confirmation email with your booking receipt.
             </span>
           </li>
           <li className="flex items-start gap-2">
@@ -551,7 +551,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
           <li className="flex items-start gap-2">
             <RefreshCw className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
             <span>
-              <strong>2–3 Hours Refund Policy:</strong> If rejected or declined by the member, the entire amount of ₹500 will be refunded within <strong>2–3 hours</strong>.
+              <strong>2–3 Hours Refund Policy:</strong> If rejected or declined by the member, the entire amount of ₹499 will be refunded within <strong>2–3 hours</strong>.
             </span>
           </li>
         </ul>
@@ -604,7 +604,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
       <div className="pt-2 border-t border-slate-100 space-y-3">
         <div className="flex items-center justify-between text-xs text-slate-600">
           <span>Consultancy Fee (45 mins):</span>
-          <span className="font-bold text-slate-900">₹500</span>
+          <span className="font-bold text-slate-900">₹499</span>
         </div>
         <div className="flex items-center justify-between text-xs text-slate-600">
           <span>Escrow &amp; Platform Charge:</span>
@@ -612,7 +612,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
         </div>
         <div className="flex items-center justify-between text-sm font-extrabold text-slate-900 pt-1 border-t border-slate-100">
           <span>Total Payable:</span>
-          <span className="text-base text-blue-600">₹500</span>
+          <span className="text-base text-blue-600">₹499</span>
         </div>
 
         <Button
@@ -627,7 +627,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
           ) : (
             <>
               <Lock className="h-4 w-4" />
-              <span>Pay ₹500 via Razorpay &amp; Request Booking</span>
+              <span>Pay ₹499 via Razorpay &amp; Request Booking</span>
               <ArrowRight className="h-4 w-4" />
             </>
           )}

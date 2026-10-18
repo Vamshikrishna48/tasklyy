@@ -385,7 +385,7 @@ export const SandboxMentorsTrack: React.FC<SandboxMentorsTrackProps> = ({ onSele
         </div>
         <div>
           <p className="sb-work-sub">
-            Structured 1-on-1 decision frameworks across admissions, college selection, and seat allotment. Flat ₹500 fee. Confirmed only when member approves.
+            Structured 1-on-1 decision frameworks across admissions, college selection, and seat allotment. Flat ₹499 fee. Confirmed only when member approves.
           </p>
           <div className="flex items-center gap-3">
             <button
@@ -403,7 +403,7 @@ export const SandboxMentorsTrack: React.FC<SandboxMentorsTrackProps> = ({ onSele
               <ArrowRight className="h-4 w-4 text-slate-700" />
             </button>
             <span className="text-xs font-mono font-medium text-slate-500 ml-2">
-              {BLUEPRINT_MODULES.length} Advisory Blueprints · Flat ₹500
+              {BLUEPRINT_MODULES.length} Advisory Blueprints · Flat ₹499
             </span>
           </div>
         </div>
@@ -423,7 +423,7 @@ export const SandboxMentorsTrack: React.FC<SandboxMentorsTrackProps> = ({ onSele
                     <span>{bp.chapterBadge}</span>
                   </div>
                   <div className="sb-tile-price">
-                    ₹500 <span className="text-[11px] font-normal text-slate-500">/ 45 mins</span>
+                    ₹499 <span className="text-[11px] font-normal text-slate-500">/ 45 mins</span>
                   </div>
                 </div>
 
@@ -466,7 +466,7 @@ export const SandboxMentorsTrack: React.FC<SandboxMentorsTrackProps> = ({ onSele
                     onClick={() => handleBookBlueprint(bp)}
                     className="w-full mt-1 h-11 rounded-xl bg-slate-900 hover:bg-blue-600 text-white font-semibold text-xs tracking-wider uppercase transition-colors flex items-center justify-center gap-2"
                   >
-                    <span>Book Blueprint (₹500)</span>
+                    <span>Book Blueprint</span>
                     <ArrowUpRight className="h-4 w-4" />
                   </button>
                 </div>
