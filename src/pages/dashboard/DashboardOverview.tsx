@@ -2,7 +2,7 @@ import { useApp } from "@/context/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Briefcase, IndianRupee, TrendingUp, ArrowRight, ShieldCheck } from "lucide-react";
+import { Briefcase, IndianRupee, TrendingUp, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -112,7 +112,34 @@ const DashboardOverview = () => {
         </Card>
       </div>
 
-
+      {/* 3D Student Mentorship & Consultancy Feature Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+      >
+        <Card className="relative overflow-hidden border-orange-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-white shadow-xl">
+          <div className="absolute right-0 top-0 w-80 h-full bg-gradient-to-l from-orange-500/15 via-blue-500/10 to-transparent blur-3xl pointer-events-none" />
+          <CardContent className="p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-400/30">
+                <Sparkles className="h-3 w-3 animate-pulse text-orange-400" /> 1-on-1 Student Mentorship & 3D Roadmap
+              </div>
+              <h3 className="font-display text-xl font-bold text-white">
+                Talk to Seniors, Alumni & Verified Mentors
+              </h3>
+              <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+                Book 1-on-1 video sessions for college admissions, course selection, study abroad, internships, and placement prep. Explore the interactive 3D milestone journey.
+              </p>
+            </div>
+            <Link to="/consultancy" className="shrink-0 w-full md:w-auto">
+              <Button className="w-full md:w-auto bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-bold gap-2 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.35)]">
+                Explore Mentors <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Link to="/post-job">

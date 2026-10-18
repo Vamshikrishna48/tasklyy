@@ -82,15 +82,21 @@ const Index = () => {
               Tasskly is the immersive freelance marketplace built for students. Building truly memorable experiences within your campus community.
             </motion.p>
 
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-6">
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
               <Link to="/jobs">
-                <Button variant="hero" size="lg" className="h-14 px-10 text-lg rounded-full shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
+                <Button variant="hero" size="lg" className="h-14 px-8 sm:px-10 text-base sm:text-lg rounded-full shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
                   Explore Work
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
+              <Link to="/consultancy">
+                <Button variant="outline" size="lg" className="h-14 px-7 sm:px-8 text-base sm:text-lg rounded-full border-orange-500/40 bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white transition-all shadow-lg shadow-orange-500/10 font-bold gap-2">
+                  <Sparkles className="h-5 w-5 text-orange-500" />
+                  1-on-1 Mentorship
+                </Button>
+              </Link>
               <Link to="/post-job">
-                <Button variant="hero-outline" size="lg" className="h-14 px-10 text-lg rounded-full transition-all">
+                <Button variant="hero-outline" size="lg" className="h-14 px-8 text-base sm:text-lg rounded-full transition-all">
                   Post a Task
                 </Button>
               </Link>
@@ -355,10 +361,11 @@ const Index = () => {
             <div>
               <h4 className="font-bold mb-4 uppercase text-xs tracking-widest text-primary">Navigation</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="hover:text-primary transition-colors cursor-pointer">Home</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">Work</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">Services</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">About</li>
+                <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+                <li><Link to="/jobs" className="hover:text-primary transition-colors">Browse Jobs</Link></li>
+                <li><Link to="/consultancy" className="hover:text-primary transition-colors flex items-center gap-1.5 text-orange-600 font-semibold"><Sparkles className="h-3.5 w-3.5" /> 1-on-1 Mentorship</Link></li>
+                <li><Link to="/internships" className="hover:text-primary transition-colors">Internships</Link></li>
+                <li><Link to="/post-job" className="hover:text-primary transition-colors">Post a Task</Link></li>
               </ul>
             </div>
             <div>
