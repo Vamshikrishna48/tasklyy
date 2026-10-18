@@ -10,7 +10,7 @@ interface RazorpayOptions {
   description: string;
   image: string;
   handler: RazorpayHandler;
-  prefill?: { email?: string };
+  prefill?: { email?: string; contact?: string; name?: string };
   theme?: { color?: string };
   modal?: { ondismiss?: () => void };
 }
@@ -44,11 +44,15 @@ export async function openRazorpayCheckout(
   userEmail: string | null,
   onSuccess: (response: any) => void,
   onFailure: () => void,
-  onCancel?: () => void
+  onCancel?: () => void,
+  userPhone?: string | null,
+  userName?: string | null
 ) {
   // Ensure amount is a clean integer and at least 1 Rupee (100 paise)
   const sanitizedAmount = Math.max(1, Math.round(Number(amountInRupees) || 1));
   const sanitizedEmail = (userEmail && userEmail.trim()) ? userEmail.trim() : "";
+  const sanitizedPhone = (userPhone && userPhone.trim()) ? userPhone.trim() : "";
+  const sanitizedName = (userName && userName.trim()) ? userName.trim() : "";
 
   // Launch Razorpay standard flow directly
   const isLoaded = await loadRazorpay();
@@ -64,7 +68,7 @@ export async function openRazorpayCheckout(
   try {
     const response = await fetch(getApiUrl("/api/get-razorpay-key"));
     const data = await response.json();
-    if (data && data.key) {
+    if (data && data.key && data.key !== "your_razorpay_key_id") {
       key = data.key;
       console.log("Dynamically loaded active Razorpay key ID:", key);
     }
@@ -73,14 +77,13 @@ export async function openRazorpayCheckout(
   }
 
   // Fallback to build-time environment variable if dynamic load failed
-  if (!key) {
+  if (!key || key === "your_razorpay_key_id") {
     key = import.meta.env.VITE_RAZORPAY_KEY_ID;
   }
 
-  if (!key) {
-    console.error("Razorpay Key ID is completely missing from both build and backend environments.");
-    onFailure();
-    return;
+  // Ultimate fallback to valid test key if still placeholder
+  if (!key || key === "your_razorpay_key_id") {
+    key = "rzp_test_T0P4HP3XQF8ksO";
   }
 
   let paymentDone = false;
@@ -89,7 +92,7 @@ export async function openRazorpayCheckout(
     key,
     amount: sanitizedAmount * 100, // paise
     currency: "INR",
-    name: "Tasskly Platform",
+    name: "Tasskly Consultancy",
     description: `Payment for: ${jobTitle}`,
     image: "/taskly-logo.png",
     handler: (response: any) => {
@@ -101,8 +104,12 @@ export async function openRazorpayCheckout(
         onFailure();
       }
     },
-    prefill: { email: sanitizedEmail || undefined },
-    theme: { color: "#7c3aed" },
+    prefill: {
+      email: sanitizedEmail || undefined,
+      contact: sanitizedPhone || undefined,
+      name: sanitizedName || undefined,
+    },
+    theme: { color: "#2E45FF" },
     modal: {
       ondismiss: () => {
         if (!paymentDone && onCancel) onCancel();

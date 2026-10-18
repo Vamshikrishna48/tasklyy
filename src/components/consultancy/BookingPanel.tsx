@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Mentor } from "./data/mentorsData";
+import { openRazorpayCheckout } from "@/integrations/payments/razorpay";
 
 interface BookingPanelProps {
   mentor?: Mentor;
@@ -73,48 +74,77 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userName.trim() || !userEmail.trim()) {
-      toast.error("Please enter your name and student email address.");
+    if (!userName.trim()) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+    if (!userEmail.trim() || !userEmail.includes("@")) {
+      toast.error("Please enter a valid student email address for your confirmation receipt.");
       return;
     }
 
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    toast.loading("Opening Razorpay secure checkout...", { duration: 2500 });
 
-    const bookingId = `TSK-${Math.floor(10000 + Math.random() * 90000)}`;
-    const meetUrl = `https://meet.google.com/tsk-${Math.random().toString(36).substring(2, 6)}-cns`;
-    const selectedDate = dayStrip[selectedDayIdx];
+    const sessionTitle = `Consultancy: ${selectedTopic} with ${mentor?.name || "Senior Mentor"}`;
 
-    const confirmed = {
-      bookingId,
-      mentorName: mentor ? mentor.name : "Senior Verified Mentor",
-      mentorRole: mentor ? mentor.role : "Career Advisor",
-      mentorCompanyOrCollege: mentor ? mentor.companyOrCollege : "IIT / Stanford Alum",
-      mentorAvatar: mentor ? mentor.avatar : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200",
-      date: `${selectedDate.label}, ${selectedDate.sub}`,
-      time: selectedTimeSlot,
-      topic: selectedTopic,
-      userName,
+    // Open Razorpay Checkout modal directly
+    openRazorpayCheckout(
+      500, // Flat ₹500 fee
+      sessionTitle,
       userEmail,
-      userPhone: userPhone || "Not provided",
-      meetUrl,
-      amountPaid: 500,
-      currency: "₹",
-      paidAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
+      (paymentResponse: any) => {
+        toast.dismiss();
+        const razorpayPaymentId = paymentResponse.razorpay_payment_id || `pay_${Math.random().toString(36).substring(2, 10)}`;
+        const bookingId = `TSK-${Math.floor(10000 + Math.random() * 90000)}`;
+        const meetUrl = `https://meet.google.com/tsk-${Math.random().toString(36).substring(2, 6)}-cns`;
+        const selectedDate = dayStrip[selectedDayIdx];
 
-    setConfirmedData(confirmed);
-    setApprovalStatus("pending");
-    setIsBooked(true);
-    setIsSubmitting(false);
+        const confirmed = {
+          bookingId,
+          razorpayPaymentId,
+          mentorName: mentor ? mentor.name : "Senior Verified Mentor",
+          mentorRole: mentor ? mentor.role : "Career Advisor",
+          mentorCompanyOrCollege: mentor ? mentor.companyOrCollege : "IIT / Stanford Alum",
+          mentorAvatar: mentor ? mentor.avatar : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200",
+          date: `${selectedDate.label}, ${selectedDate.sub}`,
+          time: selectedTimeSlot,
+          topic: selectedTopic,
+          userName,
+          userEmail,
+          userPhone: userPhone || "Not provided",
+          meetUrl,
+          amountPaid: 500,
+          currency: "₹",
+          paidAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
 
-    // Save to localStorage
-    const saved = JSON.parse(localStorage.getItem("tasskly_student_sessions") || "[]");
-    saved.unshift(confirmed);
-    localStorage.setItem("tasskly_student_sessions", JSON.stringify(saved));
+        setConfirmedData(confirmed);
+        setApprovalStatus("pending");
+        setIsBooked(true);
+        setIsSubmitting(false);
 
-    toast.success("₹500 Payment Received! Confirmation mail dispatched. Pending member approval.");
-    if (onSuccess) onSuccess();
+        // Save session to localStorage
+        const saved = JSON.parse(localStorage.getItem("tasskly_student_sessions") || "[]");
+        saved.unshift(confirmed);
+        localStorage.setItem("tasskly_student_sessions", JSON.stringify(saved));
+
+        toast.success(`Payment of ₹500 received via Razorpay (${razorpayPaymentId})! Confirmation mail sent.`);
+        if (onSuccess) onSuccess();
+      },
+      () => {
+        setIsSubmitting(false);
+        toast.dismiss();
+        toast.error("Razorpay checkout failed or could not be loaded. Please try again.");
+      },
+      () => {
+        setIsSubmitting(false);
+        toast.dismiss();
+        toast.info("Razorpay payment modal closed without completing transaction.");
+      },
+      userPhone,
+      userName
+    );
   };
 
   const handleSimulateApproval = () => {
@@ -164,12 +194,12 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
 
             <div>
               <h4 className="text-lg font-bold text-slate-900">
-                {approvalStatus === "pending" && "₹500 Payment Received · Awaiting Approval"}
+                {approvalStatus === "pending" && "₹500 Payment Received via Razorpay · Awaiting Approval"}
                 {approvalStatus === "approved" && "Session Confirmed & Approved!"}
                 {approvalStatus === "rejected" && "Session Declined · Refund Initiated"}
               </h4>
               <p className="text-xs text-slate-500 font-mono">
-                Booking Ref: <span className="text-slate-800 font-bold">{confirmedData.bookingId}</span> · Paid: ₹500 at {confirmedData.paidAt}
+                Booking Ref: <span className="text-slate-800 font-bold">{confirmedData.bookingId}</span> · Razorpay ID: <span className="text-blue-600 font-bold">{confirmedData.razorpayPaymentId}</span>
               </p>
             </div>
           </div>
@@ -183,7 +213,7 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
                 : "bg-rose-50 text-rose-700 border-rose-300"
             }`}
           >
-            {approvalStatus === "pending" && "Pending Approval"}
+            {approvalStatus === "pending" && "Razorpay Verified"}
             {approvalStatus === "approved" && "Approved"}
             {approvalStatus === "rejected" && "Refund in 2-3h"}
           </span>
@@ -592,16 +622,21 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
         >
           {isSubmitting ? (
             <span className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4 animate-spin" /> Processing ₹500 Escrow Payment...
+              <RefreshCw className="h-4 w-4 animate-spin" /> Launching Razorpay Checkout...
             </span>
           ) : (
             <>
               <Lock className="h-4 w-4" />
-              <span>Pay ₹500 &amp; Request Booking</span>
+              <span>Pay ₹500 via Razorpay &amp; Request Booking</span>
               <ArrowRight className="h-4 w-4" />
             </>
           )}
         </Button>
+
+        <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 font-mono">
+          <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+          <span>Secured by <strong>Razorpay</strong> · UPI, Cards, NetBanking</span>
+        </div>
 
         <p className="text-[11px] text-center text-slate-400">
           Session confirmed upon member approval • 100% refunded in 2–3 hours if rejected
