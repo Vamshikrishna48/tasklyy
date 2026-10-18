@@ -3,7 +3,8 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { IndianRupee, Lock, Users, CheckCircle, Rocket, Construction } from "lucide-react";
+import { IndianRupee, Lock, Users, CheckCircle, Rocket, Construction, GraduationCap, ArrowRight, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { getIsPlatformLaunched, setPlatformLaunched, syncLaunchStateFromServer } from "@/utils/launchControl";
 
@@ -22,6 +23,7 @@ const AdminOverview = () => {
   const [loading, setLoading] = useState(true);
   const [isLaunched, setIsLaunched] = useState(() => getIsPlatformLaunched());
   const [launching, setLaunching] = useState(false);
+  const [consultancyStats, setConsultancyStats] = useState({ total: 4, pending: 1, revenue: 1996 });
 
   const loadStats = async () => {
     const data = await fetchAdminStats();
@@ -33,6 +35,22 @@ const AdminOverview = () => {
     loadStats();
     // Sync real launch state from Supabase on mount
     syncLaunchStateFromServer().then(launched => setIsLaunched(launched));
+
+    // Load consultancy booking counts
+    try {
+      const stored = localStorage.getItem("tasskly_consultancy_bookings") || localStorage.getItem("tasskly_student_sessions");
+      if (stored) {
+        const list = JSON.parse(stored);
+        if (Array.isArray(list) && list.length > 0) {
+          const total = list.length;
+          const pending = list.filter((b: any) => b.status === "pending").length;
+          const revenue = list.reduce((sum: number, b: any) => sum + (b.amountPaid || 499), 0);
+          setConsultancyStats({ total, pending, revenue });
+        }
+      }
+    } catch {
+      // ignore
+    }
   }, []);
 
   const handleToggleLaunch = async () => {
@@ -151,6 +169,39 @@ const AdminOverview = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Consultancy Bookings Card (Flat ₹499) */}
+      <Card className="border-2 border-blue-500/25 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-slate-900/5 shadow-md">
+        <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <GraduationCap className="h-5 w-5 text-blue-600" />
+              <h2 className="font-display text-base font-bold text-foreground">
+                Paid Consultancy Bookings (Flat ₹499)
+              </h2>
+              <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/30 font-bold text-xs">
+                {consultancyStats.total} Total Bookings
+              </Badge>
+              {consultancyStats.pending > 0 && (
+                <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 font-bold text-xs gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  {consultancyStats.pending} Awaiting Member Approval
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total ₹{consultancyStats.revenue.toLocaleString("en-IN")} collected in escrow via Razorpay. Sessions confirmed only when members approve, or refunded within 2–3 hours.
+            </p>
+          </div>
+
+          <Link to="/admin/consultancy">
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bold gap-1.5 rounded-xl shadow-xs shrink-0">
+              <span>View Paid Users</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
 
       <Card className="shadow-card">
         <CardContent className="p-5 space-y-3">

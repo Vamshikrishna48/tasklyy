@@ -1,11 +1,12 @@
 import { NavLink } from "@/components/NavLink";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
-import { LayoutDashboard, Shield, ArrowLeft, BookOpen, Users, Bell, RefreshCw, Landmark, Sparkles } from "lucide-react";
+import { LayoutDashboard, Shield, ArrowLeft, BookOpen, Users, Bell, RefreshCw, Landmark, Sparkles, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 const menuItems = [
   { title: "Overview", url: "/admin", icon: LayoutDashboard },
+  { title: "Consultancy Bookings", url: "/admin/consultancy", icon: GraduationCap },
   { title: "AI Works (PPT & Posters)", url: "/admin/ai-works", icon: Sparkles },
   { title: "Best Match", url: "/admin/best-match", icon: Sparkles },
   { title: "Escrow Payments", url: "/admin/escrow", icon: Shield },

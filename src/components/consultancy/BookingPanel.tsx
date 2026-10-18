@@ -117,6 +117,10 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
           amountPaid: 499,
           currency: "₹",
           paidAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          createdAt: new Date().toISOString(),
+          status: "pending",
+          userNote: userNote || "",
+          paymentMethod: paymentMethod === "upi" ? "UPI / QR" : paymentMethod === "card" ? "Credit/Debit Card" : "NetBanking",
         };
 
         setConfirmedData(confirmed);
@@ -124,10 +128,11 @@ export const BookingPanel: React.FC<BookingPanelProps> = ({
         setIsBooked(true);
         setIsSubmitting(false);
 
-        // Save session to localStorage
+        // Save session to localStorage for both student sessions & admin consultancy management
         const saved = JSON.parse(localStorage.getItem("tasskly_student_sessions") || "[]");
         saved.unshift(confirmed);
         localStorage.setItem("tasskly_student_sessions", JSON.stringify(saved));
+        localStorage.setItem("tasskly_consultancy_bookings", JSON.stringify(saved));
 
         toast.success(`Payment of ₹499 received via Razorpay (${razorpayPaymentId})! Confirmation mail sent.`);
         if (onSuccess) onSuccess();
