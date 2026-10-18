@@ -72,7 +72,7 @@ export async function openRazorpayCheckout(
 
   // 1. Try creating an official order via backend first
   try {
-    const orderRes = await fetch(getApiUrl("/api/create-razorpay-order"), {
+    const orderRes = await fetch(getApiUrl("/api/get-razorpay-key"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ amount: sanitizedAmount, currency: "INR" })

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 
+// Unified Withdrawal Handler (Request & Process)
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -21,12 +22,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { amount } = req.body;
-  if (!amount || isNaN(amount) || Number(amount) <= 0) {
-    return res.status(400).json({ error: 'Invalid or missing withdrawal amount' });
-  }
-  const withdrawalAmount = Number(amount);
-
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({ error: 'Authorization header missing' });
@@ -37,7 +32,6 @@ export default async function handler(req, res) {
   let supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
   let supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  // Fallback to local .env/.env.local parsing for local development
   if (!supabaseUrl || !supabaseServiceKey) {
     try {
       const paths = [
@@ -67,18 +61,118 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Supabase credentials not configured on backend' });
   }
 
-  // Initialize Supabase Client with Admin service role bypass permissions
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    // Authenticate the user token using Supabase Auth
     const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
     if (authErr || !user) {
-      console.error("Auth verification failed:", authErr);
       return res.status(401).json({ error: 'Invalid or expired session token. Please sign in again.' });
     }
 
-    // Get the user's profile and payout details
+    const { withdrawal_id, status, admin_note, amount } = req.body || {};
+
+    // ─────────────────────────────────────────────────────────────
+    // BRANCH A: PROCESS WITHDRAWAL (Admin Action: approve / reject)
+    // ─────────────────────────────────────────────────────────────
+    if (withdrawal_id) {
+      if (!status || (status !== 'approved' && status !== 'rejected')) {
+        return res.status(400).json({ error: 'Invalid or missing parameters (withdrawal_id, status)' });
+      }
+
+      const { data: requesterProfile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profileErr || !requesterProfile || requesterProfile.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admins are authorized to process withdrawals.' });
+      }
+
+      const { data: withdrawal, error: withdrawalErr } = await supabase
+        .from('withdrawals')
+        .select('*')
+        .eq('id', withdrawal_id)
+        .single();
+
+      if (withdrawalErr || !withdrawal) {
+        return res.status(404).json({ error: `Withdrawal request with ID ${withdrawal_id} not found.` });
+      }
+
+      if (withdrawal.status !== 'pending') {
+        return res.status(400).json({ error: `This withdrawal request has already been ${withdrawal.status}.` });
+      }
+
+      if (status === 'approved') {
+        const { error: updateErr } = await supabase
+          .from('withdrawals')
+          .update({
+            status: 'approved',
+            admin_note: admin_note || 'Approved and processed',
+            processed_at: new Date().toISOString()
+          })
+          .eq('id', withdrawal_id);
+
+        if (updateErr) throw updateErr;
+      } else {
+        const { error: updateErr } = await supabase
+          .from('withdrawals')
+          .update({
+            status: 'rejected',
+            admin_note: admin_note || 'Rejected by Admin',
+            processed_at: new Date().toISOString()
+          })
+          .eq('id', withdrawal_id);
+
+        if (updateErr) throw updateErr;
+
+        // Refund the balance back to user's wallet_balance
+        const { data: targetProfile, error: targetProfileErr } = await supabase
+          .from('profiles')
+          .select('wallet_balance')
+          .eq('id', withdrawal.user_id)
+          .single();
+
+        if (targetProfileErr || !targetProfile) {
+          throw new Error("Target user profile not found for refund");
+        }
+
+        const currentBalance = Number(targetProfile.wallet_balance) || 0;
+        const refundAmount = Number(withdrawal.amount);
+        const refundedBalance = currentBalance + refundAmount;
+
+        const { error: refundErr } = await supabase
+          .from('profiles')
+          .update({ wallet_balance: refundedBalance })
+          .eq('id', withdrawal.user_id);
+
+        if (refundErr) {
+          await supabase
+            .from('withdrawals')
+            .update({
+              status: 'pending',
+              admin_note: null,
+              processed_at: null
+            })
+            .eq('id', withdrawal_id);
+          throw new Error("Failed to refund amount back to wallet balance");
+        }
+      }
+
+      return res.status(200).json({ 
+        success: true, 
+        message: `Withdrawal request successfully ${status}.` 
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // BRANCH B: REQUEST WITHDRAWAL (User Action)
+    // ─────────────────────────────────────────────────────────────
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
+      return res.status(400).json({ error: 'Invalid or missing withdrawal amount' });
+    }
+    const withdrawalAmount = Number(amount);
+
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
       .select('wallet_balance, upi_id, full_name')
@@ -86,18 +180,15 @@ export default async function handler(req, res) {
       .single();
 
     if (profileErr || !profile) {
-      console.error("Profile not found:", profileErr);
       return res.status(404).json({ error: 'User profile not found.' });
     }
 
-    // Check if UPI ID is set
     if (!profile.upi_id) {
       return res.status(400).json({ 
         error: 'Please configure your UPI ID in your profile settings before requesting a withdrawal.' 
       });
     }
 
-    // Validate if the user has enough wallet balance
     const currentBalance = Number(profile.wallet_balance) || 0;
     if (currentBalance < withdrawalAmount) {
       return res.status(400).json({ 
@@ -105,7 +196,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // 1. Deduct withdrawal amount from user's wallet balance
     const newBalance = currentBalance - withdrawalAmount;
     const { error: balanceUpdateErr } = await supabase
       .from('profiles')
@@ -113,11 +203,9 @@ export default async function handler(req, res) {
       .eq('id', user.id);
 
     if (balanceUpdateErr) {
-      console.error("Failed to update wallet balance:", balanceUpdateErr);
       throw new Error("Failed to deduct amount from wallet balance");
     }
 
-    // 2. Create the pending withdrawal record with UPI destination
     const payoutUpi = profile.upi_id;
     const payoutHolder = profile.full_name || 'UPI Holder';
 
@@ -134,8 +222,6 @@ export default async function handler(req, res) {
       });
 
     if (withdrawalErr) {
-      console.error("Failed to insert withdrawal transaction:", withdrawalErr);
-      // Rollback wallet balance update
       await supabase
         .from('profiles')
         .update({ wallet_balance: currentBalance })
@@ -148,8 +234,9 @@ export default async function handler(req, res) {
       message: 'Withdrawal request submitted successfully.',
       new_balance: newBalance
     });
+
   } catch (err) {
-    console.error("Error processing withdrawal request:", err);
-    return res.status(500).json({ error: err.message || 'Internal server error during withdrawal request' });
+    console.error("Error in withdrawal handler:", err);
+    return res.status(500).json({ error: err.message || 'Internal server error during withdrawal' });
   }
 }

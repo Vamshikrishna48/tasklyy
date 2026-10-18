@@ -1,12 +1,13 @@
 import fs from 'fs';
 import path from 'path';
+import Razorpay from 'razorpay';
 
-// Dynamic Razorpay key exposure endpoint
+// Unified Razorpay Key and Order creation endpoint
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', (req.headers && req.headers.origin) || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
@@ -18,13 +19,81 @@ export default async function handler(req, res) {
   }
 
   // Prioritize Vercel environment variables first
-  let key = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
+  let key_id = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
+  let key_secret = process.env.RAZORPAY_KEY_SECRET || process.env.VITE_RAZORPAY_KEY_SECRET;
 
-  // Filter out any stale/revoked keys
-  const REVOKED = ['rzp_test_T0P4HP3XQF8ksO', 'your_razorpay_key_id', 'rzp_test_SwrcccCFd0O03j', 'rzp_test_Ss6UkuAHYOxOPV'];
-  if (!key || REVOKED.includes(key)) {
-    key = 'rzp_test_TpN1RYQAhmX0OC';
+  // Fallback to local .env/.env.local parsing for local development
+  if (!key_id || !key_secret) {
+    try {
+      const paths = [
+        path.join(process.cwd(), '.env.local'),
+        path.join(process.cwd(), '.env')
+      ];
+      for (const envPath of paths) {
+        if (fs.existsSync(envPath)) {
+          const envContent = fs.readFileSync(envPath, 'utf8');
+          if (!key_id) {
+            const matchKey = envContent.match(/VITE_RAZORPAY_KEY_ID\s*=\s*(["']?)(.*?)\1(\s|$)/);
+            if (matchKey && matchKey[2]) key_id = matchKey[2].trim();
+          }
+          if (!key_secret) {
+            const matchSecret = envContent.match(/(VITE_)?RAZORPAY_KEY_SECRET\s*=\s*(["']?)(.*?)\1(\s|$)/);
+            if (matchSecret && matchSecret[3]) key_secret = matchSecret[3].trim();
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to parse env files dynamically:", err);
+    }
   }
 
-  return res.status(200).json({ key });
+  // Filter out any stale/revoked keys
+  const REVOKED_KEYS = ['rzp_test_T0P4HP3XQF8ksO', 'your_razorpay_key_id', 'rzp_test_SwrcccCFd0O03j', 'rzp_test_Ss6UkuAHYOxOPV'];
+  if (!key_id || REVOKED_KEYS.includes(key_id)) {
+    key_id = 'rzp_test_TpN1RYQAhmX0OC';
+  }
+  if (!key_secret || key_secret === 'ZaYJYekC9IM9WyP9o9QViDpF') {
+    key_secret = 'Hxp5Ku9Ooo2cga90b5grQxu2';
+  }
+
+  // GET: Return public key
+  if (req.method === 'GET') {
+    return res.status(200).json({ key: key_id });
+  }
+
+  // POST: Create Razorpay Order
+  if (req.method === 'POST') {
+    const { amount = 499, currency = 'INR', receipt = `rcpt_${Date.now()}` } = req.body || {};
+
+    try {
+      const instance = new Razorpay({
+        key_id,
+        key_secret
+      });
+
+      const options = {
+        amount: Math.round(Number(amount) * 100),
+        currency,
+        receipt
+      };
+
+      const order = await instance.orders.create(options);
+      return res.status(200).json({
+        success: true,
+        order_id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        key_id
+      });
+    } catch (err) {
+      console.error("Razorpay order creation failed:", err);
+      return res.status(200).json({
+        success: false,
+        error: err.message || 'Failed to create order with Razorpay',
+        key_id
+      });
+    }
+  }
+
+  return res.status(405).json({ error: 'Method Not Allowed' });
 }

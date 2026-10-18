@@ -13,6 +13,14 @@
       "destination": "/api/internship-auth"
     },
     {
+      "source": "/api/create-razorpay-order",
+      "destination": "/api/get-razorpay-key"
+    },
+    {
+      "source": "/api/process-withdrawal",
+      "destination": "/api/request-withdrawal"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
