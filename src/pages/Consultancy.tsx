@@ -239,61 +239,61 @@ const ConsultancyContent: React.FC = () => {
       ],
     },
     {
-      id: "sb-ch-internships",
+      id: "sb-ch-college",
       number: "04",
-      railLabel: "Internships",
-      title: "Land the summer gig.",
-      lede: "Cold outreach templates, open-source portfolio proof, and getting noticed by hiring managers before rounds close.",
+      railLabel: "College",
+      title: "Compare campuses. Know the real college before you join.",
+      lede: "Honest peer reviews on campus culture, hostel realities, placement cells, and true peer group quality directly from current seniors.",
       modules: [
         {
           id: "mod-10",
           number: "10",
-          title: "FAANG & High-Growth Startup Outreach",
-          mentorInst: "Google L4",
+          title: "Tier-1 vs Tier-2 Reality & Campus Comparison",
+          mentorInst: "IIT Delhi",
           mentorId: "arjun-sharma",
         },
         {
           id: "mod-11",
           number: "11",
-          title: "GitHub & Production Portfolio Audit",
-          mentorInst: "Microsoft",
-          mentorId: "david-kim",
+          title: "Autonomous vs State University Infrastructure Audit",
+          mentorInst: "BITS Pilani",
+          mentorId: "ananya-sengupta",
         },
         {
           id: "mod-12",
           number: "12",
-          title: "First-Year & Sophomore Internship Strategy",
-          mentorInst: "BITS Pilani",
-          mentorId: "ananya-sengupta",
+          title: "Hostels, Peer Community & Technical Clubs Review",
+          mentorInst: "NIT / Carnegie Mellon",
+          mentorId: "rohan-nair",
         },
       ],
     },
     {
-      id: "sb-ch-placements",
+      id: "sb-ch-seat",
       number: "05",
-      railLabel: "Placements",
-      title: "Crack the code. Secure the package.",
-      lede: "Live 1-on-1 coding mock interviews, system design breakdown, and high-impact compensation negotiation.",
+      railLabel: "Seat",
+      title: "Lock your seat. Optimize counseling rounds.",
+      lede: "Rank-versus-seat matrix analysis, choice filling algorithms, branch sliding, and freezing the best possible seat for your percentile.",
       modules: [
         {
           id: "mod-13",
           number: "13",
-          title: "FAANG LeetCode & System Design Simulation",
-          mentorInst: "Google",
+          title: "JoSAA, CET & State Counseling Choice-Filling Strategy",
+          mentorInst: "IIT Delhi",
           mentorId: "arjun-sharma",
         },
         {
           id: "mod-14",
           number: "14",
-          title: "Quant Finance & FinTech Engineering Prep",
-          mentorInst: "Uber / FinTech",
-          mentorId: "marcus-vance",
+          title: "Branch Sliding vs Upgrading to Tier-1 College",
+          mentorInst: "Microsoft / Tech Alum",
+          mentorId: "david-kim",
         },
         {
           id: "mod-15",
           number: "15",
-          title: "Multiple Offer Negotiation & Equity Strategy",
-          mentorInst: "McKinsey Alumni",
+          title: "Spot Rounds, Merit Quota & Seat Matrix Optimization",
+          mentorInst: "IIM / Counseling Lead",
           mentorId: "priya-patel",
         },
       ],
@@ -547,8 +547,8 @@ const ConsultancyContent: React.FC = () => {
               <li><button onClick={() => scrollToChapter("sb-ch-admissions")} className="hover:text-blue-600">Admissions</button></li>
               <li><button onClick={() => scrollToChapter("sb-ch-courses")} className="hover:text-blue-600">Course Selection</button></li>
               <li><button onClick={() => scrollToChapter("sb-ch-abroad")} className="hover:text-blue-600">Study Abroad</button></li>
-              <li><button onClick={() => scrollToChapter("sb-ch-internships")} className="hover:text-blue-600">Internships</button></li>
-              <li><button onClick={() => scrollToChapter("sb-ch-placements")} className="hover:text-blue-600">Placements</button></li>
+              <li><button onClick={() => scrollToChapter("sb-ch-college")} className="hover:text-blue-600">College</button></li>
+              <li><button onClick={() => scrollToChapter("sb-ch-seat")} className="hover:text-blue-600">Seat</button></li>
             </ul>
           </div>
           <div>

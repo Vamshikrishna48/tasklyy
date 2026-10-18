@@ -33,8 +33,8 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
     { id: "sb-ch-admissions", title: "01 Admissions & SOP Strategy", type: "chapter" },
     { id: "sb-ch-courses", title: "02 Course Selection & Branch Changes", type: "chapter" },
     { id: "sb-ch-abroad", title: "03 Study Abroad & Visa Counseling", type: "chapter" },
-    { id: "sb-ch-internships", title: "04 Summer Internships & Cold Outreach", type: "chapter" },
-    { id: "sb-ch-placements", title: "05 Placements, Coding & System Design", type: "chapter" },
+    { id: "sb-ch-college", title: "04 College Comparison & Campus Realities", type: "chapter" },
+    { id: "sb-ch-seat", title: "05 Seat Allotment & Counseling Strategy", type: "chapter" },
   ];
 
   const filteredChapters = chapters.filter((c) =>

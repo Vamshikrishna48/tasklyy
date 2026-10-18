@@ -130,30 +130,29 @@ export const Sandbox3DCore: React.FC<Sandbox3DCoreProps> = ({ currentChapter, sc
         f3[i3 + 2] = radius * Math.cos(phi);
       }
 
-      // Formation 4: Interconnected Network Constellation (Internships)
+      // Formation 4: College Campus Colonnade & Architecture
       const f4 = new Float32Array(PARTICLE_COUNT * 3);
       for (let i = 0; i < PARTICLE_COUNT; i++) {
         const i3 = i * 3;
-        const cluster = i % 5;
-        const cx = Math.cos((cluster / 5) * Math.PI * 2) * 1.8;
-        const cy = Math.sin((cluster / 5) * Math.PI * 2) * 1.8;
-        f4[i3] = cx + (Math.random() - 0.5) * 1.0;
-        f4[i3 + 1] = cy + (Math.random() - 0.5) * 1.0;
-        f4[i3 + 2] = (Math.random() - 0.5) * 1.2;
+        const pillar = i % 4;
+        const px = (pillar - 1.5) * 1.35;
+        const py = (Math.random() - 0.5) * 3.8;
+        const pz = (Math.random() - 0.5) * 0.8;
+        f4[i3] = px + (Math.random() - 0.5) * 0.25;
+        f4[i3 + 1] = py;
+        f4[i3 + 2] = pz;
       }
 
-      // Formation 5: Radiant Crystalline Diamond (Placements)
+      // Formation 5: Seat Allotment / Concentric Target & Locked Node
       const f5 = new Float32Array(PARTICLE_COUNT * 3);
       for (let i = 0; i < PARTICLE_COUNT; i++) {
         const i3 = i * 3;
-        const u = Math.random();
-        const v = Math.random();
-        const theta = u * 2.0 * Math.PI;
-        const phi = Math.acos(2.0 * v - 1.0);
-        const r = Math.cbrt(Math.random()) * 2.5;
-        f5[i3] = r * Math.sin(phi) * Math.cos(theta);
-        f5[i3 + 1] = r * Math.abs(Math.cos(phi)) * 1.4 - 0.2;
-        f5[i3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+        const ring = (i % 3) + 1;
+        const angle = (i / PARTICLE_COUNT) * Math.PI * 12;
+        const rad = ring * 0.85;
+        f5[i3] = Math.cos(angle) * rad + (Math.random() - 0.5) * 0.15;
+        f5[i3 + 1] = (Math.random() - 0.5) * 0.6;
+        f5[i3 + 2] = Math.sin(angle) * rad + (Math.random() - 0.5) * 0.15;
       }
 
       const formations = [f0, f1, f2, f3, f4, f5];
