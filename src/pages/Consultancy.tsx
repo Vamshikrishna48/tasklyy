@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   Lock,
   RefreshCcw,
+  Mail,
+  Clock,
 } from "lucide-react";
 
 import "@/components/consultancy/sandbox-consultancy.css";
@@ -327,7 +329,7 @@ const ConsultancyContent: React.FC = () => {
         </Link>
 
         <p className="sb-top-tag">
-          Direct 1-on-1 sessions with verified seniors &amp; alumni.
+          Flat ₹500 sessions. Confirmed only when member approves. 100% refund in 2–3h.
         </p>
 
         <nav className="sb-top-nav">
@@ -359,7 +361,7 @@ const ConsultancyContent: React.FC = () => {
             onClick={() => handleOpenBooking()}
             className="sb-pill sb-pill-dark"
           >
-            <span>Book Session</span>
+            <span>Book (₹500)</span>
             <span className="sb-pill-dot" />
           </button>
         </nav>
@@ -412,6 +414,16 @@ const ConsultancyContent: React.FC = () => {
             <div className="sb-hero-inner">
               <h1 className="sb-wordmark">consultancy</h1>
               <div>
+                {/* Policy Pill Badge */}
+                <div className="inline-flex flex-wrap items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-200 text-xs font-mono mb-4 backdrop-blur-md">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="font-bold text-white">Flat ₹500 / Session</span>
+                  <span className="text-slate-500 hidden sm:inline">•</span>
+                  <span>Confirmed on Member Approval</span>
+                  <span className="text-slate-500 hidden sm:inline">•</span>
+                  <span className="text-amber-400 font-semibold">100% Refund in 2–3 Hours</span>
+                </div>
+
                 <p className="sb-hero-lede">
                   Direct one-on-one sessions with verified seniors, alumni, and industry engineers who have already walked your path.
                 </p>
@@ -427,7 +439,7 @@ const ConsultancyContent: React.FC = () => {
                     onClick={() => scrollToChapter("sb-mentors-catalog")}
                     className="sb-pill sb-pill-glass sb-pill-lg"
                   >
-                    Browse Mentors
+                    Browse Mentors (₹500)
                   </button>
                 </div>
               </div>
@@ -505,6 +517,65 @@ const ConsultancyContent: React.FC = () => {
       />
 
       {/* ─────────────────────────────────────────────────────────────
+         CONSULTANCY POLICY & ESCROW GUARANTEE SECTION
+         ───────────────────────────────────────────────────────────── */}
+      <section className="py-20 px-6 max-w-6xl mx-auto border-t border-slate-200">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <p className="text-xs font-mono uppercase tracking-widest text-blue-600 font-semibold mb-2">
+            Student Protection Protocol
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+            How Booking &amp; Member Approval Works
+          </h2>
+          <p className="text-slate-600 mt-3 text-sm sm:text-base">
+            Transparent student pricing, strict mentor accountability, and zero-risk scheduling.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base border border-blue-100">
+              01
+            </div>
+            <h3 className="font-bold text-slate-900 text-base">Flat ₹500 Fee</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Transparent, predictable student pricing across every chapter and mentor. No surge rates or platform markups.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-base border border-indigo-100">
+              02
+            </div>
+            <h3 className="font-bold text-slate-900 text-base">Instant Email Receipt</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              After paying ₹500, a confirmation email with your booking request and payment receipt is immediately dispatched to your inbox.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-base border border-amber-100">
+              03
+            </div>
+            <h3 className="font-bold text-slate-900 text-base">Member Approval Condition</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Your session is confirmed <strong>when and only when the member approves</strong>. This ensures the mentor is 100% prepared to guide you.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base border border-emerald-100">
+              04
+            </div>
+            <h3 className="font-bold text-slate-900 text-base">2–3 Hours Refund Guarantee</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              If the member rejects your request or cannot accommodate your slot, the full ₹500 is refunded to your account within <strong>2–3 hours</strong>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────────────────
          CTA BLOCK
          ───────────────────────────────────────────────────────────── */}
       <section className="sb-cta">
@@ -519,13 +590,16 @@ const ConsultancyContent: React.FC = () => {
         </h2>
         <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-600 font-medium">
           <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> 100% Verified Mentors
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Flat ₹500 / Session
           </span>
           <span className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-blue-600" /> Google Meet Calendar Sync
+            <Mail className="h-4 w-4 text-blue-600" /> Instant Email Confirmation
           </span>
           <span className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-slate-600" /> Guaranteed Escrow Protection
+            <ShieldCheck className="h-4 w-4 text-amber-600" /> Confirmed Only On Member Approval
+          </span>
+          <span className="flex items-center gap-2">
+            <RefreshCcw className="h-4 w-4 text-emerald-600" /> 100% Refund in 2–3 Hours if Rejected
           </span>
         </div>
       </section>
@@ -564,7 +638,7 @@ const ConsultancyContent: React.FC = () => {
 
         <div className="sb-foot-bottom">
           <p>© 2026 Tasskly Technologies. All rights reserved.</p>
-          <p>Crafted for students, future engineers, and campus builders.</p>
+          <p>Crafted for students, future engineers, and campus builders. Flat ₹500 Escrow Mentorship.</p>
         </div>
       </footer>
 
@@ -582,8 +656,8 @@ const ConsultancyContent: React.FC = () => {
             </DialogTitle>
             <DialogDescription className="text-slate-300 text-sm">
               {selectedMentor
-                ? `${selectedMentor.role} · ${selectedMentor.companyOrCollege} (₹${selectedMentor.price} / session)`
-                : "Select a date and time slot for your 1-on-1 video call."}
+                ? `${selectedMentor.role} · ${selectedMentor.companyOrCollege} — Flat ₹500 (Confirmed when and only when member approves · Refund in 2–3h if rejected)`
+                : "Flat ₹500 / session · Confirmed upon member approval · 100% refund in 2–3 hours if rejected."}
             </DialogDescription>
           </DialogHeader>
 

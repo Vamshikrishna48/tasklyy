@@ -30,7 +30,7 @@ export const SandboxMentorsTrack: React.FC<SandboxMentorsTrackProps> = ({ onSele
         </div>
         <div>
           <p className="sb-work-sub">
-            Direct 1-on-1 video sessions. Real seniors and engineers from top universities and tech giants.
+            Direct 1-on-1 video sessions. Flat ₹500 fee. Confirmed only when member approves. 100% refund within 2–3 hours if rejected.
           </p>
           <div className="flex items-center gap-3">
             <button
@@ -48,7 +48,7 @@ export const SandboxMentorsTrack: React.FC<SandboxMentorsTrackProps> = ({ onSele
               <ArrowRight className="h-4 w-4 text-slate-700" />
             </button>
             <span className="text-xs font-mono font-medium text-slate-500 ml-2">
-              {MENTORS_DATA.length} verified mentors available
+              {MENTORS_DATA.length} verified mentors · ₹500 / session
             </span>
           </div>
         </div>
@@ -106,12 +106,17 @@ export const SandboxMentorsTrack: React.FC<SandboxMentorsTrackProps> = ({ onSele
                     ))}
                   </div>
 
+                  {/* Policy Micro-badge */}
+                  <p className="text-[10px] text-slate-500 font-mono mt-1">
+                    Approval required · 2-3h refund guarantee
+                  </p>
+
                   {/* Action CTA */}
                   <button
                     onClick={() => onSelectMentor(mentor)}
                     className="w-full mt-2 h-11 rounded-xl bg-slate-900 hover:bg-blue-600 text-white font-semibold text-xs tracking-wider uppercase transition-colors flex items-center justify-center gap-2"
                   >
-                    <span>Book 1-on-1 Session</span>
+                    <span>Book Session (₹500)</span>
                     <ArrowUpRight className="h-4 w-4" />
                   </button>
                 </div>

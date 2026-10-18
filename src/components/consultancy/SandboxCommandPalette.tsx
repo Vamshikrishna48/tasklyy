@@ -152,7 +152,7 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
                         {item.title}
                       </p>
                       <p className="text-xs text-slate-500 truncate">
-                        {item.itemType === "chapter" ? "Milestone Roadmap" : "1-on-1 Verified Mentor"}
+                        {item.itemType === "chapter" ? "Milestone Roadmap" : "1-on-1 Verified Mentor · ₹500 · Approval Required"}
                       </p>
                     </div>
                   </div>
