@@ -1,21 +1,20 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, Component, ErrorInfo, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
   ArrowUpRight,
   Search,
-  Calendar,
   ShieldCheck,
   Star,
   Sparkles,
   Compass,
   CheckCircle2,
   Lock,
+  RefreshCcw,
 } from "lucide-react";
 
 import "@/components/consultancy/sandbox-consultancy.css";
 import { Sandbox3DCore } from "@/components/consultancy/Sandbox3DCore";
-import { SandboxLoader } from "@/components/consultancy/SandboxLoader";
 import { SandboxCommandPalette } from "@/components/consultancy/SandboxCommandPalette";
 import { SandboxMentorsTrack } from "@/components/consultancy/SandboxMentorsTrack";
 import { SandboxScrubStatement } from "@/components/consultancy/SandboxScrubStatement";
@@ -23,33 +22,57 @@ import { BookingPanel } from "@/components/consultancy/BookingPanel";
 import { MENTORS_DATA, Mentor } from "@/components/consultancy/data/mentorsData";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-export const Consultancy: React.FC = () => {
+// Local Error Boundary to catch any potential runtime glitches
+class ConsultancyErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Consultancy page error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6 text-center">
+          <div className="max-w-md space-y-4">
+            <h2 className="text-2xl font-bold">Consultancy Page Encountered an Issue</h2>
+            <p className="text-sm text-slate-400">
+              {this.state.error?.message || "An unexpected error occurred while rendering the page."}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-500 transition-colors inline-flex items-center gap-2"
+            >
+              <RefreshCcw className="h-4 w-4" /> Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const ConsultancyContent: React.FC = () => {
   // Scroll and layout state
   const [scrollY, setScrollY] = useState(0);
   const [currentChapter, setCurrentChapter] = useState(0);
   const [activeChapterIndex, setActiveChapterIndex] = useState(0);
-  const [isDarkTop, setIsDarkTop] = useState(true);
-  const [isSolidTop, setIsSolidTop] = useState(false);
+  const [isLightModeTop, setIsLightModeTop] = useState(false);
   const [isRailActive, setIsRailActive] = useState(false);
   const [railMarkerY, setRailMarkerY] = useState(0);
-
-  // Frame insets for scroll expansion animation
-  const [frameInsets, setFrameInsets] = useState({
-    top: 80,
-    x: 24,
-    bottom: 24,
-    radius: 24,
-  });
 
   // Modal and palette state
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [isLoaderDone, setIsLoaderDone] = useState(false);
 
   // Chapter DOM references
   const storyRef = useRef<HTMLDivElement | null>(null);
-  const chaptersRefs = useRef<(HTMLElement | null)[]>([]);
 
   // Keyboard shortcut for Command Palette (Ctrl+K or Cmd+K)
   useEffect(() => {
@@ -69,44 +92,16 @@ export const Consultancy: React.FC = () => {
     const vh = window.innerHeight;
     setScrollY(y);
 
-    // 1. Frame expansion animation (From inset card to full bleed)
-    // Between 0 and 0.6 vh, insets contract to 0
-    const openProgress = Math.max(0, Math.min(1, y / (vh * 0.65)));
-    const gutter = Math.min(40, Math.max(16, window.innerWidth * 0.025));
-
-    // When approaching end of story (around 6.5 vh), close frame back
     const storyEl = storyRef.current;
     const storyHeight = storyEl ? storyEl.offsetHeight : vh * 7;
-    const closeThreshold = storyHeight - vh * 1.5;
-    const closeProgress = Math.max(0, Math.min(1, (y - closeThreshold) / (vh * 0.8)));
 
-    if (closeProgress > 0) {
-      setFrameInsets({
-        top: Math.round(closeProgress * 80),
-        x: Math.round(closeProgress * gutter),
-        bottom: Math.round(closeProgress * gutter),
-        radius: Math.round(closeProgress * 24),
-      });
-      setIsDarkTop(closeProgress < 0.7);
-    } else {
-      setFrameInsets({
-        top: Math.round((1 - openProgress) * 80),
-        x: Math.round((1 - openProgress) * gutter),
-        bottom: Math.round((1 - openProgress) * gutter),
-        radius: Math.round((1 - openProgress) * 24),
-      });
-      setIsDarkTop(true);
-    }
+    // Header light mode when scrolled into the light section
+    const pastStory = y > storyHeight - 100;
+    setIsLightModeTop(pastStory);
 
-    // Header background state when past the dark story
-    const isPastStory = y > storyHeight - 80;
-    setIsSolidTop(isPastStory);
-    if (isPastStory) setIsDarkTop(false);
-
-    // 2. Chapter calculations
-    // Hero is 0. 5 Chapters correspond to 1, 2, 3, 4, 5.
-    const heroH = vh;
-    const chapterH = vh * 1.2;
+    // Chapter calculations: Hero is 0. Chapters 1-5.
+    const heroH = vh * 0.9;
+    const chapterH = vh * 1.1;
 
     if (y < heroH * 0.5) {
       setCurrentChapter(y / (heroH * 0.5));
@@ -121,11 +116,11 @@ export const Consultancy: React.FC = () => {
       const activeIdx = Math.min(4, Math.max(0, Math.floor(clampedChapter - 1)));
       setActiveChapterIndex(activeIdx);
 
-      // Rail visibility: only during chapters
-      const inChapterRegion = y >= heroH * 0.7 && y < storyHeight - vh * 0.8;
+      // Rail visibility
+      const inChapterRegion = y >= heroH * 0.7 && y < storyHeight - vh * 0.6;
       setIsRailActive(inChapterRegion);
 
-      // Smooth rail marker Y (approx 36px per rail button)
+      // Smooth rail marker Y
       const markerPos = (clampedChapter - 1) * 38;
       setRailMarkerY(markerPos);
     }
@@ -164,7 +159,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-1",
           number: "01",
           title: "Ivy League & US Top-20 SOP Critique",
-          mentorName: "Sarah Jenkins",
           mentorInst: "Stanford MS CS",
           mentorId: "sarah-jenkins",
         },
@@ -172,7 +166,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-2",
           number: "02",
           title: "IIT & Top Engineering College Counseling",
-          mentorName: "Arjun Sharma",
           mentorInst: "IIT Delhi",
           mentorId: "arjun-sharma",
         },
@@ -180,7 +173,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-3",
           number: "03",
           title: "MBA & Business School Application Strategy",
-          mentorName: "Priya Patel",
           mentorInst: "IIM Ahmedabad",
           mentorId: "priya-patel",
         },
@@ -197,7 +189,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-4",
           number: "04",
           title: "CS vs AI/ML vs Data Science Degree Audit",
-          mentorName: "David Kim",
           mentorInst: "Microsoft AI",
           mentorId: "david-kim",
         },
@@ -205,7 +196,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-5",
           number: "05",
           title: "Branch Change & Dual Degree Roadmaps",
-          mentorName: "Ananya Sengupta",
           mentorInst: "BITS Pilani",
           mentorId: "ananya-sengupta",
         },
@@ -213,7 +203,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-6",
           number: "06",
           title: "Core Engineering to Software Transition",
-          mentorName: "Marcus Vance",
           mentorInst: "Uber Tech",
           mentorId: "marcus-vance",
         },
@@ -230,7 +219,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-7",
           number: "07",
           title: "US, UK & Germany Master's Roadmap",
-          mentorName: "Sarah Jenkins",
           mentorInst: "Stanford University",
           mentorId: "sarah-jenkins",
         },
@@ -238,7 +226,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-8",
           number: "08",
           title: "Full-Ride Scholarships & TA/RA Tactics",
-          mentorName: "Elena Rostova",
           mentorInst: "ETH Zurich",
           mentorId: "elena-rostova",
         },
@@ -246,7 +233,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-9",
           number: "09",
           title: "F-1 Student Visa Mock Interview Prep",
-          mentorName: "Rohan Nair",
           mentorInst: "Carnegie Mellon",
           mentorId: "rohan-nair",
         },
@@ -263,7 +249,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-10",
           number: "10",
           title: "FAANG & High-Growth Startup Outreach",
-          mentorName: "Arjun Sharma",
           mentorInst: "Google L4",
           mentorId: "arjun-sharma",
         },
@@ -271,7 +256,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-11",
           number: "11",
           title: "GitHub & Production Portfolio Audit",
-          mentorName: "David Kim",
           mentorInst: "Microsoft",
           mentorId: "david-kim",
         },
@@ -279,7 +263,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-12",
           number: "12",
           title: "First-Year & Sophomore Internship Strategy",
-          mentorName: "Ananya Sengupta",
           mentorInst: "BITS Pilani",
           mentorId: "ananya-sengupta",
         },
@@ -296,7 +279,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-13",
           number: "13",
           title: "FAANG LeetCode & System Design Simulation",
-          mentorName: "Arjun Sharma",
           mentorInst: "Google",
           mentorId: "arjun-sharma",
         },
@@ -304,7 +286,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-14",
           number: "14",
           title: "Quant Finance & FinTech Engineering Prep",
-          mentorName: "Marcus Vance",
           mentorInst: "Uber / FinTech",
           mentorId: "marcus-vance",
         },
@@ -312,7 +293,6 @@ export const Consultancy: React.FC = () => {
           id: "mod-15",
           number: "15",
           title: "Multiple Offer Negotiation & Equity Strategy",
-          mentorName: "Priya Patel",
           mentorInst: "McKinsey Alumni",
           mentorId: "priya-patel",
         },
@@ -322,11 +302,6 @@ export const Consultancy: React.FC = () => {
 
   return (
     <div className="sb-root">
-      {/* ─────────────────────────────────────────────────────────────
-         SESSION BOOT LOADER (Matching sandbox-os loader)
-         ───────────────────────────────────────────────────────────── */}
-      <SandboxLoader onComplete={() => setIsLoaderDone(true)} />
-
       {/* ─────────────────────────────────────────────────────────────
          FLOATING COMMAND PALETTE (Ctrl + K)
          ───────────────────────────────────────────────────────────── */}
@@ -338,17 +313,17 @@ export const Consultancy: React.FC = () => {
       />
 
       {/* ─────────────────────────────────────────────────────────────
-         HEADER (Matching sandbox-os k-top with brand mark & pills)
+         HEADER (Fixed top bar with logo, search, and action pills)
          ───────────────────────────────────────────────────────────── */}
-      <header className={`sb-top ${isDarkTop ? "is-dark" : ""} ${isSolidTop ? "is-solid" : ""}`}>
+      <header className={`sb-top ${isLightModeTop ? "is-light-mode" : ""}`}>
         <Link to="/" className="sb-mark">
           <div className="sb-mark-icon">
-            <svg width="20" height="20" viewBox="0 0 64 64" fill="none">
+            <svg width="18" height="18" viewBox="0 0 64 64" fill="none">
               <circle cx="32" cy="32" r="10" fill="#FF8F2E" fillOpacity="0.4" />
               <circle cx="32" cy="32" r="5" fill="#FF8F2E" />
             </svg>
           </div>
-          <span>tasskly</span>
+          <span className="font-bold tracking-tight">tasskly</span>
         </Link>
 
         <p className="sb-top-tag">
@@ -396,12 +371,7 @@ export const Consultancy: React.FC = () => {
       <div ref={storyRef} className="sb-story" id="sb-story">
         {/* Sticky Background 3D Scene */}
         <div className="sb-scene">
-          <div
-            className="sb-frame"
-            style={{
-              clipPath: `inset(${frameInsets.top}px ${frameInsets.x}px ${frameInsets.bottom}px ${frameInsets.x}px round ${frameInsets.radius}px)`,
-            }}
-          >
+          <div className="sb-frame">
             <div className="sb-canvas-holder">
               <Sandbox3DCore currentChapter={currentChapter} scrollY={scrollY} />
             </div>
@@ -410,7 +380,7 @@ export const Consultancy: React.FC = () => {
         </div>
 
         {/* ─────────────────────────────────────────────────────────────
-           STICKY RIGHT-HAND CHAPTER RAIL (Matching sandbox-os k-rail)
+           STICKY RIGHT-HAND CHAPTER RAIL
            ───────────────────────────────────────────────────────────── */}
         <ol className={`sb-rail ${isRailActive ? "is-active" : ""}`} aria-label="Roadmap Chapters">
           <div
@@ -465,12 +435,11 @@ export const Consultancy: React.FC = () => {
           </section>
 
           {/* Chapters 1 to 5: Sequential Editorial Chapters */}
-          {CHAPTERS_LIST.map((chap, idx) => (
+          {CHAPTERS_LIST.map((chap) => (
             <section
               key={chap.id}
               id={chap.id}
               className="sb-chapter"
-              ref={(el) => (chaptersRefs.current[idx] = el)}
             >
               <div className="sb-chapter-inner">
                 <p className="sb-chapter-n">{chap.number}</p>
@@ -613,7 +582,7 @@ export const Consultancy: React.FC = () => {
             </DialogTitle>
             <DialogDescription className="text-slate-300 text-sm">
               {selectedMentor
-                ? `${selectedMentor.role} · ${selectedMentor.institution} (₹${selectedMentor.price} / 30m session)`
+                ? `${selectedMentor.role} · ${selectedMentor.institution} (₹${selectedMentor.price} / session)`
                 : "Select a date and time slot for your 1-on-1 video call."}
             </DialogDescription>
           </DialogHeader>
@@ -621,12 +590,20 @@ export const Consultancy: React.FC = () => {
           <div className="p-6 max-h-[75vh] overflow-y-auto">
             <BookingPanel
               mentor={selectedMentor || MENTORS_DATA[0]}
-              onClose={() => setIsBookingOpen(false)}
+              onSuccess={() => setIsBookingOpen(false)}
             />
           </div>
         </DialogContent>
       </Dialog>
     </div>
+  );
+};
+
+export const Consultancy: React.FC = () => {
+  return (
+    <ConsultancyErrorBoundary>
+      <ConsultancyContent />
+    </ConsultancyErrorBoundary>
   );
 };
 
