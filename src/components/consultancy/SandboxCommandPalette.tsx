@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ArrowRight, UserCheck, Compass, Sparkles, X } from "lucide-react";
-import { MENTORS_DATA, Mentor } from "./data/mentorsData";
+import { Search, ArrowRight, Layers, Compass, Sparkles, X } from "lucide-react";
+import { Mentor } from "./data/mentorsData";
 
 interface SandboxCommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectMentor: (mentor: Mentor) => void;
+  onSelectMentor: (mentor?: Mentor, topic?: string) => void;
   onSelectChapter: (chapterId: string) => void;
 }
 
@@ -28,7 +28,7 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
     }
   }, [isOpen]);
 
-  // List of searchable items
+  // List of searchable roadmap chapters
   const chapters = [
     { id: "sb-ch-admissions", title: "01 Admissions & SOP Strategy", type: "chapter" },
     { id: "sb-ch-courses", title: "02 Course Selection & Branch Changes", type: "chapter" },
@@ -37,21 +37,72 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
     { id: "sb-ch-seat", title: "05 Seat Allotment & Counseling Strategy", type: "chapter" },
   ];
 
+  // List of searchable strategy blueprints (decision topics)
+  const blueprints = [
+    {
+      id: "bp-seat-matrix",
+      title: "JoSAA & CET Choice-Filling Allotment Matrix",
+      category: "05 Seat Allotment",
+      keywords: ["josaa", "cet", "seat", "allotment", "choice", "filling", "rank", "counseling"],
+    },
+    {
+      id: "bp-campus-roi",
+      title: "Tier-1 vs Tier-2 Campus ROI Diagnostic",
+      category: "04 College Comparison",
+      keywords: ["tier-1", "tier-2", "roi", "placement", "campus", "college", "package", "salary"],
+    },
+    {
+      id: "bp-branch-tree",
+      title: "Branch Sliding & Core-to-Tech Transition Lab",
+      category: "02 Course Selection",
+      keywords: ["branch", "sliding", "change", "core", "tech", "transition", "cs", "mechanical", "electrical"],
+    },
+    {
+      id: "bp-sop-audit",
+      title: "US & EU Top-20 SOP Critique Blueprint",
+      category: "03 Study Abroad",
+      keywords: ["sop", "statement of purpose", "us", "eu", "admissions", "audit", "stanford", "cmu", "eth"],
+    },
+    {
+      id: "bp-visa-meter",
+      title: "F-1 & Schengen Student Visa Mock Chamber",
+      category: "03 Visa Prep",
+      keywords: ["visa", "f-1", "schengen", "mock", "interview", "embassy", "consulate", "214b"],
+    },
+    {
+      id: "bp-cs-venn",
+      title: "CS vs AI/ML vs Data Science Degree Audit",
+      category: "02 Course Selection",
+      keywords: ["cs", "ai", "ml", "data science", "degree", "audit", "curriculum", "syllabus"],
+    },
+    {
+      id: "bp-spot-radar",
+      title: "Spot Rounds & Vacancy Heatmap Strategy",
+      category: "05 Seat Allotment",
+      keywords: ["spot", "rounds", "vacancy", "heatmap", "cutoff", "sliding", "allotment"],
+    },
+    {
+      id: "bp-hostel-blueprint",
+      title: "Hostel Living, Mess & Peer Community Vetting",
+      category: "04 Campus Realities",
+      keywords: ["hostel", "mess", "food", "campus", "living", "curfew", "peer", "life"],
+    },
+  ];
+
   const filteredChapters = chapters.filter((c) =>
     c.title.toLowerCase().includes(query.toLowerCase())
   );
 
-  const filteredMentors = MENTORS_DATA.filter(
-    (m) =>
-      m.name.toLowerCase().includes(query.toLowerCase()) ||
-      m.role.toLowerCase().includes(query.toLowerCase()) ||
-      (m.companyOrCollege || "").toLowerCase().includes(query.toLowerCase()) ||
-      (m.tags || []).some((t) => t.toLowerCase().includes(query.toLowerCase()))
+  const filteredBlueprints = blueprints.filter(
+    (b) =>
+      b.title.toLowerCase().includes(query.toLowerCase()) ||
+      b.category.toLowerCase().includes(query.toLowerCase()) ||
+      b.keywords.some((kw) => kw.toLowerCase().includes(query.toLowerCase()))
   );
 
   const allItems = [
-    ...filteredChapters.map((c) => ({ ...c, itemType: "chapter" })),
-    ...filteredMentors.map((m) => ({ ...m, title: `${m.name} — ${m.role} (${m.companyOrCollege})`, itemType: "mentor" })),
+    ...filteredChapters.map((c) => ({ ...c, itemType: "chapter" as const })),
+    ...filteredBlueprints.map((b) => ({ ...b, itemType: "blueprint" as const })),
   ];
 
   // Handle keyboard navigation
@@ -69,7 +120,7 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
         if (current.itemType === "chapter") {
           onSelectChapter(current.id);
         } else {
-          onSelectMentor(current as unknown as Mentor);
+          onSelectMentor(undefined, current.title);
         }
         onClose();
       }
@@ -95,7 +146,7 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
             ref={inputRef}
             type="text"
             className="sb-palette-input"
-            placeholder="Search verified mentors, milestones, or topics (e.g. SOP, FAANG, IELTS)..."
+            placeholder="Search milestones, blueprints, or decision topics (e.g. SOP, JoSAA, Visa)..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -114,7 +165,7 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
         <ul className="sb-palette-list">
           {allItems.length === 0 ? (
             <li className="py-8 text-center text-sm text-slate-400">
-              No mentors or milestones found for &quot;{query}&quot;
+              No milestones or blueprints found for &quot;{query}&quot;
             </li>
           ) : (
             allItems.map((item, idx) => {
@@ -127,7 +178,7 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
                     if (item.itemType === "chapter") {
                       onSelectChapter(item.id);
                     } else {
-                      onSelectMentor(item as unknown as Mentor);
+                      onSelectMentor(undefined, item.title);
                     }
                     onClose();
                   }}
@@ -138,13 +189,13 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
                       className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
                         item.itemType === "chapter"
                           ? "bg-blue-50 text-blue-600"
-                          : "bg-amber-50 text-amber-600"
+                          : "bg-indigo-50 text-indigo-600"
                       }`}
                     >
                       {item.itemType === "chapter" ? (
                         <Compass className="h-4 w-4" />
                       ) : (
-                        <UserCheck className="h-4 w-4" />
+                        <Layers className="h-4 w-4" />
                       )}
                     </div>
                     <div className="min-w-0 text-left">
@@ -152,7 +203,7 @@ export const SandboxCommandPalette: React.FC<SandboxCommandPaletteProps> = ({
                         {item.title}
                       </p>
                       <p className="text-xs text-slate-500 truncate">
-                        {item.itemType === "chapter" ? "Milestone Roadmap" : "1-on-1 Campus Insider · ₹499 · Approval Required"}
+                        {item.itemType === "chapter" ? "Milestone Roadmap" : `Decision Blueprint · ${item.category}`}
                       </p>
                     </div>
                   </div>

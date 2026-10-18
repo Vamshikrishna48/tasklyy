@@ -314,7 +314,7 @@ const ConsultancyContent: React.FC = () => {
       <SandboxCommandPalette
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}
-        onSelectMentor={(mentor) => handleOpenBooking(mentor)}
+        onSelectMentor={(mentor, topic) => handleOpenBooking(mentor, topic)}
         onSelectChapter={(chapterId) => scrollToChapter(chapterId)}
       />
 
@@ -322,19 +322,14 @@ const ConsultancyContent: React.FC = () => {
          HEADER (Fixed top bar with logo, search, and action pills)
          ───────────────────────────────────────────────────────────── */}
       <header className={`sb-top ${isLightModeTop ? "is-light-mode" : ""}`}>
-        <Link to="/" className="sb-mark">
-          <div className="sb-mark-icon">
-            <svg width="18" height="18" viewBox="0 0 64 64" fill="none">
-              <circle cx="32" cy="32" r="10" fill="#FF8F2E" fillOpacity="0.4" />
-              <circle cx="32" cy="32" r="5" fill="#FF8F2E" />
-            </svg>
-          </div>
+        <Link to="/" className="sb-mark flex items-center gap-2">
+          <img
+            src="/taskly-logo.png"
+            alt="Tasskly"
+            className="w-8 h-8 object-contain"
+          />
           <span className="font-bold tracking-tight">tasskly</span>
         </Link>
-
-        <p className="sb-top-tag">
-          Flat ₹499 sessions. Confirmed only when member approves. 100% refund in 2–3h.
-        </p>
 
         <nav className="sb-top-nav">
           <button

@@ -422,9 +422,6 @@ export const SandboxMentorsTrack: React.FC<SandboxMentorsTrackProps> = ({ onSele
                     <Layers className="h-3.5 w-3.5" />
                     <span>{bp.chapterBadge}</span>
                   </div>
-                  <div className="sb-tile-price">
-                    ₹499 <span className="text-[11px] font-normal text-slate-500">/ 45 mins</span>
-                  </div>
                 </div>
 
                 {/* Body Details */}
