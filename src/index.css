@@ -154,8 +154,8 @@
 
 /* ── Capacitor Native Mobile touch & layout optimizations ── */
 html, body {
-  /* Prevent screen bounces and scroll behaviors on native overlays */
-  overscroll-behavior-y: contain;
+  /* Allow pull-to-refresh — do NOT use 'contain' here */
+  overscroll-behavior-y: auto;
   /* Smooth native-like touch gestures */
   touch-action: manipulation;
   /* Disable browser select overlay highlight color on mobile taps */
