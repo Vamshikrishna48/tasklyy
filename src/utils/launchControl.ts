@@ -47,25 +47,53 @@ export const clearAdminGate = (): void => {
   localStorage.removeItem("demoAdminAuth");
 };
 
-/** Returns true if the platform is launched (from localStorage cache). */
+/** Returns true if the platform is launched. Defaults to true to ensure website access on all devices. */
 export const getIsPlatformLaunched = (): boolean => {
-  return localStorage.getItem(LAUNCH_KEY) === "true";
+  try {
+    const cached = localStorage.getItem(LAUNCH_KEY);
+    if (cached !== null) {
+      return cached !== "false";
+    }
+  } catch { /* ignore */ }
+  return true;
 };
 
 const broadcastLaunch = (launched: boolean) => {
-  localStorage.setItem(LAUNCH_KEY, launched ? "true" : "false");
+  try {
+    localStorage.setItem(LAUNCH_KEY, launched ? "true" : "false");
+  } catch { /* ignore */ }
   window.dispatchEvent(new CustomEvent(LAUNCH_EVENT, { detail: { launched } }));
 };
 
 /**
- * Saves launch state to Supabase so ALL users/browsers see it.
+ * Saves launch state to backend & Supabase so ALL users/browsers see it.
  * Also updates localStorage immediately for the current session.
  */
 export const setPlatformLaunched = async (launched: boolean): Promise<boolean> => {
   // Update localStorage immediately so this device responds instantly
   broadcastLaunch(launched);
 
-  // Persist to Supabase so other devices/browsers see the change
+  // Try via serverless backend with service role first
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      const res = await fetch("/api/platform-launch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ launched }),
+      });
+      if (res.ok) {
+        return true;
+      }
+    }
+  } catch (e) {
+    console.warn("Backend /api/platform-launch sync failed:", e);
+  }
+
+  // Persist to Supabase client fallback
   try {
     const { error } = await (supabase as any)
       .from("platform_settings")
@@ -75,20 +103,32 @@ export const setPlatformLaunched = async (launched: boolean): Promise<boolean> =
       );
     if (error) {
       console.warn("Could not save launch state to Supabase:", error.message);
-      // Still return true because localStorage is updated
     }
     return true;
   } catch (e) {
     console.warn("Could not save launch state to Supabase:", e);
-    return true; // localStorage is already updated
+    return true;
   }
 };
 
 /**
- * Reads launch state from Supabase and syncs to localStorage.
+ * Reads launch state from backend or Supabase and syncs to localStorage.
  * Call on app mount so all devices get the real server state.
  */
 export const syncLaunchStateFromServer = async (): Promise<boolean> => {
+  // 1. Try serverless endpoint first
+  try {
+    const res = await fetch("/api/platform-launch");
+    if (res.ok) {
+      const json = await res.json();
+      if (typeof json.launched === "boolean") {
+        broadcastLaunch(json.launched);
+        return json.launched;
+      }
+    }
+  } catch { /* fallback to supabase client */ }
+
+  // 2. Direct Supabase query
   try {
     const { data, error } = await (supabase as any)
       .from("platform_settings")
@@ -96,13 +136,11 @@ export const syncLaunchStateFromServer = async (): Promise<boolean> => {
       .eq("key", "is_launched")
       .maybeSingle();
 
-    if (error) {
-      // Table may not exist yet — default to not launched
-      console.warn("platform_settings table not accessible:", error.message);
+    if (error || !data) {
       return getIsPlatformLaunched();
     }
 
-    const serverLaunched = data?.value === "true";
+    const serverLaunched = data.value !== "false";
     broadcastLaunch(serverLaunched);
     return serverLaunched;
   } catch (e) {
@@ -130,7 +168,7 @@ export const subscribeToLaunchState = (onChange: (launched: boolean) => void) =>
         (payload: any) => {
           const value = payload?.new?.value ?? payload?.old?.value;
           if (value === undefined) return;
-          const launched = value === "true";
+          const launched = value !== "false";
           broadcastLaunch(launched);
           onChange(launched);
         }

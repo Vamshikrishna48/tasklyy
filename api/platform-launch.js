@@ -67,10 +67,10 @@ export default async function handler(req, res) {
 
       if (error) {
         console.warn('platform-launch GET:', error.message);
-        return res.status(200).json({ launched: false });
+        return res.status(200).json({ launched: true });
       }
 
-      return res.status(200).json({ launched: data?.value === 'true' });
+      return res.status(200).json({ launched: data?.value !== 'false' });
     }
 
     if (req.method === 'POST') {

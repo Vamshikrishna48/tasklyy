@@ -124,7 +124,8 @@ const Auth = () => {
 
     try {
       // Under Development restriction check: Only Administrators can log in or register before official launch
-      if (!getIsPlatformLaunched() && (view === "signin" || view === "signup")) {
+      const isPreview = typeof sessionStorage !== "undefined" && sessionStorage.getItem("tasskly_preview_dismissed") === "true";
+      if (!getIsPlatformLaunched() && !isPreview && (view === "signin" || view === "signup")) {
         if (!isAdminEmail(email)) {
           const { data: profileCheck } = await (supabase as any)
             .from("profiles")
@@ -134,7 +135,7 @@ const Auth = () => {
             .maybeSingle();
 
           if (profileCheck?.role !== "admin") {
-            throw new Error("🔒 Platform Under Development: Tasskly is currently in preview mode. Only Administrators are permitted to log in right now. The website will be launching soon!");
+            throw new Error("🔒 Platform Under Development: Tasskly is currently in preview mode. Click 'Explore Platform' on the notice or log in with administrator credentials.");
           }
         }
       }
