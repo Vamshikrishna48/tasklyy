@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   UserCheck, UserX, Shield, Mail, CheckCircle, Clock,
-  AlertTriangle, Eye, X, Check, Briefcase, IndianRupee, ImageOff, Trash2, Loader2, CreditCard
+  AlertTriangle, Eye, X, Check, Briefcase, IndianRupee, ImageOff, Trash2, Loader2, CreditCard, Phone, RefreshCw
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -241,7 +241,25 @@ const AdminUsers = () => {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+
+    // Poll every 30 seconds so new registrations appear automatically
+    const pollId = setInterval(() => { loadData(); }, 30000);
+
+    // Realtime subscription for profile inserts/updates
+    const channel = supabase
+      .channel("admin-profiles-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        loadData();
+      })
+      .subscribe();
+
+    return () => {
+      clearInterval(pollId);
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleViewDocs = async (req: any) => {
     setSelectedRequest(req);
@@ -266,9 +284,21 @@ const AdminUsers = () => {
 
   return (
     <div className="p-6 space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">User Management</h1>
-        <p className="text-muted-foreground text-sm">Review verification requests and monitor user activity.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">User Management</h1>
+          <p className="text-muted-foreground text-sm">Review verification requests and monitor user activity.</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => loadData()}
+          disabled={loading}
+          className="flex items-center gap-2 shrink-0"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* ── Verification Queue ── */}

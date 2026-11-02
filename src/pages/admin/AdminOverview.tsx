@@ -36,6 +36,9 @@ const AdminOverview = () => {
     // Sync real launch state from Supabase on mount
     syncLaunchStateFromServer().then(launched => setIsLaunched(launched));
 
+    // Poll every 30 seconds so total user count stays fresh
+    const pollId = setInterval(() => { loadStats(); }, 30000);
+
     // Load consultancy booking counts
     try {
       const stored = localStorage.getItem("tasskly_consultancy_bookings") || localStorage.getItem("tasskly_student_sessions");
@@ -51,6 +54,8 @@ const AdminOverview = () => {
     } catch {
       // ignore
     }
+
+    return () => clearInterval(pollId);
   }, []);
 
   const handleToggleLaunch = async () => {
