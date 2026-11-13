@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Construction, Sparkles, Clock, Rocket, Lock, Shield, ArrowRight, X, Eye } from "lucide-react";
+import { Construction, Sparkles, Clock, Rocket, Lock, Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   getIsPlatformLaunched,
@@ -79,7 +79,6 @@ export const UnderDevelopmentModal: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={handleDismiss}
           className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl transition-opacity pointer-events-auto"
         />
 
@@ -90,16 +89,6 @@ export const UnderDevelopmentModal: React.FC = () => {
           transition={{ type: "spring", duration: 0.5, bounce: 0.15 }}
           className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-violet-200 dark:border-slate-800 overflow-hidden z-10 my-auto pointer-events-auto"
         >
-          {/* Dismiss button */}
-          <button
-            onClick={handleDismiss}
-            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-            title="Close and preview platform"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
           <div className="h-2.5 w-full bg-gradient-to-r from-amber-500 via-violet-600 to-indigo-600 animate-pulse" />
 
           <div className="p-6 sm:p-8">
@@ -136,7 +125,7 @@ export const UnderDevelopmentModal: React.FC = () => {
 
             <div className="bg-amber-50/60 dark:bg-amber-950/30 rounded-2xl p-4 border border-amber-200/80 dark:border-amber-900/40 mb-6">
               <p className="text-xs sm:text-sm text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
-                🚧 This website is currently under active development and internal testing. You can explore the platform in preview mode.
+                🚧 This website is currently under active development and internal testing. Stay tuned — we're launching very soon!
               </p>
             </div>
 
@@ -163,15 +152,6 @@ export const UnderDevelopmentModal: React.FC = () => {
             </div>
 
             <div className="space-y-3 pt-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Button
-                  onClick={handleDismiss}
-                  className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-extrabold rounded-2xl py-3.5 flex items-center justify-center gap-2 text-sm shadow-md cursor-pointer"
-                >
-                  <Eye className="w-4 h-4" />
-                  Explore Platform
-                </Button>
-
                 <Button
                   onClick={() => {
                     clearAdminGate();
@@ -183,13 +163,6 @@ export const UnderDevelopmentModal: React.FC = () => {
                   Admin Login
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-center border border-slate-200 dark:border-slate-700">
-                <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                  ⚡ Preview mode is unlocked. You can explore all marketplace features.
-                </p>
-              </div>
             </div>
           </div>
         </motion.div>
